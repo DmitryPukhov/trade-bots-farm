@@ -99,31 +99,25 @@ echo "Dags to redeploy: $dags"
 for dag in $dags
 do
   echo "Processing dag=$dag"
-  case "$dag" in
-    common)
-      echo "Deploy common dag tools"
+  if [[ "$dag" == "common" || "$dag" == "all" ]]; then
+    echo "Deploy common dag tools"
       build_copy_module "$PROJECT_ROOT/common"
-      ;;
-    connector_stream_htx)
+  fi
+  if [[ "$dag" == "connector_stream_htx" || "$dag" == "all" ]]; then
         module_dir=$PROJECT_ROOT/connectors/stream/htx-ws
         dag_name="connector_stream_htx"
         deploy_module "$module_dir" "$dag_name"
-      ;;
-    connector_batch_s3_external)
+  fi
+  if [[ "$dag" == "connector_batch_s3_external" || "$dag" == "all" ]]; then
         module_dir=$PROJECT_ROOT/connectors/batch/s3-external
         dag_name="connector_batch_s3_external"
         deploy_module "$module_dir" "$dag_name"
-      ;;
-    process_stream_raw_to_preproc)
+  fi
+  if [[ "$dag" == "process_stream_raw_to_preproc" || "$dag" == "all" ]]; then
         module_dir=$PROJECT_ROOT/processes/stream/raw-to-preproc
         dag_name="process_stream_raw_to_preproc"
         deploy_module "$module_dir" "$dag_name"
-      ;;
-    *)
-      echo "Unknown dag=$dag"
-      exit 1
-       ;;
-  esac
+  fi
 done
 
 
