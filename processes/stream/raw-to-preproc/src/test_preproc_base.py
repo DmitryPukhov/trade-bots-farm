@@ -32,19 +32,19 @@ class TestPreprocBase(TestCase):
         preproc_base = self.new_preproc_base()
 
         # Accumulate minute 1, don't process
-        msg["tick"]["id"] = ts1.value // 1_000_000
+        msg["tick"]["ts"] = ts1.value // 1_000_000
         preprocessed = pd.DataFrame(preproc_base.process(json.dumps(msg)))
         self.assertTrue(preprocessed.empty)
         self.assertListEqual([pd.Timestamp("2025-06-03 14:11:00")], list(preproc_base._buffer.keys()))
 
         # Accumulate minute 2, don't process minute 1 because of timeout not elapsed
-        msg["tick"]["id"] = ts2.value // 1_000_000
+        msg["tick"]["ts"] = ts2.value // 1_000_000
         preprocessed = pd.DataFrame(preproc_base.process(json.dumps(msg)))
         self.assertTrue(preprocessed.empty)
         self.assertListEqual([pd.Timestamp("2025-06-03 14:11:00"), pd.Timestamp("2025-06-03 14:12:00")], list(preproc_base._buffer.keys()))
 
         # Accumulate minute 2, process minute 1 and delete from buffer
-        msg["tick"]["id"] = ts3.value // 1_000_000
+        msg["tick"]["ts"] = ts3.value // 1_000_000
         preprocessed = pd.DataFrame(preproc_base.process(json.dumps(msg)))
         self.assertEqual(1, len(preprocessed))
         self.assertListEqual([pd.Timestamp("2025-06-03 14:12:00")], list(preproc_base._buffer.keys()))
