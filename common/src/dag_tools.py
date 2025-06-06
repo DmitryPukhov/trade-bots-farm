@@ -1,13 +1,15 @@
-from airflow.operators.python import PythonVirtualenvOperator
 import os
 
-def tbf_task_operator( task_id, wheel_file_name, module_name, class_name, **kwargs):
+from airflow.operators.python import PythonVirtualenvOperator
+
+
+def tbf_task_operator(task_id, wheel_file_name, module_name, class_name, **kwargs):
     """ PythonVirtualEnvOperator wrapper to run trade bots farm dag task.
     This method is called from dag to create the task
     Written in functional style to be compatible with PythonVirtualenvOperator callable
     """
 
-    def tbf_task_callable(module_name, class_name,**kwargs):
+    def tbf_task_callable(module_name, class_name, **kwargs):
         """ This callable is passed to PythonVirtualenvOperator"""
 
         def load_env(dag_id: str):
@@ -25,6 +27,11 @@ def tbf_task_operator( task_id, wheel_file_name, module_name, class_name, **kwar
             if not os.path.exists(env_path):
                 raise FileNotFoundError(f"Environment file not found at {env_path}")
             load_dotenv(env_path)
+
+            #  env_vars came from dag and override those from .env file
+            for key, val in kwargs.get("env_vars"):
+                os.environ.putenv(key, val)
+
             print(f"Loaded environment variables from {env_path}")
 
         def init_log():
@@ -44,7 +51,7 @@ def tbf_task_operator( task_id, wheel_file_name, module_name, class_name, **kwar
         import os
         task_id = os.getenv("AIRFLOW_CTX_TASK_ID")
         dag_id = os.getenv("AIRFLOW_CTX_DAG_ID")
-        print(f"Running dag {dag_id}, task {task_id}") # logging is not available here, so print is used
+        print(f"Running dag {dag_id}, task {task_id}")  # logging is not available here, so print is used
 
         # Initialization
         load_env(dag_id)
@@ -72,12 +79,13 @@ def tbf_task_operator( task_id, wheel_file_name, module_name, class_name, **kwar
         op_kwargs={
             "module_name": module_name,
             "class_name": class_name,
-            "env_vars": {
-                "PYTHONPATH": f"{airflow_wheels_dir}",
-                # Ensure Python knows where to write logs
-                "PYTHONUNBUFFERED": "1",
-                #"LOG_LEVEL": "INFO"
-            }
+            "env_vars": {**kwargs,
+                         **{
+                             "PYTHONPATH": f"{airflow_wheels_dir}",
+                             # Ensure Python knows where to write logs
+                             "PYTHONUNBUFFERED": "1",
+                             # "LOG_LEVEL": "INFO"
+                         }}
         },
         system_site_packages=False,
     )
