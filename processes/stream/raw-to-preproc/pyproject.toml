@@ -1,5 +1,5 @@
 [project]
-name = "raw-level2-preproc"
+name = "trade-bots-farm-process-stream-raw-to-preproc"
 version = "0.1.0"
 description = "Aggregate raw level2 by 1min"
 readme = "README.md"

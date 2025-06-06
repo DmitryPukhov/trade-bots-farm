@@ -93,11 +93,14 @@ deploy_module() {
 ###############
 # Exit on error
 set -e
+#set -x
 #modules=${*:-"secrets prometheus mlflow grafana kafka kafka-ui airflow"}
 dags=$*
 echo "Dags to redeploy: $dags"
+
 for dag in $dags
 do
+  echo "Processing dag=$dag"
   case "$dag" in
     common)
       echo "Deploy common dag tools"
@@ -113,6 +116,11 @@ do
         dag_name="connector_batch_s3_external"
         deploy_module "$module_dir" "$dag_name"
       ;;
+    process_stream_raw_to_preproc)
+        module_dir=$PROJECT_ROOT/processes/stream/raw-to-preproc
+        dag_name="process_stream_raw_to_preproc"
+        deploy_module "$module_dir" "$dag_name"
+      ;;
     *)
       echo "Unknown dag=$dag"
       exit 1
@@ -120,10 +128,10 @@ do
   esac
 done
 
-exit
+
 #module_dir=$PROJECT_ROOT/processes/stream/raw-to-preproc
 #deploy_module "$module_dir"
-build_copy_module "$PROJECT_ROOT/common"
+#build_copy_module "$PROJECT_ROOT/common"
 
 
 
