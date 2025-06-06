@@ -31,7 +31,6 @@ copy_dags() {
   echo "Copying $dag_tools_file to $AIRFLOW_WEBSERVER:$AIRFLOW_DAGS_DIR"
   kubectl cp "$dag_tools_file" "$AIRFLOW_WEBSERVER":"$AIRFLOW_DAGS_DIR"
 
-
   # Find dags files in module, copy them to airflow
   for dag_src in "$module_dir"/src/*_dag.py
   do
@@ -91,10 +90,9 @@ deploy_module() {
 ###############
 # main
 ###############
-# Exit on error
-set -e
-#set -x
-#modules=${*:-"secrets prometheus mlflow grafana kafka kafka-ui airflow"}
+
+set -e # Exit on error
+
 dags=$*
 echo "Dags to redeploy: $dags"
 
@@ -127,13 +125,6 @@ do
        ;;
   esac
 done
-
-
-#module_dir=$PROJECT_ROOT/processes/stream/raw-to-preproc
-#deploy_module "$module_dir"
-#build_copy_module "$PROJECT_ROOT/common"
-
-
 
 
 
