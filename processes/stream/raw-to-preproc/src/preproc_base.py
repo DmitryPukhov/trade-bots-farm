@@ -38,7 +38,7 @@ class PreprocBase:
 
         # Add to buffer
         raw_message = json.loads(raw_message)
-        message_ts = pd.Timestamp(raw_message["tick"]["id"], unit='ms')
+        message_ts = pd.Timestamp(raw_message["tick"]["ts"], unit='ms') if "ts" in raw_message["tick"] else pd.Timestamp(raw_message["tick"]["id"])  # noqa: E501
         start_minute_ts = message_ts.floor('1min')
         self._buffer.setdefault(start_minute_ts, []).append(raw_message)
 
