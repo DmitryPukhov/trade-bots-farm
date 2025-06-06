@@ -43,6 +43,7 @@ class TestLevel2Preproc(TestCase):
     def test_transform_message(self):
         raw_msg = {
             "tick": {
+                "ts": pd.Timestamp("2025-06-03 14:11:00").value / 1_000_000,
                 "bids": [[101, 1], [102, 2]],
                 "asks": [[103, 3], [104, 4]]
             }
@@ -63,6 +64,7 @@ class TestLevel2Preproc(TestCase):
     def test_aggregate(self):
         raw_msg = {
             "tick": {
+                "ts":pd.Timestamp("2025-06-03 14:11:00").value/1_000_000,
                 "bids": [[101, 1], [102, 2]],
                 "asks": [[103, 3], [104, 4]]
             }
