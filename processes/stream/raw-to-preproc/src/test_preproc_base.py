@@ -25,7 +25,7 @@ class TestPreprocBase(TestCase):
             "tick": {
                 "bids": [[98, 1], [99, 2]],
                 "asks": [[101, 3], [102, 4]],
-                "id": ts1.value // 1_000_000,  # nanos to millis
+                "ts": ts1.value // 1_000_0000,  # nanos to millis
             }
         }
 

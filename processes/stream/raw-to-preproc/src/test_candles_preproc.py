@@ -4,7 +4,6 @@ from unittest import TestCase
 import pandas as pd
 
 from candles_preproc import CandlesPreproc
-from level2_preproc import Level2Preproc
 
 
 class TestCandlesPreproc(TestCase):
@@ -14,8 +13,9 @@ class TestCandlesPreproc(TestCase):
         ts3 = pd.Timestamp("2025-06-03 14:12:11")
 
         msg = {
+            "ts": ts1.value // 1_000_000,  # nanos to millis
             "tick": {
-                "id": ts1.value // 1_000_000,  # nanos to millis
+                # "id": ts1.value // 1_000_000,  # nanos to millis
                 "open": 100,
                 "high": 102,
                 "low": 100,
@@ -27,19 +27,20 @@ class TestCandlesPreproc(TestCase):
         candles_preproc = CandlesPreproc()
 
         # Accumulate minute 1, don't process
-        msg["tick"]["id"] = ts1.value // 1_000_000
+        msg["ts"] = ts1.value // 1_000_000
         preprocessed = pd.DataFrame(candles_preproc.process(json.dumps(msg)))
         self.assertTrue(preprocessed.empty)
         self.assertListEqual([pd.Timestamp("2025-06-03 14:11:00")], list(candles_preproc._buffer.keys()))
 
         # Accumulate minute 2, don't process minute 1 because of timeout not elapsed
-        msg["tick"]["id"] = ts2.value // 1_000_000
+        msg["ts"] = ts2.value // 1_000_000
         preprocessed = pd.DataFrame(candles_preproc.process(json.dumps(msg)))
         self.assertTrue(preprocessed.empty)
-        self.assertListEqual([pd.Timestamp("2025-06-03 14:11:00"), pd.Timestamp("2025-06-03 14:12:00")], list(candles_preproc._buffer.keys()))
+        self.assertListEqual([pd.Timestamp("2025-06-03 14:11:00"), pd.Timestamp("2025-06-03 14:12:00")],
+                             list(candles_preproc._buffer.keys()))
 
         # Accumulate minute 2, process minute 1 and delete from buffer
-        msg["tick"]["id"] = ts3.value // 1_000_000
+        msg["ts"] = ts3.value // 1_000_000
         preprocessed = pd.DataFrame(candles_preproc.process(json.dumps(msg)))
         self.assertEqual(1, len(preprocessed))
         self.assertListEqual([pd.Timestamp("2025-06-03 14:12:00")], list(candles_preproc._buffer.keys()))
@@ -50,30 +51,32 @@ class TestCandlesPreproc(TestCase):
 
     def test_aggregate(self):
         raw_msgs = [
-            {"tick": {
-                "id": pd.Timestamp("2025-06-03 14:11:01").value // 1_000_000,
-                "open": 100,
-                "high": 102,
-                "low": 98,
-                "close": 110,
-                "amount": 1000
-            }},
-            {"tick": {
-                "id": pd.Timestamp("2025-06-03 14:11:30").value // 1_000_000,
-                "open": 110,
-                "high": 104,
-                "low": 97,
-                "close": 120,
-                "amount": 2000
-            }},
-            {"tick": {
-                "id": pd.Timestamp("2025-06-03 14:12:00").value // 1_000_000,
-                "open": 120,
-                "high": 103,
-                "low": 99,
-                "close": 101,
-                "amount": 50
-            }},
+            {"ts": pd.Timestamp("2025-06-03 14:11:01").value // 1_000_000,
+             "tick": {
+                 "open": 100,
+                 "high": 102,
+                 "low": 98,
+                 "close": 110,
+                 "amount": 1000
+             }},
+            {
+                "ts": pd.Timestamp("2025-06-03 14:11:30").value // 1_000_000,
+                "tick": {
+                    "open": 110,
+                    "high": 104,
+                    "low": 97,
+                    "close": 120,
+                    "amount": 2000
+                }},
+            {
+                "ts": pd.Timestamp("2025-06-03 14:12:00").value // 1_000_000,
+                "tick": {
+                    "open": 120,
+                    "high": 103,
+                    "low": 99,
+                    "close": 101,
+                    "amount": 50
+                }},
 
         ]
         aggregated = CandlesPreproc()._aggregate(raw_msgs)
@@ -85,4 +88,3 @@ class TestCandlesPreproc(TestCase):
         self.assertEqual(97, aggregated[0]["low"])
         self.assertEqual(101, aggregated[0]["close"])
         self.assertEqual(2000, aggregated[0]["vol"])
-
