@@ -4,6 +4,7 @@ import os
 
 from confluent_kafka import Producer, Consumer, KafkaException
 
+from candles_preproc import CandlesPreproc
 from level2_preproc import Level2Preproc
 
 
@@ -32,6 +33,8 @@ class ProcessStreamRawToPreprocApp:
         match kind:
             case "level2":
                 return Level2Preproc()
+            case "candles":
+                return CandlesPreproc()
             case _:
                 return None
 
