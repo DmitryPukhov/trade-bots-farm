@@ -7,7 +7,7 @@ from confluent_kafka import Producer, Consumer, KafkaException
 from level2_preproc import Level2Preproc
 
 
-class RawToPreprocApp:
+class ProcessStreamRawToPreprocApp:
     """ Main class"""
 
     def __init__(self):
@@ -94,4 +94,4 @@ class RawToPreprocApp:
 
 
 if __name__ == '__main__':
-    RawToPreprocApp().run()
+    ProcessStreamRawToPreprocApp().run()
