@@ -11,6 +11,7 @@ class Level2Preproc(PreprocBase):
     @dataclass
     class _PreprocMessageEntity:
         """ Intermediate entity for preprocessed level2 message inside a minute"""
+        datetime: pd.Timestamp
         bid_max: float
         bid_vol_sum: float
         bid_mul_vol_sum: float
@@ -38,7 +39,9 @@ class Level2Preproc(PreprocBase):
         # Bidask expectation
         expect = (ask_mul_vol_sum - bid_mul_vol_sum) / (ask_vol_sum + bid_vol_sum)
 
-        return self._PreprocMessageEntity(bid_max=max(bids)[0], bid_vol_sum=bid_vol_sum,
+        ts = pd.Timestamp(raw_message['tick']['ts'] , unit='ms')
+        return self._PreprocMessageEntity(datetime=ts,
+                                          bid_max=max(bids)[0], bid_vol_sum=bid_vol_sum,
                                           bid_mul_vol_sum=bid_mul_vol_sum,
                                           bid_expect=bid_expect, ask_min=min(asks)[0], ask_vol_sum=ask_vol_sum,
                                           ask_mul_vol_sum=ask_mul_vol_sum, ask_expect=ask_expect, expect=expect)
@@ -48,8 +51,12 @@ class Level2Preproc(PreprocBase):
         Aggregate accumulated messages within a minute.
         Method is called once a minute
         """
+        if not raw_messages:
+            return []
         transformed = (self._transform_message(msg) for msg in raw_messages)
         df_transformed = pd.DataFrame(transformed)
         df_aggregated = df_transformed.agg('mean')
-        res =  df_aggregated.to_dict()
+        df_aggregated = df_transformed.agg('mean')
+        df_aggregated["datetime"] = str(df_transformed["datetime"].max())
+        res = df_aggregated.to_dict()
         return res
