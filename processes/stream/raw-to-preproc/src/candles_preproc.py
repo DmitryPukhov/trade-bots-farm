@@ -37,4 +37,6 @@ class CandlesPreproc(PreprocBase):
             'close': "last",  # Last value
             'vol': 'max'
         })
+        df_1min_resampled[["open_time", "close_time"]] = df_1min_resampled[["open_time", "close_time"]].astype("str")
+
         return df_1min_resampled.to_dict(orient="records")
