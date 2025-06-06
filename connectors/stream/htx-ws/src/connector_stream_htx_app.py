@@ -45,13 +45,6 @@ class ConnectorStreamHtxApp:
                                                             receiver=kafka_raw_producer)
 
 
-    # def _init_logging(self):
-    #     # Setup logging
-    #     logging.basicConfig(
-    #         level=os.environ.get("LOG_LEVEL") or logging.INFO,
-    #         format='%(asctime)s -  %(module)s.%(funcName)s:%(lineno)d  - %(levelname)s - %(message)s'
-    #     )
-
     def run(self):
         kafka_raw_producer = KafkaRawProducer()
         websocket_client = HtxWebSocketClient(receiver=kafka_raw_producer)
