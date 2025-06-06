@@ -13,6 +13,13 @@ AIRFLOW_DAGS_DIR=/opt/airflow/dags
 AIRFLOW_ENV_DIR="/opt/trade-bots-farm/environment"
 AIRFLOW_WHEELS_DIR="/opt/trade-bots-farm/wheels"
 echo "Airflow webserver: $AIRFLOW_WEBSERVER"
+copy_dag_tools(){
+  # Copy common dag tool
+    dag_tools_file="$PROJECT_ROOT/common/src/dag_tools.py"
+    echo "Copying $dag_tools_file to $AIRFLOW_WEBSERVER:$AIRFLOW_DAGS_DIR"
+    kubectl cp "$dag_tools_file" "$AIRFLOW_WEBSERVER":"$AIRFLOW_DAGS_DIR"
+
+}
 
 copy_dags() {
   module_dir=$1
@@ -26,10 +33,7 @@ copy_dags() {
       return 1
   fi
 
-  # Copy common dag tool
-  dag_tools_file="$PROJECT_ROOT/common/src/dag_tools.py"
-  echo "Copying $dag_tools_file to $AIRFLOW_WEBSERVER:$AIRFLOW_DAGS_DIR"
-  kubectl cp "$dag_tools_file" "$AIRFLOW_WEBSERVER":"$AIRFLOW_DAGS_DIR"
+  copy_dag_tools
 
   # Find dags files in module, copy them to airflow
   for dag_src in "$module_dir"/src/*_dag.py
@@ -102,6 +106,7 @@ do
   if [[ "$dag" == "common" || "$dag" == "all" ]]; then
     echo "Deploy common dag tools"
       build_copy_module "$PROJECT_ROOT/common"
+      copy_dag_tools
   fi
   if [[ "$dag" == "connector_stream_htx" || "$dag" == "all" ]]; then
         module_dir=$PROJECT_ROOT/connectors/stream/htx-ws
