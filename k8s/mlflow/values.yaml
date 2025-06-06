@@ -1,0 +1,70 @@
+tracking:
+  enabled: true
+  auth:
+    enabled: true
+    existingSecret: mlflow-tracking
+    existingSecretUserKey: admin-user
+    existingSecretPasswordKey: admin-password
+    existingSecretFlaskServerSecretKey: flask-server-secret-key
+  service:
+    type: LoadBalancer
+    nodePorts:
+      http: "30180"
+      https: "30180"
+
+defaultBuckets: "trade-bots-farm"
+
+postgresql:
+  enabled: true
+  auth:
+    database: bitnami_mlflow
+    existingSecret: mlflow-postgresql
+
+minio:
+  enabled: false
+#  auth:
+#    existingSecret: mlflow-minio
+
+## Disable built-in artifact storage (we'll use external S3)
+artifactRoot: s3://trade-bots-farm/mlartifacts
+## S3 Configuration
+extraEnvVars:
+  - name: MLFLOW_S3_ENDPOINT_URL
+    value: "http://192.168.49.2:30900"  # Your MinIO endpoint
+  - name: AWS_S3_IGNORE_TLS
+    value: "true"  # Only needed if using self-signed certs
+
+# Local minikube minio
+externalS3:
+  host: "192.168.49.2"
+  port: 30900
+  useCredentialsInSecret: true
+  existingSecret: "mlflow-minio"
+  existingSecretAccessKeyIDKey: "root-user"
+  existingSecretKeySecretKey: "root-password"
+  protocol: "http"
+  bucket: "trade-bots-farm"
+  serveArtifacts: true
+
+# Cloud s3
+#externalS3:
+#  host: "storage.yandexcloud.net"
+#  port: 443
+#  useCredentialsInSecret: true
+#  existingSecret: "mlflow-s3"
+#  existingSecretAccessKeyIDKey: "access-key-id"
+#  existingSecretKeySecretKey: "access-key-secret"
+#  protocol: "https"
+#  bucket: "trade-bots-farm"
+#  serveArtifacts: true
+
+#ingress:
+#  enabled: true
+#  annotations:
+#    kubernetes.io/ingress.class: nginx
+#    nginx.ingress.kubernetes.io/rewrite-target: /$1
+#  hosts:
+#    - host: "{{ .Values.global.trade-bots-farm_external_ip }}"
+#      paths:
+#        - path: /mlflow(/|$)(.*)
+#          pathType: ImplementationSpecific

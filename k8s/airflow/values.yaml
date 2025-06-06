@@ -1,0 +1,43 @@
+
+webserver:
+  service:
+    type: NodePort
+    ports:
+      - name: airflow-ui
+        port: 8080
+        targetPort: 8080
+        nodePort: 31880
+airflow:
+  config:
+    AIRFLOW__CORE__REMOTE_LOGGING: "True"
+    AIRFLOW__CORE__REMOTE_BASE_LOG_FOLDER: "s3://trade-bots-farm/airflow/logs/"
+    AIRFLOW__CORE__REMOTE_DAGS: "s3://trade-bots-farm/airflow/dags/"
+    AIRFLOW__CORE__DAGS_FOLDER: "/opt/airflow/dags"
+
+webserverSecretKeySecretName: "airflow"
+
+volumes:
+  - name: airflow-dags
+    persistentVolumeClaim:
+      claimName: airflow-dags
+  - name: environment
+    persistentVolumeClaim:
+      claimName: environment
+  - name: wheels
+    persistentVolumeClaim:
+      claimName: wheels
+
+volumeMounts:
+  - mountPath: /opt/airflow/dags
+    name: airflow-dags
+
+  - mountPath: /opt/trade-bots-farm/environment
+    name: environment
+
+  - mountPath: /opt/trade-bots-farm/wheels
+    name: wheels
+
+# Kubernetes executor secrets
+kubernetes:
+  envFromSecrets:
+    - "airflow"

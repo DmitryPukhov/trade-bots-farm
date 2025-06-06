@@ -1,0 +1,21 @@
+[project]
+name = "raw-level2-preproc"
+version = "0.1.0"
+description = "Aggregate raw level2 by 1min"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    #"apache-airflow",
+    #"google-re2==0.0.0",  # exclude google providers with their errors
+    "python-dotenv",
+    "sortedcontainers",
+    "pandas",
+    "pyyaml",
+    "requests",
+    "urllib3",
+    "numpy",
+    "sqlalchemy",
+    "prometheus-client",
+    "confluent-kafka"
+    ]
+

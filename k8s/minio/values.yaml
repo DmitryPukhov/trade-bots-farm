@@ -1,0 +1,27 @@
+auth:
+  existingSecret: minio
+
+## Service Configuration
+service:
+  type: NodePort             # Makes it accessible on Minikube IP
+  ports:
+    api: 9000                # MinIO API port
+    console: 9090             # MinIO Console port
+  nodePorts:
+    api: 31900               # NodePort for API (30000-32767 range)
+    console: 31901
+
+# Explicit console service config (this is what actually works)
+console:
+  enabled: true
+  service:
+    type: NodePort
+    nodePorts:
+      http: 31901
+
+## Network Configuration (For Minikube IP access)
+networkPolicy:
+  enabled: false             # Disable for Minikube simplicity
+tls:
+  enabled: false
+defaultBuckets: "trade-bots-farm"

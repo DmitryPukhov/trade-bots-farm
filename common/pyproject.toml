@@ -1,0 +1,17 @@
+[project]
+name = "trade-bots-farm-common"
+version = "0.1.0"
+description = "Trade bots farm common tools and libraries"
+readme = "README.md"
+
+requires-python = ">=3.12.0"
+
+dependencies = [
+]
+
+
+[project.optional-dependencies]
+dev = [  # Install with `pip install -e .[dev]`
+    "apache-airflow",
+    "apache-airflow-providers-standard"
+]
