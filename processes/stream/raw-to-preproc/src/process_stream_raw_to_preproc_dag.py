@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from airflow import DAG
+from airflow.operators.empty import EmptyOperator
 
 from dag_tools import tbf_task_operator
 
@@ -23,8 +24,30 @@ with DAG(
         catchup=False,
         tags=['trade-bots-farm'],
 ) as dag:
-    tbf_task_operator(
-        task_id="process_stream_raw_to_preproc",
-        wheel_file_name="trade_bots_farm_process_stream_raw_to_preproc-0.1.0-py3-none-any.whl",
-        module_name="process_stream_raw_to_preproc_app",
-        class_name="ProcessStreamRawToPreprocApp")
+    # create [(source, dest, kind)] from config
+
+    task_envs = [
+        # Process level2
+        {"KAFKA_TOPIC_SRC": "raw.market.btc-usdt.depth.step13", "KAFKA_TOPIC_DEST": "preproc.btc-usdt.level2.1min",
+         "KIND": "level2", "TICKER": "btc-usdt"},
+        # Process candles
+        {"KAFKA_TOPIC_SRC": "raw.market.btc-usdt.kline.1min",
+         "KAFKA_TOPIC_DEST": "preproc.btc-usdt.candles.1min",
+         "KIND": "candles", "TICKER": "btc-usdt"}
+    ]
+
+    # Create tasks list for each source,  dest, kind
+    parallel_tasks = []
+    for task_env in task_envs:
+        task_id = f"process_stream_raw_to_preproc_{task_env["TICKER"]}_{task_env["KIND"]}"
+        # Parallel process level2, candles, bid/ask if configured
+        task_operator = tbf_task_operator(
+            task_id=task_id,
+            wheel_file_name="trade_bots_farm_process_stream_raw_to_preproc-0.1.0-py3-none-any.whl",
+            module_name="process_stream_raw_to_preproc_app",
+            class_name="ProcessStreamRawToPreprocApp",
+            **{"env_vars": task_env})
+        parallel_tasks.append(task_operator)
+
+    # Final workflow
+    EmptyOperator(task_id="start") >> parallel_tasks

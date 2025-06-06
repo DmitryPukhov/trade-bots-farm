@@ -27,12 +27,9 @@ def tbf_task_operator(task_id, wheel_file_name, module_name, class_name, **kwarg
             if not os.path.exists(env_path):
                 raise FileNotFoundError(f"Environment file not found at {env_path}")
             load_dotenv(env_path)
-
             #  env_vars came from dag and override those from .env file
-            for key, val in kwargs.get("env_vars"):
-                os.environ.putenv(key, val)
-
-            print(f"Loaded environment variables from {env_path}")
+            os.environ.update(kwargs.get("env_vars"))
+            print(f"Loaded environment variables from {env_path} file and passed env_vars: {kwargs.get('env_vars') or {}}")
 
         def init_log():
             print("Configuring logging")
@@ -52,7 +49,6 @@ def tbf_task_operator(task_id, wheel_file_name, module_name, class_name, **kwarg
         task_id = os.getenv("AIRFLOW_CTX_TASK_ID")
         dag_id = os.getenv("AIRFLOW_CTX_DAG_ID")
         print(f"Running dag {dag_id}, task {task_id}")  # logging is not available here, so print is used
-
         # Initialization
         load_env(dag_id)
         init_log()
@@ -79,7 +75,7 @@ def tbf_task_operator(task_id, wheel_file_name, module_name, class_name, **kwarg
         op_kwargs={
             "module_name": module_name,
             "class_name": class_name,
-            "env_vars": {**kwargs,
+            "env_vars": {**(kwargs.get("env_vars") or {}),
                          **{
                              "PYTHONPATH": f"{airflow_wheels_dir}",
                              # Ensure Python knows where to write logs
