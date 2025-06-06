@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: environment
+  namespace: trade-bots-farm  # e.g., "airflow" if using the airflow namespace
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10M  # Adjust size as needed
+  storageClassName: standard  # For Minikube, use "standard" or the appropriate class

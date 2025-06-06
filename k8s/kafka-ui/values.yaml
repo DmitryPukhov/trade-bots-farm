@@ -1,0 +1,22 @@
+yamlApplicationConfig:
+  kafka:
+    clusters:
+      - name: trade-bots-farm
+        bootstrapServers:  trade-bots-farm-kafka-bootstrap:9092
+  auth:
+    type: disabled
+  management:
+    health:
+      ldap:
+        enabled: false
+# Add these service configurations
+service:
+  type: NodePort
+  port: 8080
+  nodePort: 31080  # Choose a port between 30000-32767
+  annotations: {}
+  labels: {}
+
+# Optional: Ingress configuration if you want to use Ingress later
+ingress:
+  enabled: false

@@ -1,0 +1,20 @@
+[project]
+name = "trade-bots-farm-connector-stream-htx"
+version = "0.1.0"
+description = "Injest streaming data from htx websocket"
+readme = "README.md"
+requires-python = ">=3.12"
+
+dependencies = [
+    "trade-bots-farm-common",
+    "pandas",
+    "pyyaml",
+    "requests",
+    "urllib3",
+    "numpy",
+    "sqlalchemy",
+    "prometheus-client",
+    "websocket-client",
+    "confluent-kafka"
+
+    ]
