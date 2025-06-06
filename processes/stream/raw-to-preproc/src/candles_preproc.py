@@ -22,7 +22,9 @@ class CandlesPreproc(PreprocBase):
         if not raw_messages:
             return []
         df_1min = pd.DataFrame([msg["tick"] for msg in raw_messages]).copy()
-        df_1min["close_time"] = pd.to_datetime(df_1min["id"], unit="ms")
+        df_1min["ts"] = [msg["ts"] for msg in raw_messages].copy()
+
+        df_1min["close_time"] = pd.to_datetime(df_1min["ts"], unit="ms")
         df_1min["open_time"] = df_1min["close_time"] - pd.Timedelta("1min")
         df_1min["vol"] = df_1min["amount"]
         df_1min = df_1min[["open_time", "close_time", "open", "high", "low", "close", "vol"]]

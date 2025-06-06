@@ -38,20 +38,19 @@ class PreprocBase:
 
         # Add to buffer
         raw_message = json.loads(raw_message)
-        message_ts = pd.Timestamp(raw_message["tick"]["ts"], unit='ms') if "ts" in raw_message["tick"] else pd.Timestamp(raw_message["tick"]["id"])  # noqa: E501
+        message_ts = pd.Timestamp(raw_message["tick"]["ts"], unit='ms') if "ts" in raw_message[
+            "tick"] else pd.Timestamp(raw_message["ts"], unit="ms")  # noqa: E501
         start_minute_ts = message_ts.floor('1min')
         self._buffer.setdefault(start_minute_ts, []).append(raw_message)
 
         out = []
-        # Process previous minute if ordering timeout is passed
+        # 10 seconds timeout to collect all messages from previous minute passed
         if message_ts - start_minute_ts > self._order_timeout:
-            # If we have previous minute in the bufferr, process it
-            # sorted_keys = sorted(self._buffer.keys())
-            while len(self._buffer) > 1:
-                cur_minute_ts = next(iter(self._buffer))
-                cur_minute_messages = self._buffer[cur_minute_ts]
-                out.append(self._aggregate(cur_minute_messages))
-                del self._buffer[cur_minute_ts]
+            for buf_start_minute_ts in self._buffer:
+
+                buf_messages = self._buffer[buf_start_minute_ts]
+                out.append(self._aggregate(buf_messages))
+                del self._buffer[buf_start_minute_ts]
 
         return out
 
