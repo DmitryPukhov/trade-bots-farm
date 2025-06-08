@@ -11,13 +11,13 @@ class S3Tools:
                               start_date,
                               end_date) -> dict[str, pd.Timestamp]:
         """ Create last file name: modified time dictionary for files in s3 directory between start_date and end_date inclusive."""
-
+        endpoint_url = file_system.kwargs.get('endpoint_url')
         # modified time: file name dictionary
         modified_dict = {}
 
         # List objects in the bucket
         if not file_system.exists(f"{s3_dir}"):
-            logging.info(f"Skipping file search in {file_system.endpoint_url}://{s3_dir}, it doesn't exist")
+            logging.info(f"Skipping file search in {endpoint_url}://{s3_dir}, it doesn't exist")
             return modified_dict
 
         objects = file_system.listdir(s3_dir)
