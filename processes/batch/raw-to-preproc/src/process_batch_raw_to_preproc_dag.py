@@ -33,7 +33,7 @@ with DAG(
          "KIND": "level2", "TICKER": "btc-usdt"},
         # Process candles
         {"S3_SRC_DIR": "trade-bots-farm/data/raw/pytrade2/BTC-USDT/candles",
-         "S3_DST_DIR": "trade-bots-farm/data/preproc/candles",
+         "S3_DST_DIR": "trade-bots-farm/data/preproc/BTC-USDT/candles",
          "KIND": "candles", "TICKER": "btc-usdt"},
     ]
 
