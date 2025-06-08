@@ -26,7 +26,7 @@ class ProcessBatchRawToPreprocApp:
 
         # S3 client
         self._s3_endpoint_url = os.environ.get("S3_ENDPOINT_URL")
-        #self._s3_bucket = os.environ.get("S3_BUCKET")
+        # self._s3_bucket = os.environ.get("S3_BUCKET")
         self._s3_access_key = os.environ.get("S3_ACCESS_KEY")
         self._s3_secret_key = os.environ.get("S3_SECRET_KEY")
         self._s3_dir = os.environ.get("S3_DIR") or "data"
@@ -34,6 +34,7 @@ class ProcessBatchRawToPreprocApp:
         self._s3_file_system = s3fs.S3FileSystem(endpoint_url=self._s3_endpoint_url,
                                                  key=self._s3_access_key,
                                                  secret=self._s3_secret_key)
+        self.history_days_limit = int(os.environ.get("HISTORY_DAYS", "1"))
 
     def create_preprocessor(self, kind: str):
         """ Return preprocessor instance for specified kind of data"""
@@ -43,14 +44,9 @@ class ProcessBatchRawToPreprocApp:
             case "candles":
                 return CandlesPreproc()
 
-    def _process_file(self, file_name):
+    def _process_file(self, src_path: str, dst_path: str):
         """ Process single file from source folder, write result to destination folder """
-        src_path = f"s3://{self._src_s3_dir}/{file_name}"
-        dst_path = f"s3://{self._dst_s3_dir}/{file_name.rstrip(".zip")}"
-        logging.info(f"Processing: read raw {src_path}, write preprocessed to {dst_path}")
-
-
-        storage_options={
+        storage_options = {
             "key": self._s3_access_key,
             "secret": self._s3_secret_key,
             "client_kwargs": {"endpoint_url": self._s3_endpoint_url},
@@ -59,17 +55,23 @@ class ProcessBatchRawToPreprocApp:
         dst_df = self._preprocessor.process(src_df)
         dst_df.to_csv(dst_path, storage_options=storage_options)
 
-
     def run(self):
         logging.info(
             f"Preprocess s3 files in s3://{self._s3_endpoint_url}/{self._src_s3_dir}, "
             f"write result to s3://{self._s3_endpoint_url}/{self._dst_s3_dir}")
         # Get file names, not processed yet or updated in source folder
-        files = S3Tools.find_updated_files(pd.Timestamp.min, pd.Timestamp.max,
+        files = S3Tools.find_updated_files(pd.Timestamp.now() - pd.Timedelta(days=self.history_days_limit),  # from
+                                           pd.Timestamp.now(),  # to
                                            self._s3_file_system, self._src_s3_dir,
                                            self._s3_file_system, self._dst_s3_dir)
-        for file in files:
-            self._process_file(file)
+        total_files = len(files)
+        logging.info(f"Found {total_files} files to process")
+        for i, file_name in enumerate(files, 1):
+            src_path = f"s3://{self._src_s3_dir}/{file_name}"
+            dst_path = f"s3://{self._dst_s3_dir}/{file_name.rstrip(".zip")}"
+
+            logging.info(f"Processing [{i}/{total_files}]. Read {src_path}, transform, write to {dst_path}")
+            self._process_file(src_path, dst_path)
 
 
 if __name__ == '__main__':

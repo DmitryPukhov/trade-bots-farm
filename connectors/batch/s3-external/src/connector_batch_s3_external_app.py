@@ -13,8 +13,8 @@ class ConnectorBatchS3ExternalApp:
     def __init__(self):
         CommonTools.init_logging()
         self._history_s3_downloader = HistoryS3Downloader()
-        self.history_days_limit = int(os.environ.get("HISTORY_DAYS_LIMIT", "1"))
-        logging.info(f"Updating history from HISTORY_DAYS_LIMIT = {self.history_days_limit}")
+        self.history_days_limit = int(os.environ.get("HISTORY_DAYS", "1"))
+        logging.info(f"Updating history from HISTORY_DAYS = {self.history_days_limit}")
 
 
     def run(self):
