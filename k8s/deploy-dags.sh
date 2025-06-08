@@ -111,7 +111,6 @@ do
     echo "Deploy common dag tools"
       build_copy_module "$PROJECT_ROOT/common"
       copy_dag_tools
-      build_copy_module "$PROJECT_ROOT/libs/pytrade2"
   fi
   if [[ "$dag" == "connector_stream_htx" || "$dag" == "all" ]]; then
         module_dir=$PROJECT_ROOT/connectors/stream/htx-ws
