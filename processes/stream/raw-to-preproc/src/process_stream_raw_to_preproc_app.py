@@ -5,6 +5,7 @@ import os
 from confluent_kafka import Producer, Consumer, KafkaException
 
 from candles_preproc import CandlesPreproc
+from common.build.lib.common_tools import CommonTools
 from level2_preproc import Level2Preproc
 
 
@@ -13,7 +14,7 @@ class ProcessStreamRawToPreprocApp:
 
     def __init__(self):
         """ Configure producer and consumer """
-        self._init_logging()
+        CommonTools.init_logging()
 
         self._src_topic = os.environ["KAFKA_TOPIC_SRC"]
         self._dest_topic = os.environ["KAFKA_TOPIC_DST"]
@@ -57,20 +58,6 @@ class ProcessStreamRawToPreprocApp:
         }}
         logging.info(f"Kafka producer conf: {kafka_producer_conf}\nKafka consumer conf: {kafka_consumer_conf}")
         return kafka_producer_conf, kafka_consumer_conf
-
-    def _init_logging(self):
-        log_level = os.environ.get("LOG_LEVEL") or logging.INFO
-        print(f"Setting log level to {log_level}")
-        # Setup logging
-        logging.basicConfig(
-            level=os.environ.get("LOG_LEVEL") or logging.INFO,
-            format='%(asctime)s -  %(module)s.%(funcName)s:%(lineno)d  - %(levelname)s - %(message)s'
-        )
-        logging.error("logging error test")
-        logging.warning("logging warning test")
-        logging.info("logging info test")
-        logging.debug("logging debug test")
-
 
     def run(self):
         self._consumer.subscribe([self._src_topic])

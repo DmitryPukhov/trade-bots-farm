@@ -20,7 +20,7 @@ class CandlesPreproc(PreprocBase):
         #     'close': lambda x: x.iloc[-1],   # Last value
         #     'vol': 'sum'}
         if not raw_messages:
-            return []
+            return {}
         df_1min = pd.DataFrame([msg["tick"] for msg in raw_messages]).copy()
         df_1min["ts"] = [msg["ts"] for msg in raw_messages].copy()
 
@@ -39,4 +39,6 @@ class CandlesPreproc(PreprocBase):
         })
         df_1min_resampled[["open_time", "close_time"]] = df_1min_resampled[["open_time", "close_time"]].astype("str")
 
-        return df_1min_resampled.to_dict(orient="records")
+        if len(df_1min_resampled) > 1:
+            raise ValueError("Messages, accumulated for aggregation should be inside a minute")
+        return df_1min_resampled.to_dict(orient='records')
