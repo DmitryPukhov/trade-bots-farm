@@ -7,6 +7,8 @@ class CandlesPreproc:
     def process(self, raw_candles: pd.DataFrame) -> pd.DataFrame:
         # In row candles volume is small at the start end increasing till the end of each minute
         # We are interested only in the last state of each candle per a minute
+        if raw_candles.empty:
+            return pd.DataFrame()
 
         raw_candles[["open_time", "close_time"]] = raw_candles[["open_time", "close_time"]].astype('datetime64[ms]')
         bad_col = "close_time.1"
