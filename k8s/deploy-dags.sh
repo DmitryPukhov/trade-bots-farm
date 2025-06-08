@@ -123,6 +123,12 @@ do
         dag_name="process_stream_raw_to_preproc"
         deploy_module "$module_dir" "$dag_name"
   fi
+  if [[ "$dag" == "process_batch_raw_to_preproc" || "$dag" == "all" ]]; then
+        module_dir=$PROJECT_ROOT/processes/batch/raw-to-preproc
+        dag_name="process_batch_raw_to_preproc"
+        deploy_module "$module_dir" "$dag_name"
+  fi
+
 done
 
 
