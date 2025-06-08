@@ -5,7 +5,7 @@ import pandas as pd
 import s3fs
 
 from candles_preproc import CandlesPreproc
-from common.build.lib.common_tools import CommonTools
+from common_tools import CommonTools
 from level2_pytrade2_preproc import Level2PyTrade2Preproc
 from s3_tools import S3Tools
 
