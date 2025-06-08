@@ -1,0 +1,75 @@
+import logging
+
+import pandas as pd
+import s3fs
+
+
+class S3Tools:
+    @staticmethod
+    def _get_s3_modified_dict(file_system: s3fs.S3FileSystem,
+                              s3_dir: str,
+                              start_date,
+                              end_date) -> dict[str, pd.Timestamp]:
+        """ Create last file name: modified time dictionary for files in s3 directory between start_date and end_date inclusive."""
+
+        # modified time: file name dictionary
+        modified_dict = {}
+
+        # List objects in the bucket
+        if not file_system.exists(f"{s3_dir}"):
+            logging.info(f"Skipping file search in {s3_dir}, it doesn't exist")
+            return modified_dict
+
+        objects = file_system.listdir(s3_dir)
+
+        # Filter files by date range
+        for obj in objects:
+            s3_file_path = obj['Key']
+            file_name = s3_file_path.split('/')[-1]
+            # Extract date from filename (assuming format: YYYY-MM-DD_BTC-USDT_level2.csv.zip)
+            try:
+                file_datetime_str = file_name.split('_')[0]
+                file_date = pd.to_datetime(file_datetime_str).date()
+                if not (start_date.date() <= file_date <= end_date.date()):
+                    continue
+                if not file_name.endswith('.csv.zip') and not file_name.endswith('.csv'):
+                    # Skip non-csv.zip files
+                    logging.info(f"Skipping file {s3_file_path}, not a csv.zip or csv file")
+                    continue
+                modified_time = pd.Timestamp(obj['LastModified'])
+                # Remove extensions
+                modified_dict[file_name] = modified_time
+            except (IndexError, ValueError):
+                logging.info(f"Error parsing date from file {s3_file_path}, skipping")
+                continue
+        return modified_dict
+
+    @staticmethod
+    def find_updated_files(start_date, end_date,
+                           src_s3_client: s3fs.S3FileSystem,
+                           src_s3_dir: str,
+                           dst_s3_client: s3fs.S3FileSystem,
+                           dst_s3_dir: str) -> list[str]:
+        """ Find file names (not fill paths) of files in source s3 directory
+        that are not in target s3 directory or have been modified."""
+
+        # Create modified time: file name dictionaries if not provided
+        src_modified_dict = S3Tools._get_s3_modified_dict(src_s3_client,
+                                                          src_s3_dir,
+                                                          start_date,
+                                                          end_date)
+        dst_modified_dict = S3Tools._get_s3_modified_dict(dst_s3_client,
+                                                          dst_s3_dir,
+                                                          start_date,
+                                                          end_date)
+        download_list = []
+        for src_file_name, src_file_datetime in src_modified_dict.items():
+            # If absent or older, include in download list
+            if (
+                    (src_file_name.rstrip(".zip") not in dst_modified_dict
+                     and src_file_name not in dst_modified_dict)
+                    or
+                    (src_file_datetime > (dst_modified_dict.get(src_file_name) or dst_modified_dict.get(
+                        src_file_name.rstrip(".zip"))))):
+                download_list.append(src_file_name)
+        return sorted(download_list)

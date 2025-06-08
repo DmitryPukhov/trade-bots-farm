@@ -17,7 +17,7 @@ class KafkaRawProducer:
         self._producer = Producer(conf)
 
     def on_message(self, topic, raw_message):
-        prefix = "raw."
+        prefix = "raw.htx."
         if not topic.startswith(prefix): topic = prefix + topic
         #logging.debug(f"Raw message: {raw_message}")
         self._producer.produce(topic, json.dumps(raw_message))

@@ -1,11 +1,11 @@
 import logging
 import os
 import tempfile
-from typing import Dict
 
 import boto3
 import pandas as pd
-from botocore.client import BaseClient
+
+from s3_tools import S3Tools
 
 
 class HistoryS3Downloader:
@@ -40,68 +40,6 @@ class HistoryS3Downloader:
         self._s3_external_client = session.client(service_name='s3', endpoint_url=self._external_s3_endpoint_url,
                                                   aws_access_key_id=self._external_s3_access_key,
                                                   aws_secret_access_key=self._external_s3_secret_key)
-
-    @staticmethod
-    def _get_s3_modified_dict(s3client: BaseClient,
-                              bucket_name: str,
-                              s3_dir: str,
-                              start_date,
-                              end_date) -> Dict[str, pd.Timestamp]:
-        """ Create last file name: modified time dictionary for files in s3 directory between start_date and end_date inclusive."""
-
-        # List objects in the bucket
-        objects = s3client.list_objects_v2(Bucket=bucket_name, Prefix=s3_dir)
-
-        # modified time: file name
-        modified_dict = {}
-
-        if 'Contents' not in objects:
-            logging.info(f"No files found in internal s3://{bucket_name}/{s3_dir}")
-            return modified_dict
-
-        # Filter files by date range
-        for obj in objects['Contents']:
-            s3_file_path = obj['Key']
-            file_name = s3_file_path.split('/')[-1]
-            # Extract date from filename (assuming format: YYYY-MM-DD_BTC-USDT_level2.csv.zip)
-            try:
-                file_datetime_str = file_name.split('_')[0]
-                file_date = pd.to_datetime(file_datetime_str).date()
-                if not (start_date.date() <= file_date <= end_date.date()):
-                    continue
-                if not file_name.endswith('.csv.zip') and not file_name.endswith('.csv'):
-                    # Skip non-csv.zip files
-                    logging.info(f"Skipping file {s3_file_path}, not a csv.zip or csv file")
-                    continue
-                modified_time = pd.Timestamp(obj['LastModified'])
-                # Remove extensions
-                modified_dict[file_name] = modified_time
-            except (IndexError, ValueError):
-                logging.info(f"Error parsing date from file {s3_file_path}, skipping")
-                continue
-        return modified_dict
-
-    def _get_download_list(self, start_date, end_date,
-                           external_s3_dir: str,
-                           internal_s3_dir: str):
-        # Create modified time: file name dictionaries if not provided
-        internal_modified_dict = self._get_s3_modified_dict(self._s3_client,
-                                                            self._s3_bucket,
-                                                            internal_s3_dir,
-                                                            start_date,
-                                                            end_date)
-        external_modified_dict = self._get_s3_modified_dict(self._s3_external_client,
-                                                            self._external_s3_bucket,
-                                                            external_s3_dir,
-                                                            start_date,
-                                                            end_date)
-        download_list = []
-        for external_file_name, external_file_datetime in external_modified_dict.items():
-            # If absent or older, include in download list
-            if (external_file_name not in internal_modified_dict) \
-                    or (external_file_datetime > internal_modified_dict[external_file_name]):
-                download_list.append(external_file_name)
-        return sorted(download_list)
 
     def _download_file(self, external_s3_dir: str, internal_s3_dir: str, file_name: str):
         """ Download a single file from external S3 to internal S3 """
@@ -153,7 +91,9 @@ class HistoryS3Downloader:
                 # Get list of files to download
                 external_s3_dir = os.path.join(self._external_s3_data_prefix, "raw", kind)
                 internal_s3_dir = os.path.join(self._s3_data_prefix, "raw", kind)
-                download_list = self._get_download_list(start_date, end_date, external_s3_dir, internal_s3_dir)
+                download_list = S3Tools.find_updated_files(start_date, end_date,
+                                                           self._s3_external_client, self._external_s3_bucket, self._external_s3_data_prefix,
+                                                           self._s3_client, self._s3_bucket, self._s3_data_prefix,)
                 total_count = len(download_list)
                 logging.info(f"Found {total_count} {kind} files to download")
                 for i, file_name in enumerate(download_list, start=1):
