@@ -13,5 +13,5 @@ dependencies = [
     "numpy",
     "sqlalchemy",
     "prometheus-client",
-    "boto3"
+    "s3fs"
     ]

@@ -16,8 +16,8 @@ class ProcessBatchRawToPreprocApp:
 
         CommonTools.init_logging()
 
-        self._src_s3_dir = os.environ["S3_DIR_SRC"]
-        self._dst_s3_dir = os.environ["S3_DIR_DST"]
+        self._src_s3_dir = os.environ["S3_SRC_DIR"]
+        self._dst_s3_dir = os.environ["S3_DST_DIR"]
         self.kind = os.environ["KIND"]
         logging.info(
             f"{self.__class__.__name__} for {self.kind}, RAW_KIND={self.kind}Source: {self._src_s3_dir}, Destination: {self._dst_s3_dir}")

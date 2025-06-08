@@ -16,7 +16,7 @@ class ProcessStreamRawToPreprocApp:
         self._init_logging()
 
         self._src_topic = os.environ["KAFKA_TOPIC_SRC"]
-        self._dest_topic = os.environ["KAFKA_TOPIC_DEST"]
+        self._dest_topic = os.environ["KAFKA_TOPIC_DST"]
         self.kind = os.environ["KIND"]
         logging.info(
             f"{self.__class__.__name__} for {self.kind}, RAW_KIND={self.kind}Source topic: {self._src_topic}, Destination topic: {self._dest_topic}")
