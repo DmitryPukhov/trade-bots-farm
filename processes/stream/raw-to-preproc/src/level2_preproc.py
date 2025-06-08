@@ -24,6 +24,14 @@ class Level2Preproc(PreprocBase):
 
     def _transform_message(self, raw_message) -> _PreprocMessageEntity:
         """ Calculates big, ask, bid/ask expectations and returns them"""
+        #
+        # level2_tick_df = pd.DataFrame([msg["tick"] for msg in raw_messages]).copy()
+        # level2_raw_df = level2_tick_df[["bids", "asks", "ts"]]
+        # level2_raw_df.columns = ["bids", "asks", "datetime"]
+        # transformed_df  = Level2Features().expectation(level2_raw_df)
+        # if len(transformed_df) > 1:
+        #     raise ValueError("Messages, accumulated for aggregation should be inside a minute")
+        # return transformed_df.to_dict(orient='records')
         # Bid expectation calculation
         bids = raw_message['tick']['bids']
         bid_vol_sum = sum([vol for _, vol in bids])
@@ -45,7 +53,7 @@ class Level2Preproc(PreprocBase):
                                           bid_mul_vol_sum=bid_mul_vol_sum,
                                           bid_expect=bid_expect, ask_min=min(asks)[0], ask_vol_sum=ask_vol_sum,
                                           ask_mul_vol_sum=ask_mul_vol_sum, ask_expect=ask_expect, expect=expect)
-
+    #
     def _aggregate(self, raw_messages: []) -> dict:
         """
         Aggregate accumulated messages within a minute.
@@ -55,7 +63,6 @@ class Level2Preproc(PreprocBase):
             return []
         transformed = (self._transform_message(msg) for msg in raw_messages)
         df_transformed = pd.DataFrame(transformed)
-        df_aggregated = df_transformed.agg('mean')
         df_aggregated = df_transformed.agg('mean')
         df_aggregated["datetime"] = str(df_transformed["datetime"].max())
         res = df_aggregated.to_dict()
