@@ -11,7 +11,7 @@ class S3Tools:
                               start_date,
                               end_date) -> dict[str, pd.Timestamp]:
         """ Create last file name: modified time dictionary for files in s3 directory between start_date and end_date inclusive."""
-        endpoint_url = file_system.kwargs.get('endpoint_url')
+        endpoint_url = file_system.client_kwargs.get('endpoint_url')
         # modified time: file name dictionary
         modified_dict = {}
 

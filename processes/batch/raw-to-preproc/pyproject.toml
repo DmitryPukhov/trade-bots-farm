@@ -8,6 +8,7 @@ dependencies = [
     #"google-re2==0.0.0",  # exclude google providers with their errors
     "pytrade2",
     "trade-bots-farm-common",
+    "botocore~=1.37",
     "python-dotenv",
     "sortedcontainers",
     "pandas",

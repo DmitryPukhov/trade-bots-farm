@@ -60,13 +60,15 @@ class ProcessBatchRawToPreprocApp:
         }
         src_df = pd.read_csv(src_path, compression='zip', storage_options=storage_options)
         dst_df = self._preprocessor.process(src_df)
-
-        dst_df.to_csv(dst_path, storage_options=storage_options)
+        if not dst_df.empty:
+            dst_df.to_csv(dst_path, storage_options=storage_options)
+        else:
+            logging.info(f"Processed output is empty for  {src_path} file")
 
     def run(self):
         logging.info(
-            f"Preprocess s3 files in s3://{self._s3_endpoint_url}/{self._src_s3_dir}, "
-            f"write result to s3://{self._s3_endpoint_url}/{self._dst_s3_dir}")
+            f"Preprocess s3 files in {self._s3_endpoint_url}/{self._src_s3_dir}, "
+            f"write result to {self._s3_endpoint_url}/{self._dst_s3_dir}")
         # Get file names, not processed yet or updated in source folder
         files = S3Tools.find_updated_files(pd.Timestamp.now() - pd.Timedelta(days=self.history_days_limit),  # from
                                            pd.Timestamp.now(),  # to
