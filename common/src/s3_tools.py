@@ -17,7 +17,7 @@ class S3Tools:
 
         # List objects in the bucket
         if not file_system.exists(f"{s3_dir}"):
-            logging.info(f"Skipping file search in {s3_dir}, it doesn't exist")
+            logging.info(f"Skipping file search in {file_system.endpoint_url}://{s3_dir}, it doesn't exist")
             return modified_dict
 
         objects = file_system.listdir(s3_dir)
@@ -25,16 +25,16 @@ class S3Tools:
         # Filter files by date range
         for obj in objects:
             s3_file_path = obj['Key']
+            if not s3_file_path.endswith('.csv.zip') and not s3_file_path.endswith('.csv'):
+                # Skip non-csv.zip files
+                logging.info(f"Skipping file {s3_file_path}, not a csv.zip or csv file")
+                continue
             file_name = s3_file_path.split('/')[-1]
             # Extract date from filename (assuming format: YYYY-MM-DD_BTC-USDT_level2.csv.zip)
             try:
                 file_datetime_str = file_name.split('_')[0]
                 file_date = pd.to_datetime(file_datetime_str).date()
                 if not (start_date.date() <= file_date <= end_date.date()):
-                    continue
-                if not file_name.endswith('.csv.zip') and not file_name.endswith('.csv'):
-                    # Skip non-csv.zip files
-                    logging.info(f"Skipping file {s3_file_path}, not a csv.zip or csv file")
                     continue
                 modified_time = pd.Timestamp(obj['LastModified'])
                 # Remove extensions

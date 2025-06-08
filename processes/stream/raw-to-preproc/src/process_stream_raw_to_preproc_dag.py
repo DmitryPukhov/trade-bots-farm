@@ -28,11 +28,11 @@ with DAG(
 
     task_envs = [
         # Process level2
-        {"KAFKA_TOPIC_SRC": "raw.market.btc-usdt.depth.step13", "KAFKA_TOPIC_DEST": "preproc.btc-usdt.level2.1min",
+        {"KAFKA_TOPIC_SRC": "raw.market.btc-usdt.depth.step13", "KAFKA_TOPIC_DST": "preproc.btc-usdt.level2.1min",
          "KIND": "level2", "TICKER": "btc-usdt"},
         # Process candles
         {"KAFKA_TOPIC_SRC": "raw.market.btc-usdt.kline.1min",
-         "KAFKA_TOPIC_DEST": "preproc.btc-usdt.candles.1min",
+         "KAFKA_TOPIC_DST": "preproc.btc-usdt.candles.1min",
          "KIND": "candles", "TICKER": "btc-usdt"}
     ]
 
