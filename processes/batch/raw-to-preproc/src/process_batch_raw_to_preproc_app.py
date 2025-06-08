@@ -60,6 +60,7 @@ class ProcessBatchRawToPreprocApp:
         }
         src_df = pd.read_csv(src_path, compression='zip', storage_options=storage_options)
         dst_df = self._preprocessor.process(src_df)
+
         dst_df.to_csv(dst_path, storage_options=storage_options)
 
     def run(self):

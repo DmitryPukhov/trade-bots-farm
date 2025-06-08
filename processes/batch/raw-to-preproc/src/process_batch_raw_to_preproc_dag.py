@@ -28,11 +28,11 @@ with DAG(
 
     task_envs = [
         # Process level2
-        {"S3_SRC_DIR": "trade-bots-farm/data/raw/pytrade2/level2",
+        {"S3_SRC_DIR": "trade-bots-farm/data/raw/pytrade2/BTC-USDT/level2",
          "S3_DST_DIR": "trade-bots-farm/data/preproc/BTC-USDT/level2",
          "KIND": "level2", "TICKER": "btc-usdt"},
         # Process candles
-        {"S3_SRC_DIR": "trade-bots-farm/data/raw/candles/pytrade2",
+        {"S3_SRC_DIR": "trade-bots-farm/data/raw/pytrade2/BTC-USDT/candles",
          "S3_DST_DIR": "trade-bots-farm/data/preproc/candles",
          "KIND": "candles", "TICKER": "btc-usdt"},
     ]
