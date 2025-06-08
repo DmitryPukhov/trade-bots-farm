@@ -25,19 +25,22 @@ with DAG(
         catchup=False,
         tags=['trade-bots-farm'],
 ) as dag:
-
-    external_bucket="pytrade2"
-    internal_bucket= "trade-bots-farm"
+    external_bucket = "pytrade2"
+    internal_bucket = "trade-bots-farm"
     task_envs = [
         # Process level2
-        {"SRC_DIR": f"{external_bucket}/data/raw/level2", "DST_DIR": f"{internal_bucket}/data/raw/pytrade2/BTC-USDT/level2"},
-        {"SRC_DIR": f"{external_bucket}/data/raw/candles/level2", "DST_DIR": f"{internal_bucket}/data/raw/pytrade2/candles/BTC-USDT/level2"},
+        {"SRC_DIR": f"{external_bucket}/data/raw/level2",
+         "DST_DIR": f"{internal_bucket}/data/raw/pytrade2/BTC-USDT/level2",
+         "TICKER": "BTC-USDT", "KIND": "level2"},
+        {"SRC_DIR": f"{external_bucket}/data/raw/candles/level2",
+         "DST_DIR": f"{internal_bucket}/data/raw/pytrade2/candles/BTC-USDT/level2",
+         "TICKER": "BTC-USDT", "KIND": "candles"},
     ]
 
     tasks = []
-    for env in task_envs:
+    for task_env in task_envs:
         tasks.append(tbf_task_operator(
-            task_id="connector_batch_s3_external",
+            task_id=f"connector_batch_s3_external_{task_env["TICKER"]}_{task_env["KIND"]}",
             wheel_file_name="trade_bots_farm_connector_batch_s3_external-0.1.0-py3-none-any.whl",
             module_name="connector_batch_s3_external_app",
             class_name="ConnectorBatchS3ExternalApp",

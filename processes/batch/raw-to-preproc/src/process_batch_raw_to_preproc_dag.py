@@ -34,7 +34,7 @@ with DAG(
         # Process candles
         {"SRC_DIR": "trade-bots-farm/data/raw/candles/pytrade2",
          "DST_DIR": "trade-bots-farm/data/preproc/candles",
-         "KIND": "level2", "TICKER": "btc-usdt"},
+         "KIND": "candles", "TICKER": "btc-usdt"},
     ]
 
     # Create tasks list for each source,  dest, kind
