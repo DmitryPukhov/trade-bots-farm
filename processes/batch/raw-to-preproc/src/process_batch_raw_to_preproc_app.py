@@ -16,24 +16,31 @@ class ProcessBatchRawToPreprocApp:
 
         CommonTools.init_logging()
 
+        self._s3_endpoint_url = os.environ.get("S3_ENDPOINT_URL")
         self._src_s3_dir = os.environ["S3_SRC_DIR"]
         self._dst_s3_dir = os.environ["S3_DST_DIR"]
         self.kind = os.environ["KIND"]
         logging.info(
-            f"{self.__class__.__name__} for {self.kind}, RAW_KIND={self.kind}Source: {self._src_s3_dir}, Destination: {self._dst_s3_dir}")
+            f"{self.__class__.__name__} for {self.kind}, kind={self.kind}, endpoint_url={self._s3_endpoint_url}, "
+            f"source: {self._src_s3_dir}, Destination: {self._dst_s3_dir}")
 
         self._preprocessor = self.create_preprocessor(self.kind)
 
         # S3 client
-        self._s3_endpoint_url = os.environ.get("S3_ENDPOINT_URL")
         # self._s3_bucket = os.environ.get("S3_BUCKET")
         self._s3_access_key = os.environ.get("S3_ACCESS_KEY")
         self._s3_secret_key = os.environ.get("S3_SECRET_KEY")
         self._s3_dir = os.environ.get("S3_DIR") or "data"
 
-        self._s3_file_system = s3fs.S3FileSystem(endpoint_url=self._s3_endpoint_url,
-                                                 key=self._s3_access_key,
-                                                 secret=self._s3_secret_key)
+        storage_options = {
+            'key': self._s3_access_key,
+            'secret': self._s3_secret_key,
+            'client_kwargs': {
+                'endpoint_url': self._s3_endpoint_url
+            }
+        }
+
+        self._s3_file_system = s3fs.S3FileSystem(**storage_options)
         self.history_days_limit = int(os.environ.get("HISTORY_DAYS", "1"))
 
     def create_preprocessor(self, kind: str):

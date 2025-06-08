@@ -28,10 +28,10 @@ class HistoryS3Downloader:
         logging.info(f"Destination s3: {self._dst_s3_endpoint_url}/{self._dst_s3_dir}")
 
         # Create s3 clients for external and internal s3
-        self._s3_external_fs = s3fs.S3FileSystem(endpoint_url=self._src_s3_endpoint_url,
+        self._s3_external_fs = s3fs.S3FileSystem(client_kwargs={"endpoint_url": self._src_s3_endpoint_url},
                                                  key=self._src_s3_access_key,
                                                  secret=self._src_s3_secret_key)
-        self._s3_internal_fs = s3fs.S3FileSystem(endpoint_url=self._dst_s3_endpoint_url,
+        self._s3_internal_fs = s3fs.S3FileSystem(client_kwargs={"endpoint_url": self._dst_s3_endpoint_url},
                                                  key=self._dst_s3_access_key,
                                                  secret=self._dst_s3_secret_key)
 
@@ -41,7 +41,7 @@ class HistoryS3Downloader:
         src_path = f"{external_s3_dir}/{file_name}"
         dst_path = f"{internal_s3_dir}/{file_name}"
         try:
-            logging.info(f"Downloading {self._s3_external_fs.endpoint_url}{src_path} to {dst_path}")
+            logging.info(f"Downloading {self._s3_external_fs.kwargs["endpoint_url"]}{src_path} to {dst_path}")
             with self._s3_external_fs.open(src_path, 'rb') as src_file:
                 with self._s3_internal_fs.open(dst_path, 'wb') as dest_file:
                     dest_file.write(src_file.read())
@@ -68,7 +68,7 @@ class HistoryS3Downloader:
         logging.info(f"Found {total_count} files to download")
         for i, file_name in enumerate(download_list, start=1):
             logging.info(
-                f"Downloading  [{i}/{total_count}] {self._s3_external_fs.endpoint_url}/{self._src_s3_dir}/{file_name} "
-                f"to {self._s3_internal_fs.endpoint_url}/{self._dst_s3_dir}/{file_name}")
+                f"Downloading  [{i}/{total_count}] {self._s3_external_fs.kwargs.get("endpoint_url")}/{self._src_s3_dir}/{file_name} "
+                f"to {self._s3_internal_fs.client_kwargs.get("endpoint_url")}/{self._dst_s3_dir}/{file_name}")
             self._transfer_file(self._src_s3_dir, self._dst_s3_dir, file_name)
         logging.info("Download completed")
