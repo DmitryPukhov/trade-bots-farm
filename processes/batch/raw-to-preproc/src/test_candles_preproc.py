@@ -15,6 +15,13 @@ class TestCandlesPreproc(TestCase):
         )
         processed_candles_df = CandlesPreproc().process(raw_candles_df)
         self.assertEqual(1, len(processed_candles_df))
+
+    def test_process_should_be_empty_when_empty_df_passed(self):
+        raw_candles_df = pd.DataFrame()
+
+        processed_candles_df = CandlesPreproc().process(pd.DataFrame())
+        self.assertEqual(True, processed_candles_df.empty)
+
     def test_process(self):
         raw_candles_df = pd.DataFrame(
             [{
