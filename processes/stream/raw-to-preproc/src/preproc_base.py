@@ -16,7 +16,7 @@ class PreprocBase:
         self._order_timeout = pd.Timedelta(os.getenv("ORDER_TIMEOUT", "10s"))
         logging.info(f"{self.__class__.__name__} initialized with order timeout %s", self._order_timeout)
 
-    def process(self, raw_message: str):
+    def process(self, raw_message: str) -> list[str]:
         """ Process a raw message, returns processed messages if time comes or [] if not
          Example of raw message
          {
@@ -44,14 +44,16 @@ class PreprocBase:
         self._buffer.setdefault(start_minute_ts, []).append(raw_message)
 
         out = []
-        # 10 seconds timeout to collect all messages from previous minute passed
-        if message_ts - start_minute_ts > self._order_timeout:
-            for buf_start_minute_ts in self._buffer:
-
-                buf_messages = self._buffer[buf_start_minute_ts]
+        # Check if previous minute is accumulated in the buffer
+        buffer_min_ts = self._buffer.keys()[0]  # minimum start minute in buffer
+        time_from_buffer_started = message_ts - buffer_min_ts
+        # 1 previous minute should be accumulated in the buffer with order_timeout extra for late messages
+        timeout_from_buffer_started = pd.Timedelta("1min") + self._order_timeout
+        if time_from_buffer_started > timeout_from_buffer_started:
+            # Process buffer minutes except current one (one previous minute)
+            for buf_start_minute_ts, buf_messages in self._buffer.items()[:-1]:
                 out.append(self._aggregate(buf_messages))
                 del self._buffer[buf_start_minute_ts]
-
         return out
 
     def _aggregate(self, messages: []):
