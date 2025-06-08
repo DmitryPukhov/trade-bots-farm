@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
+from airflow.models.baseoperator import chain
 
 from dag_tools import tbf_task_operator
 
@@ -25,20 +26,21 @@ with DAG(
         tags=['trade-bots-farm'],
 ) as dag:
     # create [(source, dest, kind)] from config
-
     task_envs = [
-        # Process level2
-        {"S3_SRC_DIR": "trade-bots-farm/data/raw/pytrade2/BTC-USDT/level2",
-         "S3_DST_DIR": "trade-bots-farm/data/preproc/BTC-USDT/level2",
-         "KIND": "level2", "TICKER": "btc-usdt"},
         # Process candles
         {"S3_SRC_DIR": "trade-bots-farm/data/raw/pytrade2/BTC-USDT/candles",
          "S3_DST_DIR": "trade-bots-farm/data/preproc/BTC-USDT/candles",
-         "KIND": "candles", "TICKER": "btc-usdt"},
+         "KIND": "candles", "TICKER": "BTC-USDT"},
+
+        # Process level2
+        {"S3_SRC_DIR": "trade-bots-farm/data/raw/pytrade2/BTC-USDT/level2",
+         "S3_DST_DIR": "trade-bots-farm/data/preproc/BTC-USDT/level2",
+         "KIND": "level2", "TICKER": "BTC-USDT"},
     ]
 
+
     # Create tasks list for each source,  dest, kind
-    parallel_tasks = []
+    tasks = []
     for task_env in task_envs:
         task_id = f"process_batch_raw_to_preproc_{task_env["TICKER"]}_{task_env["KIND"]}"
         # Parallel process level2, candles, bid/ask if configured
@@ -48,7 +50,8 @@ with DAG(
             module_name="process_batch_raw_to_preproc_app",
             class_name="ProcessBatchRawToPreprocApp",
             **{"env_vars": task_env})
-        parallel_tasks.append(task_operator)
+        tasks.append(task_operator)
 
     # Final workflow
-    EmptyOperator(task_id="start") >> parallel_tasks
+    #EmptyOperator(task_id="start") >> parallel_tasks
+    chain(*tasks)

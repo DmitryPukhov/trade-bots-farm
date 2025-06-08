@@ -13,5 +13,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [  # Install with `pip install -e .[dev]`
     "apache-airflow",
-    "apache-airflow-providers-standard"
+    "apache-airflow-providers-standard",
+    "s3fs",
+    "botocore~=1.37",
 ]
