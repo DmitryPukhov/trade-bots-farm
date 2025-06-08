@@ -5,7 +5,7 @@ import os
 from confluent_kafka import Producer, Consumer, KafkaException
 
 from candles_preproc import CandlesPreproc
-from common.build.lib.common_tools import CommonTools
+from common_tools import CommonTools
 from level2_preproc import Level2Preproc
 
 
