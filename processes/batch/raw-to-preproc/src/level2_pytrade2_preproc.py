@@ -1,6 +1,6 @@
 import pandas as pd
 
-from libs.pytrade2.pytrade2.features.level2.Level2Features import Level2Features
+from pytrade2.features.level2.Level2Features import Level2Features
 
 
 class Level2PyTrade2Preproc:
