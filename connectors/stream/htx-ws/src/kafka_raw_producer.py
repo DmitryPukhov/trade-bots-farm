@@ -39,4 +39,4 @@ class KafkaRawProducer:
             "tick"] else raw_message["ts"]
         message_dt = datetime.datetime.fromtimestamp(message_ts / 1000, tz=timezone.utc)
         lag_sec = (now - message_dt).total_seconds()
-        self._metrics.TIME_LAG_SECONDS.labels(topic=topic).set(lag_sec)
+        self._metrics.TIME_LAG_SEC.labels(topic=topic).set(lag_sec)
