@@ -6,7 +6,7 @@ from datetime import timezone
 
 from confluent_kafka import Producer
 
-from HtxStreamConnectorMetrics import Metrics
+from metrics import Metrics
 
 
 class KafkaRawProducer:
@@ -19,7 +19,6 @@ class KafkaRawProducer:
         }
         logging.info(f"Confluent Kafka Producer parameters: {conf}")
         self._producer = Producer(conf)
-        self._metrics = Metrics()
 
 
     def on_message(self, topic, raw_message):
@@ -32,11 +31,11 @@ class KafkaRawProducer:
         self._producer.produce(topic, json.dumps(raw_message))
 
         # Set metrics
-        self._metrics.message_processed.labels(topic=topic).inc(1)
+        Metrics.message_processed.labels(topic=topic).inc(1)
 
         # Time lag metric
         message_ts = raw_message["tick"]["ts"] if "ts" in raw_message[
             "tick"] else raw_message["ts"]
         message_dt = datetime.datetime.fromtimestamp(message_ts / 1000, tz=timezone.utc)
         lag_sec = (now - message_dt).total_seconds()
-        self._metrics.time_lag_sec.labels(topic=topic).set(lag_sec)
+        Metrics.time_lag_sec.labels(topic=topic).set(lag_sec)

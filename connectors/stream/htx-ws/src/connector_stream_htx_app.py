@@ -1,11 +1,13 @@
 import logging
 import os
+import threading
 
 from prometheus_client import start_http_server
 
 from common_tools import CommonTools
 from htx_websocket_client import HtxWebSocketClient
 from kafka_raw_producer import KafkaRawProducer
+from metrics import Metrics
 
 
 class ConnectorStreamHtxApp:
@@ -16,7 +18,7 @@ class ConnectorStreamHtxApp:
         CommonTools.init_logging()
         # Create websocket client, don't run just now
         self.__websocket_client_market = self.create_websocket_client()
-        self._metrics_port = os.getenv('METRICS_PORT', 8000)
+
 
     def create_websocket_client(self):
         # Get key, secret
@@ -47,11 +49,10 @@ class ConnectorStreamHtxApp:
                                                             is_broker=False,
                                                             receiver=kafka_raw_producer)
 
-
     def run(self):
         # Start Prometheus HTTP server for metrics (runs on port 8000 by default)
-        start_http_server(self._metrics_port)
-
+        #start_http_server(self._metrics_port)
+        threading.Thread(target=Metrics.push_to_gateway_periodical).start()
         kafka_raw_producer = KafkaRawProducer()
         websocket_client = HtxWebSocketClient(receiver=kafka_raw_producer)
         websocket_client.open()
