@@ -1,8 +1,12 @@
+import datetime
 import json
 import logging
 import os
+from datetime import timezone
 
 from confluent_kafka import Producer
+
+from Metrics import Metrics
 
 
 class KafkaRawProducer:
@@ -15,10 +19,24 @@ class KafkaRawProducer:
         }
         logging.info(f"Confluent Kafka Producer parameters: {conf}")
         self._producer = Producer(conf)
+        self._metrics = Metrics()
+
 
     def on_message(self, topic, raw_message):
+        now = datetime.datetime.now(timezone.utc)
+
+        # Produce message to kafka
         prefix = "raw.htx."
         if not topic.startswith(prefix): topic = prefix + topic
         #logging.debug(f"Raw message: {raw_message}")
         self._producer.produce(topic, json.dumps(raw_message))
-        #self._producer.flush()
+
+        # Set metrics
+        self._metrics.MESSAGES_PROCESSED.labels(topic=topic).inc(1)
+
+        # Time lag metric
+        message_ts = raw_message["tick"]["ts"] if "ts" in raw_message[
+            "tick"] else raw_message["ts"]
+        message_dt = datetime.datetime.fromtimestamp(message_ts / 1000, tz=timezone.utc)
+        lag_sec = (now - message_dt).total_seconds()
+        self._metrics.TIME_LAG_SECONDS.labels(topic=topic).set(lag_sec)
