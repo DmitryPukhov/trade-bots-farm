@@ -50,10 +50,12 @@ function redeploy_prometheus(){
   echo "Redeploying prometheus"
   set +e
   helm delete prometheus
-  kubectl delete pvc prometheus-0
+  helm delete prometheus-pushgateway
+  #kubectl delete pvc prometheus-0
   set -e
-
   helm install prometheus oci://registry-1.docker.io/bitnamicharts/prometheus --values prometheus/values.yaml --set serviceMonitor.enabled=true
+  helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+  helm install prometheus-pushgateway prometheus-community/prometheus-pushgateway --values prometheus/prometheus-pushgateway.values.yaml
 }
 
 # Grafana
