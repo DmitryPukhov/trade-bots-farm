@@ -16,5 +16,5 @@ dependencies = [
     "prometheus-client",
     "websocket-client",
     "confluent-kafka"
-
+    "prometheus-client"
     ]
