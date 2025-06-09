@@ -14,6 +14,7 @@ default_args = {
     'email_on_retry': False,
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
+
 }
 
 # Define the DAG
@@ -24,6 +25,7 @@ with DAG(
         start_date=datetime(2023, 1, 1),
         catchup=False,
         tags=['trade-bots-farm'],
+        max_active_runs=1
 ) as dag:
     external_bucket = "pytrade2"
     internal_bucket = "trade-bots-farm"
