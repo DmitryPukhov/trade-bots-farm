@@ -6,7 +6,7 @@ from datetime import timezone
 
 from confluent_kafka import Producer
 
-from Metrics import Metrics
+from HtxStreamConnectorMetrics import Metrics
 
 
 class KafkaRawProducer:

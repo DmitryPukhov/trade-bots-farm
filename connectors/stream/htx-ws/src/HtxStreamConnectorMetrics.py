@@ -14,7 +14,7 @@ class Metrics:
     )
 
     time_lag_sec = Gauge(
-        'time_lag_sec',
+        '_time_lag_sec',
         'Lag between message timestamp and current time',
         ['topic']
     )
