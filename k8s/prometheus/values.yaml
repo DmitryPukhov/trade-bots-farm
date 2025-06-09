@@ -5,6 +5,10 @@ server:
       https: "30280"
 
   extraScrapeConfigs:
-    - job_name: trade-bots-farm
+#    - job_name: trade-bots-farm
+#      static_configs:
+#        - targets: [ 'trade-bots-farm:8000' ]
+    - job_name: 'pushgateway'
+      honor_labels: true  # Important to preserve original job labels
       static_configs:
-        - targets: [ 'trade-bots-farm:8000' ]
+        - targets: ['pushgateway:9091']
