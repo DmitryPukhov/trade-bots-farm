@@ -7,7 +7,7 @@ from prometheus_client import Counter, Gauge
 
 
 class Metrics:
-    gateway = os.getenv('PUSHGATEWAY_URL', 'http://localhost:9091')
+    gateway = os.getenv('PROMETHEUS_PUSHGATEWAY_URL', 'http://localhost:9091')
     _push_to_gateway_interval_sec = float(os.environ.get('METRICS_PUSH_TO_GATEWAY_INTERVAL_SEC') or 10)
 
     namespace = "connector_stream_htx"
@@ -37,5 +37,5 @@ class Metrics:
                 cls._registry.collect()
                 push_to_gateway(cls.gateway, job='trade_bots_farm', registry=cls._registry)
             except Exception as e:
-                logging.error('Error while pushing metrics to gateway: {}'.format(e))
+                logging.error(f"Error while pushing metrics to {cls.gateway}: {e}")
             await asyncio.sleep(cls._push_to_gateway_interval_sec)
