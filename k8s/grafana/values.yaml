@@ -5,4 +5,4 @@ admin:
 service:
   type: NodePort
   nodePorts:
-    grafana: 30300
+    grafana: 31300

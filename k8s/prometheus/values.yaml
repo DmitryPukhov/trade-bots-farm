@@ -1,8 +1,8 @@
 server:
   service:
     nodePorts:
-      http: "30280"
-      https: "30280"
+      http: "31280"
+      https: "31280"
 
   extraScrapeConfigs:
 #    - job_name: trade-bots-farm
