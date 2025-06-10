@@ -10,5 +10,10 @@ server:
 #        - targets: [ 'trade-bots-farm:8000' ]
     - job_name: 'pushgateway'
       honor_labels: true  # Important to preserve original job labels
+      honor_timestamps: true
+      scrape_interval: 10s
+      scrape_timeout: 10s
+      metrics_path: '/metrics'
+      scheme: 'http'
       static_configs:
-        - targets: ['pushgateway:9091']
+        - targets: ['prometheus-pushgateway:9091']
