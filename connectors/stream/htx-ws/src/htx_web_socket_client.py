@@ -1,42 +1,18 @@
+import asyncio
 import base64
 import gzip
 import hmac
 import json
 import logging
 import os
-import threading
-import time
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import timedelta, datetime
 from hashlib import sha256
-from typing import Callable
 from urllib import parse
 
-from websocket import WebSocketApp
-
+from websockets import connect, exceptions
 
 class HtxWebSocketClient:
-    """
-    WebSocket Subscription Address
-    Market Data Request and Subscription: wss://api.hbdm.com/swap-ws
-
-    Order Push Subscription: wss://api.hbdm.com/swap-notification
-
-    Index Kline Data and Basis Data Subscription: wss://api.hbdm.com/ws_index
-
-    System status updates subscription ：wss://api.hbdm.com/center-notification
-
-    If the url: api.hbdm.com can't be accessed, please use the url below:
-
-    Market Data Request and Subscription Address: wss://api.btcgateway.pro/swap-ws;
-
-    Order Push Subscription：wss://api.btcgateway.pro/swap-notification
-
-    Index Kline Data and Basis Data Subscription: wss://api.btcgateway.pro/ws_index
-
-    System status updates subscription ：wss://api.btcgateway.pro/center-notification
-    """
-
     def __init__(self,
                  receiver,
                  topics: list[str] = os.environ.get("HTX_TOPICS"),
@@ -54,63 +30,72 @@ class HtxWebSocketClient:
         self._is_broker = is_broker
         self._be_spot = be_spot
         self._topics = [topic.strip() for topic in os.environ['HTX_TOPICS'].split(',')]
+        self._running = False
 
-        self._ws = None
         self._consumers = defaultdict(set)
         self.is_running = False
         self.watchdog_thread = None
         self.heartbeat_timeout = timedelta(seconds=60)
+        self._reconnect_delay = self.heartbeat_timeout
         self.last_heartbeat = datetime.utcnow()  # record last heartbeat time
         self.receiver = receiver
+        self._websocket = None
         logging.info(f"Initialized, key: ***{access_key[-3:]}, secret: ***{secret_key[-3:]}")
 
-    def __del__(self):
-        self.close()
+    async def connect(self):
+        self._running = True
+        while self._running:
+            try:
+                logging.info(f"Connecting to {self.url}...")
+                async with connect(self.url) as websocket:
+                    self._websocket = websocket
+                    self._reconnect_delay = self.heartbeat_timeout  # Reset delay after successful connection
+                    await self._on_open()
 
-    def __enter__(self):
-        # self.open()
-        return self
+                    try:
+                        async for message in websocket:
+                            await self._on_message(message)
+                    except exceptions.ConnectionClosed as e:
+                        await self._on_close(e.code, e.reason)
+                    except Exception as e:
+                        await self._on_error(e)
 
-    def __exit__(self, *args):
-        self.close()
+            except Exception as e:
+                await self._on_error(e)
+                await self._handle_reconnect()
 
-    def open(self):
-        logging.info(f"Opening socket: {self.url}")
-        self._ws = WebSocketApp(self.url,
-                                on_open=self._on_open,
-                                on_message=self._on_msg,
-                                on_close=self._on_close,
-                                on_error=self._on_error)
-        self.is_running = True
-        self.last_heartbeat = datetime.utcnow()  # record last heartbeat time
+    async def _handle_reconnect(self):
+        if not self._running:
+            return
 
-        # Start new watchdog thread once
-        if not self.watchdog_thread:
-            self.watchdog_thread = threading.Thread(
-                target=self._watchdog,
-                daemon=True
-            )
-            self.watchdog_thread.start()
+        logging.info(f"Reconnecting in {self._reconnect_delay} seconds...")
+        await asyncio.sleep(self._reconnect_delay.total_seconds())
 
-        self._ws.run_forever()
+        # Exponential backoff with max limit
+        self._reconnect_delay = min(self.heartbeat_timeout * 2, self.heartbeat_timeout)
 
-    def _on_open(self, ws):
+    async def close(self):
+        self._running = False
+        if self._websocket:
+            await self._websocket.close()
+
+    async def _on_open(self):
         logging.info(f"Socket opened: {self.url}")
         if self._is_broker:
             # Some endpoints requires this signature data, others just returns invalid command error and continue to work.
             signature_data = self._get_signature_data()  # signature data
-            self._ws.send(json.dumps(signature_data))  # as json string to be send
+            await self._websocket.send(json.dumps(signature_data))  # as json string to be send
 
-        self.subscribe_events()
+        await self.subscribe_events()
 
-    def subscribe_events(self):
+    async def subscribe_events(self):
         """Subscribe to topics """
         for topic in self._topics:
             params = json.dumps({"sub": topic})
             logging.info(f"Subscribing to socket data, params: {params}")
-            self._ws.send(params)  # as json string to be send
+            await self._websocket.send(params)  # as json string to be send
 
-    def _get_signature_data(self) -> dict:
+    async def _get_signature_data(self) -> dict:
         # it's utc time and an example is 2017-05-11T15:19:30
         timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
         url_timestamp = parse.quote(timestamp)  # url encode
@@ -155,7 +140,7 @@ class HtxWebSocketClient:
             }
         return data
 
-    def _on_msg(self, ws, message):
+    async def _on_message(self, message):
         self.last_heartbeat = datetime.utcnow()
         try:
             plain = message
@@ -165,7 +150,7 @@ class HtxWebSocketClient:
             jdata = json.loads(plain)
             if 'ping' in jdata:
                 sdata = plain.replace('ping', 'pong')
-                self._ws.send(sdata)
+                await self._websocket.send(sdata)
                 return
             elif 'op' in jdata:
                 # Order and accounts notifications like {op: "notify", topic: "orders_cross@btc-usdt", data: []}
@@ -178,56 +163,30 @@ class HtxWebSocketClient:
                         consumer.on_socket_data(topic, jdata)
                 elif opdata == 'ping':
                     sdata = plain.replace('ping', 'pong')
-                    self._ws.send(sdata)
+                    await self._websocket.send(sdata)
                 else:
                     pass
             elif 'action' in jdata:
                 opdata = jdata['action']
                 if opdata == 'ping':
                     sdata = plain.replace('ping', 'pong')
-                    self._ws.send(sdata)
+                    await self._websocket.send(sdata)
                     return
                 else:
                     pass
             elif 'ch' in jdata:
                 # Pass the event to receiver
                 topic = jdata['ch'].lower()
-                self.receiver.on_message(topic, jdata)
+                await self.receiver.on_message(topic, jdata)
             elif jdata.get('status') == 'error':
                 logging.error(f"Got message with error: {jdata}")
         except Exception as e:
             logging.error(e)
 
-    def _on_close(self, *args):
-        logging.info("Socket closed")
+    async def _on_close(self, code, reason):
+        logging.info(f"WebSocket connection closed: code={code}, reason={reason}")
+        # Your close handler logic here
 
-    def _on_error(self, ws, error):
-        logging.error(f"Socket error: {error}")
-        # Reopen
-        self.close()
-        self.open()
-
-    def add_consumer(self, topic, params: dict, consumer):
-        """ Registering consumer for the topic """
-        logging.debug(f"Adding consumer, topic: {topic}, params: {params}, consumer: {consumer}")
-        # topic -> (params, consumer obj)
-        self._consumers[topic].add((json.dumps(params), consumer))
-
-    def close(self):
-        logging.info("Closing socket")
-        if self._ws: self._ws.close()
-
-    def _watchdog(self):
-        watchdog_interval_sec = self.heartbeat_timeout.seconds / 2
-        logging.info(f"Watchdog started with heartbeat timeout: {self.heartbeat_timeout}")
-        while self.is_running:
-            time.sleep(watchdog_interval_sec)
-            elapsed = datetime.utcnow() - self.last_heartbeat
-            if elapsed > self.heartbeat_timeout:
-                logging.error(f"Watchdog: heartbeat timeout {self.heartbeat_timeout} elapsed. Reconnecting...")
-                # Reopen
-                self.close()
-                self.open()
-            else:
-                logging.debug(f"Heartbeat is ok. {elapsed} elapsed since last heartbeat at {self.last_heartbeat}")
-        logging.info(f"is_running: {self.is_running}. Watchdog stopped")
+    async def _on_error(self, error):
+        logging.error(f"WebSocket error: {error}")
+        # Your error handler logic here
