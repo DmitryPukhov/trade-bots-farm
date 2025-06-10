@@ -5,6 +5,7 @@ import os
 from common_tools import CommonTools
 from htx_web_socket_client import HtxWebSocketClient
 from kafka_raw_producer import KafkaRawProducer
+from metrics import Metrics
 
 
 class ConnectorStreamHtxApp:
@@ -33,23 +34,27 @@ class ConnectorStreamHtxApp:
 
         # Set up the Kafka producer and the HTX client to run together
         kafka_raw_producer = KafkaRawProducer()
-        client =  HtxWebSocketClient(topics=self.topics,
-                                     host=self.htx_host,
-                                     path=self.htx_path,
-                                     access_key=self.htx_access_key,
-                                     secret_key=self.htx_secret_key,
-                                     be_spot=False,
-                                     is_broker=False,
-                                     receiver=kafka_raw_producer)
+        client = HtxWebSocketClient(topics=self.topics,
+                                    host=self.htx_host,
+                                    path=self.htx_path,
+                                    access_key=self.htx_access_key,
+                                    secret_key=self.htx_secret_key,
+                                    be_spot=False,
+                                    is_broker=False,
+                                    receiver=kafka_raw_producer)
 
         # Connect to HTX and listen to the messages
         try:
-            await client.connect()
+            await asyncio.gather(client.connect(),  # web socket event loop
+                                 Metrics().push_to_gateway_periodical()  # push metrics to gateway periodically
+                                 )
+
         except asyncio.CancelledError:
             await client.close()
 
     def run(self):
         asyncio.run(self.run_async())
+
 
 if __name__ == '__main__':
     ConnectorStreamHtxApp().run()
