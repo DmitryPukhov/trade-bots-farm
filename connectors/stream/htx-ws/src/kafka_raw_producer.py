@@ -20,8 +20,7 @@ class KafkaRawProducer:
         logging.info(f"Confluent Kafka Producer parameters: {conf}")
         self._producer = Producer(conf)
 
-
-    def on_message(self, topic, raw_message):
+    async def on_message(self, topic, raw_message):
         now = datetime.datetime.now(timezone.utc)
 
         # Produce message to kafka
