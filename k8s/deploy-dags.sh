@@ -100,42 +100,52 @@ set -e # Exit on error
 dags=$*
 echo "Dags to redeploy: $dags"
 
+matched=false
+
 for dag in $dags
 do
   echo "Processing dag=$dag"
   if [[ "$dag" == "pytrade2" || "$dag" == "all" ]]; then
-    echo "Deploy common dag tools"
+      matched=true
+      echo "Deploy common dag tools"
       build_copy_module "$PROJECT_ROOT/libs/pytrade2"
   fi
   if [[ "$dag" == "common" || "$dag" == "all" ]]; then
-    echo "Deploy common dag tools"
+      matched=true
+      echo "Deploy common dag tools"
       build_copy_module "$PROJECT_ROOT/common"
       copy_dag_tools
   fi
   if [[ "$dag" == "connector_stream_htx" || "$dag" == "all" ]]; then
+        matched=true
         module_dir=$PROJECT_ROOT/connectors/stream/htx-ws
         dag_name="connector_stream_htx"
         deploy_module "$module_dir" "$dag_name"
   fi
   if [[ "$dag" == "connector_batch_s3_external" || "$dag" == "all" ]]; then
+        matched=true
         module_dir=$PROJECT_ROOT/connectors/batch/s3-external
         dag_name="connector_batch_s3_external"
         deploy_module "$module_dir" "$dag_name"
   fi
   if [[ "$dag" == "process_stream_raw_to_preproc" || "$dag" == "all" ]]; then
+        matched=true
         module_dir=$PROJECT_ROOT/processes/stream/raw-to-preproc
         dag_name="process_stream_raw_to_preproc"
         deploy_module "$module_dir" "$dag_name"
   fi
   if [[ "$dag" == "process_batch_raw_to_preproc" || "$dag" == "all" ]]; then
+        matched=true
         module_dir=$PROJECT_ROOT/processes/batch/raw-to-preproc
         dag_name="process_batch_raw_to_preproc"
         deploy_module "$module_dir" "$dag_name"
   fi
-
 done
 
 
-
+if [[ "$matched" == false ]]; then
+    echo "ALERT: No matching condition found for dag=$dag"
+    exit 1  # Optional: exit with error code
+fi
 
 
