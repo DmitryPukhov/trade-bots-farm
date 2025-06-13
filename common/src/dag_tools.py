@@ -43,7 +43,7 @@ def tbf_task_operator(task_id, wheel_file_name, module_name, class_name, **kwarg
             logging.info("logging.error() test")
             logging.warning("logging.warning() test")
             logging.info("logging.info() test")
-            logging.info("logging.debug() test")
+            logging.debug("logging.debug() test")
 
         import os
         task_id = os.getenv("AIRFLOW_CTX_TASK_ID")

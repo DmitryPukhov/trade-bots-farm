@@ -70,10 +70,12 @@ class ProcessStreamRawToPreprocApp:
 
         # pull, process, push loop
         while True:
+            await asyncio.sleep(0.001)
 
             # Get raw message from Kafka
             preproc_msg = self._consumer.poll(1)  # Seconds
             if preproc_msg is None:
+                await asyncio.sleep(0.1)
                 continue
             if preproc_msg.error():
                 raise KafkaException(preproc_msg.error())
@@ -89,10 +91,11 @@ class ProcessStreamRawToPreprocApp:
                 logging.info(f"Producing data to topic {self._dest_topic}, message: {preproc_msg}")
                 self._producer.produce(self._dest_topic, json.dumps(preproc_msg))
                 self._producer.flush()
+
                 ProcessStreamRawToPreprocMetrics.messages_output.labels(topic = self._dest_topic).inc() # metrics
 
     async def run_async(self):
-        await asyncio.gather(await self.process_loop(), await ProcessStreamRawToPreprocMetrics.push_to_gateway_periodical())
+        await asyncio.gather(self.process_loop(), ProcessStreamRawToPreprocMetrics.push_to_gateway_periodical())
 
     def run(self):
         asyncio.run(self.run_async())
