@@ -11,6 +11,8 @@ dependencies = [
     "sortedcontainers",
     "pandas",
     "pyyaml",
+    "s3fs",
+    "botocore~=1.37",
     "requests",
     "urllib3",
     "numpy",
@@ -19,3 +21,12 @@ dependencies = [
     "confluent-kafka"
     ]
 
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-asyncio",  # For async test support
+    "pytest-cov",       # Test coverage
+    "pytest-mock",      # Better mocking
+    "httpx",           # For async HTTP tests (if needed)
+    "asynctest"        # Legacy support (if needed)
+]
