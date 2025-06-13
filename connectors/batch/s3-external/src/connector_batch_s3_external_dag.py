@@ -4,7 +4,6 @@ import airflow
 from airflow import DAG
 
 from dag_tools import tbf_task_operator
-from process_stream_raw_to_preproc_dag import task_env
 
 # Default arguments for the DAG
 default_args = {
