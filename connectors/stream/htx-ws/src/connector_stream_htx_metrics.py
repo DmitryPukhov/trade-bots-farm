@@ -3,7 +3,7 @@ from prometheus_client import Counter, Gauge
 from metrics_base import MetricsBase
 
 
-class Metrics(MetricsBase):
+class ConnectorStreamHtxMetrics(MetricsBase):
 
     namespace = "connector_stream_htx"
     message_processed = Counter(
