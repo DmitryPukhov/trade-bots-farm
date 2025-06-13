@@ -28,6 +28,7 @@ class ConnectorBatchS3ExternalApp:
         await self._history_s3_downloader.update_local_history(
             start_date=pd.Timestamp.now() - pd.Timedelta(days=self.history_days_limit)
         )
+        self._metrics.run_flag = False
 
 
     def run(self):
