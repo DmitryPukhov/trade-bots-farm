@@ -1,13 +1,12 @@
 import json
-from unittest import TestCase
 from unittest.mock import MagicMock
 
 import pandas as pd
 
 from preproc_base import PreprocBase
+import pytest
 
-
-class TestPreprocBase(TestCase):
+class TestPreprocBase:
 
     @staticmethod
     def new_preproc_base():
@@ -16,12 +15,14 @@ class TestPreprocBase(TestCase):
         preproc_base._aggregate = MagicMock()
         return preproc_base
 
-    def test_process(self):
+    @pytest.mark.asyncio
+    async def test_process(self):
         ts1 = pd.Timestamp("2025-06-03 14:11:00")
         ts2 = pd.Timestamp("2025-06-03 14:12:10")
         ts3 = pd.Timestamp("2025-06-03 14:12:11")
 
         msg = {
+            "ch": "topic1",
             "tick": {
                 "bids": [[98, 1], [99, 2]],
                 "asks": [[101, 3], [102, 4]],
@@ -33,19 +34,19 @@ class TestPreprocBase(TestCase):
 
         # Accumulate minute 1, don't process
         msg["tick"]["ts"] = ts1.value // 1_000_000
-        preprocessed = pd.DataFrame(preproc_base.process(json.dumps(msg)))
-        self.assertTrue(preprocessed.empty)
-        self.assertListEqual([pd.Timestamp("2025-06-03 14:11:00")], list(preproc_base._buffer.keys()))
+        preprocessed = pd.DataFrame(await preproc_base.process(json.dumps(msg)))
+        assert preprocessed.empty
+        assert list(preproc_base._buffer.keys()) == [pd.Timestamp("2025-06-03 14:11:00")]
 
         # Accumulate minute 2, don't process minute 1 because of timeout not elapsed
         msg["tick"]["ts"] = ts2.value // 1_000_000
-        preprocessed = pd.DataFrame(preproc_base.process(json.dumps(msg)))
-        self.assertTrue(preprocessed.empty)
-        self.assertListEqual([pd.Timestamp("2025-06-03 14:11:00"), pd.Timestamp("2025-06-03 14:12:00")], list(preproc_base._buffer.keys()))
+        preprocessed = pd.DataFrame(await preproc_base.process(json.dumps(msg)))
+        assert preprocessed.empty
+        assert  list(preproc_base._buffer.keys()) == [pd.Timestamp("2025-06-03 14:11:00"), pd.Timestamp("2025-06-03 14:12:00")]
 
         # Accumulate minute 2, process minute 1 and delete from buffer
         msg["tick"]["ts"] = ts3.value // 1_000_000
-        preprocessed = pd.DataFrame(preproc_base.process(json.dumps(msg)))
-        self.assertEqual(1, len(preprocessed))
-        self.assertListEqual([pd.Timestamp("2025-06-03 14:12:00")], list(preproc_base._buffer.keys()))
+        preprocessed = pd.DataFrame(await preproc_base.process(json.dumps(msg)))
+        assert len(preprocessed) == 1
+        assert list(preproc_base._buffer.keys()) == [pd.Timestamp("2025-06-03 14:12:00")]
 
