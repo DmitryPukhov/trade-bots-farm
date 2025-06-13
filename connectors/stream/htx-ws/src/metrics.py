@@ -1,8 +1,3 @@
-import asyncio
-import logging
-import os
-
-from prometheus_client import CollectorRegistry, push_to_gateway
 from prometheus_client import Counter, Gauge
 
 from metrics_base import MetricsBase
