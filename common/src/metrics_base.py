@@ -28,6 +28,7 @@ class MetricsBase:
     @classmethod
     async def push_to_gateway_periodical(cls):
         try:
+            logging.info(f"Starting metrics pusher with a period of {cls._push_to_gateway_interval_sec} seconds.")
             while cls.run_flag:
                 # Push metrics to the Prometheus pushgateway.
                 await cls.push_to_gateway_()
