@@ -1,18 +1,20 @@
 import json
-from unittest import TestCase
 
 import pandas as pd
+import pytest
 
 from candles_preproc import CandlesPreproc
 
 
-class TestCandlesPreproc(TestCase):
-    def test_process(self):
+class TestCandlesPreproc:
+    @pytest.mark.asyncio
+    async def test_process(self):
         ts1 = pd.Timestamp("2025-06-03 14:11:00")
         ts2 = pd.Timestamp("2025-06-03 14:12:10")
         ts3 = pd.Timestamp("2025-06-03 14:12:11")
 
         msg = {
+            "ch": "topic1",
             "ts": ts1.value // 1_000_000,  # nanos to millis
             "tick": {
                 # "id": ts1.value // 1_000_000,  # nanos to millis
@@ -28,28 +30,33 @@ class TestCandlesPreproc(TestCase):
 
         # Accumulate minute 1, don't process
         msg["ts"] = ts1.value // 1_000_000
-        preprocessed = pd.DataFrame(candles_preproc.process(json.dumps(msg)))
-        self.assertTrue(preprocessed.empty)
-        self.assertListEqual([pd.Timestamp("2025-06-03 14:11:00")], list(candles_preproc._buffer.keys()))
+        res = await candles_preproc.process(json.dumps(msg))
+        preprocessed = pd.DataFrame(res)
+        assert preprocessed.empty
+        # self.assertTrue(preprocessed.empty)
+        # self.assertListEqual([pd.Timestamp("2025-06-03 14:11:00")], list(candles_preproc._buffer.keys()))
+        assert list(candles_preproc._buffer.keys()) == [pd.Timestamp("2025-06-03 14:11:00")]
 
         # Accumulate minute 2, don't process minute 1 because of timeout not elapsed
         msg["ts"] = ts2.value // 1_000_000
-        preprocessed = pd.DataFrame(candles_preproc.process(json.dumps(msg)))
-        self.assertTrue(preprocessed.empty)
-        self.assertListEqual([pd.Timestamp("2025-06-03 14:11:00"), pd.Timestamp("2025-06-03 14:12:00")],
-                             list(candles_preproc._buffer.keys()))
+        preprocessed = pd.DataFrame(await candles_preproc.process(json.dumps(msg)))
+        assert preprocessed.empty
+        assert [pd.Timestamp("2025-06-03 14:11:00"), pd.Timestamp("2025-06-03 14:12:00")] == \
+               list(candles_preproc._buffer.keys())
 
         # Accumulate minute 2, process minute 1 and delete from buffer
         msg["ts"] = ts3.value // 1_000_000
-        preprocessed = pd.DataFrame(candles_preproc.process(json.dumps(msg)))
-        self.assertEqual(1, len(preprocessed))
-        self.assertListEqual([pd.Timestamp("2025-06-03 14:12:00")], list(candles_preproc._buffer.keys()))
+        preprocessed = pd.DataFrame(await candles_preproc.process(json.dumps(msg)))
+        assert len(preprocessed) == 1
+        assert list(candles_preproc._buffer.keys()) ==  [pd.Timestamp("2025-06-03 14:12:00")]
 
-    def test_aggregate_empty(self):
-        aggregated = CandlesPreproc()._aggregate([])
-        self.assertEqual(0, len(aggregated))
+    @pytest.mark.asyncio
+    async def test_aggregate_empty(self):
+        aggregated = await CandlesPreproc()._aggregate([])
+        assert len(aggregated) == 0
 
-    def test_aggregate(self):
+    @pytest.mark.asyncio
+    async def test_aggregate(self):
         raw_msgs = [
             {"ts": pd.Timestamp("2025-06-03 14:11:01").value // 1_000_000,
              "tick": {
@@ -79,12 +86,12 @@ class TestCandlesPreproc(TestCase):
                 }},
 
         ]
-        aggregated = CandlesPreproc()._aggregate(raw_msgs)
+        aggregated = await CandlesPreproc()._aggregate(raw_msgs)
 
         # Just ensure something is calculated, no need to test pandas mean function
-        self.assertEqual(1, len(aggregated))
-        self.assertEqual(100, aggregated[0]["open"])
-        self.assertEqual(104, aggregated[0]["high"])
-        self.assertEqual(97, aggregated[0]["low"])
-        self.assertEqual(101, aggregated[0]["close"])
-        self.assertEqual(2000, aggregated[0]["vol"])
+        assert len(aggregated) == 1
+        assert aggregated[0]["open"] == 100
+        assert aggregated[0]["high"] == 104
+        assert aggregated[0]["low"] == 97
+        assert aggregated[0]["close"] == 101
+        assert aggregated[0]["vol"] == 2000
