@@ -16,4 +16,5 @@ dev = [  # Install with `pip install -e .[dev]`
     "apache-airflow-providers-standard",
     "s3fs",
     "botocore~=1.37",
+    "prometheus-client"
 ]
