@@ -29,13 +29,14 @@ with DAG(
     external_bucket = "pytrade2"
     internal_bucket = "trade-bots-farm"
     task_envs = [
+        # Process candles
+        {"SRC_S3_DIR": f"{external_bucket}/data/raw/candles",
+         "DST_S3_DIR": f"{internal_bucket}/data/raw/pytrade2/BTC-USDT/candles",
+         "TICKER": "BTC-USDT", "KIND": "candles"},
         # Process level2
         {"SRC_S3_DIR": f"{external_bucket}/data/raw/level2",
          "DST_S3_DIR": f"{internal_bucket}/data/raw/pytrade2/BTC-USDT/level2",
          "TICKER": "BTC-USDT", "KIND": "level2"},
-        {"SRC_S3_DIR": f"{external_bucket}/data/raw/candles",
-         "DST_S3_DIR": f"{internal_bucket}/data/raw/pytrade2/BTC-USDT/candles",
-         "TICKER": "BTC-USDT", "KIND": "candles"},
     ]
 
     tasks = []
