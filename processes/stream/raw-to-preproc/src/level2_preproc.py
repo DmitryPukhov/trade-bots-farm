@@ -1,8 +1,10 @@
+import asyncio
 from dataclasses import dataclass
 
 import pandas as pd
 
 from preproc_base import PreprocBase
+from process_stream_raw_to_preproc_metrics import ProcessStreamRawToPreprocMetrics
 
 
 class Level2Preproc(PreprocBase):
@@ -22,7 +24,7 @@ class Level2Preproc(PreprocBase):
         ask_expect: float
         expect: float
 
-    def _transform_message(self, raw_message) -> _PreprocMessageEntity:
+    async def _transform_message(self, raw_message) -> _PreprocMessageEntity:
         """ Calculates big, ask, bid/ask expectations and returns them"""
         #
         # level2_tick_df = pd.DataFrame([msg["tick"] for msg in raw_messages]).copy()
@@ -54,16 +56,18 @@ class Level2Preproc(PreprocBase):
                                           bid_expect=bid_expect, ask_min=min(asks)[0], ask_vol_sum=ask_vol_sum,
                                           ask_mul_vol_sum=ask_mul_vol_sum, ask_expect=ask_expect, expect=expect)
     #
-    def _aggregate(self, raw_messages: []) -> dict:
+    async def _aggregate(self, raw_messages: []) -> dict:
         """
         Aggregate accumulated messages within a minute.
         Method is called once a minute
         """
         if not raw_messages:
             return []
-        transformed = (self._transform_message(msg) for msg in raw_messages)
+        transformed = [self._transform_message(msg) for msg in raw_messages]
+        transformed = await asyncio.gather(*transformed)
         df_transformed = pd.DataFrame(transformed)
         df_aggregated = df_transformed.agg('mean')
-        df_aggregated["datetime"] = str(df_transformed["datetime"].max())
+        dt = df_transformed["datetime"].max()
+        df_aggregated["datetime"] = str(dt)
         res = df_aggregated.to_dict()
         return res

@@ -5,7 +5,7 @@ import os
 from common_tools import CommonTools
 from htx_web_socket_client import HtxWebSocketClient
 from kafka_raw_producer import KafkaRawProducer
-from metrics import Metrics
+from connector_stream_htx_metrics import ConnectorStreamHtxMetrics
 
 
 class ConnectorStreamHtxApp:
@@ -46,7 +46,7 @@ class ConnectorStreamHtxApp:
         # Connect to HTX and listen to the messages
         try:
             await asyncio.gather(client.connect(),  # web socket event loop
-                                 Metrics().push_to_gateway_periodical()  # push metrics to gateway periodically
+                                 ConnectorStreamHtxMetrics().push_to_gateway_periodical()  # push metrics to gateway periodically
                                  )
 
         except asyncio.CancelledError:

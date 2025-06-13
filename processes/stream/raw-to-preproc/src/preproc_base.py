@@ -6,6 +6,8 @@ from collections import defaultdict
 import pandas as pd
 import sortedcontainers
 
+from process_stream_raw_to_preproc_metrics import ProcessStreamRawToPreprocMetrics
+
 
 class PreprocBase:
     """ Accumulate raw messages and aggregate them"""
@@ -16,7 +18,7 @@ class PreprocBase:
         self._order_timeout = pd.Timedelta(os.getenv("ORDER_TIMEOUT", "10s"))
         logging.info(f"{self.__class__.__name__} initialized with order timeout %s", self._order_timeout)
 
-    def process(self, raw_message: str) -> list[str]:
+    async def process(self, raw_message: str) -> []:
         """ Process a raw message, returns processed messages if time comes or [] if not
          Example of raw message
          {
@@ -40,6 +42,7 @@ class PreprocBase:
         raw_message = json.loads(raw_message)
         message_ts = pd.Timestamp(raw_message["tick"]["ts"], unit='ms') if "ts" in raw_message[
             "tick"] else pd.Timestamp(raw_message["ts"], unit="ms")  # noqa: E501
+
         start_minute_ts = message_ts.floor('1min')
         self._buffer.setdefault(start_minute_ts, []).append(raw_message)
 
@@ -54,9 +57,12 @@ class PreprocBase:
             for buf_start_minute_ts, buf_messages in self._buffer.items()[:-1]:
                 out.append(self._aggregate(buf_messages))
                 del self._buffer[buf_start_minute_ts]
+
+        # Set metrics
+        ProcessStreamRawToPreprocMetrics.time_lag_sec.labels(raw_message["ch"]).set((pd.Timestamp.utcnow() - message_ts.tz_localize("utc")).total_seconds())
         return out
 
-    def _aggregate(self, messages: []):
+    async def _aggregate(self, messages: []):
         """
         Aggregate accumulated messages within a minute.
         Method is called once a minute

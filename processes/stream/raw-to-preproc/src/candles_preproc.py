@@ -6,7 +6,7 @@ from preproc_base import PreprocBase
 class CandlesPreproc(PreprocBase):
     """ Accumulate Level 2 messages and aggregate them"""
 
-    def _aggregate(self, raw_messages: []) -> dict:
+    async def _aggregate(self, raw_messages: []) -> dict:
         """
         Aggregate accumulated messages within a minute.
         Method is called once a minute
@@ -21,6 +21,7 @@ class CandlesPreproc(PreprocBase):
         #     'vol': 'sum'}
         if not raw_messages:
             return {}
+
         df_1min = pd.DataFrame([msg["tick"] for msg in raw_messages]).copy()
         df_1min["ts"] = [msg["ts"] for msg in raw_messages].copy()
 
