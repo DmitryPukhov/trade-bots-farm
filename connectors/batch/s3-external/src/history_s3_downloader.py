@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import s3fs
 
-from S3ExternalBatchConnectorMetrics import S3ExternalBatchConnectorMetrics
+from metrics import S3ExternalBatchConnectorMetrics
 from s3_tools import S3Tools
 
 
@@ -48,7 +48,7 @@ class HistoryS3Downloader:
             with self._s3_external_fs.open(src_path, 'rb') as src_file:
                 with self._s3_internal_fs.open(dst_path, 'wb') as dest_file:
                     dest_file.write(src_file.read())
-                    self._metrics.files_transferred.labels(external_s3_dir = src_path).incr(1)
+                    self._metrics.files_transferred.labels(external_s3_dir = src_path).inc()
         except Exception as e:
             logging.error(f"Failed to download {src_path} to {dst_path}. {e}")
             raise e

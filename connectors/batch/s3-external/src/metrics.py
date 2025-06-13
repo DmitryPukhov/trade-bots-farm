@@ -1,8 +1,6 @@
-from prometheus_client import Counter, Gauge, start_http_server
-import time
+from prometheus_client import Counter
 
-from prometheus_client import Counter, Gauge, start_http_server
-import time
+
 class S3ExternalBatchConnectorMetrics:
     namespace = "connector_batch_s3_external"
 
