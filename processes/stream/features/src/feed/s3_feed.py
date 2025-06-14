@@ -36,18 +36,6 @@ class S3Feed:
                      f"level2_dir: {self._s3_level2_dir}, candles_dir: {self._s3_candles_dir}, "
                      f"assess_key: ***{self._s3_access_key[:-3]}, secret_key: ***{self._s3_secret_key[-3]}")
 
-    async def read_history(self) -> pd.DataFrame:
-        """ Read historical data from s3."""
-        end_date = datetime.now(timezone.utc).date()
-        start_date = end_date - timedelta(days=self.history_days_limit)
-
-        # Read level2 and candles from theirs dirs
-        level2_df = await self._read_csv(self._s3_level2_dir, start_date, end_date, "datetime")
-        candles_df = await self._read_csv(self._s3_candles_dir, start_date, end_date, "close_time")
-
-        # Merge by time
-        return await self._merge_inputs(level2_df, candles_df)
-
     async def _merge_inputs(self, level2_df, candles_df):
         # Merge with respect to tolerance
 
@@ -65,11 +53,11 @@ class S3Feed:
 
         return merged_df
 
-    async def _read_csv(self, s3_dir: str, start_date: date, end_date: date, index_col) -> pd.DataFrame:
+    async def _read_csv(self, s3_dir: str, daily_paths: [str], index_col) -> pd.DataFrame:
         """ Read daily files from s3 dir containing data between dates"""
 
         # Find which files to read
-        daily_paths = S3Tools.find_daily_files(self._s3_fs, s3_dir, start_date, end_date)
+        # daily_paths = S3Tools.find_daily_files(self._s3_fs, s3_dir, start_date, end_date)
 
         # Read all files to a single dataframe
         daily_files = []
@@ -100,3 +88,22 @@ class S3Feed:
         # Some rubbish columns can happen in csv files
         good_cols = [col for col in df.columns if not col.startswith("Unnamed:")]
         return df[good_cols]
+
+    async def read_history(self, start_date: date = None, end_date: date = None,
+                           modified_after=pd.Timestamp.min.tz_localize("UTC")) -> pd.DataFrame:
+        """ Read historical data from s3."""
+        end_date = end_date or datetime.now(timezone.utc).date()
+        start_date = start_date or end_date - timedelta(days=self.history_days_limit)
+
+        # Find which files to read
+        level2_paths = S3Tools.find_daily_files(self._s3_fs, self._s3_level2_dir, start_date, end_date, modified_after)
+        candles_paths = S3Tools.find_daily_files(self._s3_fs, self._s3_candles_dir, start_date, end_date,
+                                                 modified_after)
+        if not (level2_paths and candles_paths):
+            # No data found
+            return pd.DataFrame()
+
+        # Read and merge level2 and candles
+        level2_df = await self._read_csv(self._s3_level2_dir, level2_paths, "datetime")
+        candles_df = await self._read_csv(self._s3_candles_dir, candles_paths, "close_time")
+        return await self._merge_inputs(level2_df, candles_df)

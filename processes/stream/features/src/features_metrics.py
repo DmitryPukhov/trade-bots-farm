@@ -26,14 +26,14 @@ class FeaturesMetrics(MetricsBase):
     input_s3_rows_good = Counter(
         '_input_s3_rows_good',
         'Rows in s3 input dataset',
-        ['feature_name'],
+        ['feature'],
         namespace=namespace,
         registry=MetricsBase._registry
     )
     input_s3_rows_not_merged = Counter(
         '_input_s3_rows_not_merged',
         'Rows in s3 input dataset not merged due to na after merge level2 and candles',
-        ['feature_name'],
+        ['feature'],
         namespace=namespace,
         registry=MetricsBase._registry
     )
