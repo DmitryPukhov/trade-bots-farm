@@ -1,10 +1,37 @@
 import logging
+from datetime import date
 
 import pandas as pd
 import s3fs
 
 
 class S3Tools:
+    @staticmethod
+    def find_daily_files(file_system: s3fs.S3FileSystem, s3_dir: str, start_date, end_date) -> list[str]:
+        # modified time: file name dictionary
+        modified_dict = {}
+
+        # List objects in the bucket
+        if not file_system.exists(f"{s3_dir}"):
+            logging.info(f"Skipping file search in {s3_dir}, it doesn't exist")
+            return modified_dict
+
+        # Get all files in the directory with date in name between start_date and end_date inclusive.
+        file_names = [obj['Key'] for obj in file_system.listdir(s3_dir)]
+        files_in_date_range = [name for name in file_names if
+                               start_date <= S3Tools.get_file_date_from_name(name) <= end_date]
+
+        logging.info(f"Found {len(files_in_date_range)} files in {s3_dir} between {start_date} and {end_date}")
+        return sorted(files_in_date_range)
+
+    @staticmethod
+    def get_file_date_from_name(file_name: str) -> date:
+        """ Extract date from filename (assuming format: YYYY-MM-DD_BTC-USDT_level2.csv.zip) """
+        file_name_only = file_name.split('/')[-1]
+        file_datetime_str = file_name_only.split('_')[0]
+        file_date = pd.to_datetime(file_datetime_str).date()
+        return file_date
+
     @staticmethod
     def _get_s3_modified_dict(file_system: s3fs.S3FileSystem,
                               s3_dir: str,
@@ -32,8 +59,7 @@ class S3Tools:
             file_name = s3_file_path.split('/')[-1]
             # Extract date from filename (assuming format: YYYY-MM-DD_BTC-USDT_level2.csv.zip)
             try:
-                file_datetime_str = file_name.split('_')[0]
-                file_date = pd.to_datetime(file_datetime_str).date()
+                file_date = S3Tools.get_file_date_from_name(file_name)
                 if not (start_date.date() <= file_date <= end_date.date()):
                     continue
                 modified_time = pd.Timestamp(obj['LastModified'])
