@@ -1,5 +1,6 @@
 import asyncio
 
+import numpy as np
 import pandas as pd
 
 from feed.kafka_feed import KafkaFeed
@@ -12,7 +13,7 @@ class KafkaWithS3Feed:
         self._feature_name = feature_name
         self._candles_buf = pd.DataFrame()
         self._level2_buf = pd.DataFrame()
-        self._merge_tolerance = pd.Timedelta(minutes=1)  # Fixed typo
+        self._merge_tolerance = pd.Timedelta(seconds=59)  # Fixed typo
         self._level2_queue = asyncio.Queue()
         self._candles_queue = asyncio.Queue()
         self.new_data_event = new_data_event
@@ -21,7 +22,7 @@ class KafkaWithS3Feed:
         # Convert message to DataFrame row with datetime index
         df = pd.DataFrame([msg])
         df['datetime'] = pd.to_datetime(df['datetime'])
-        df.set_index('datetime', inplace=True)
+        df.set_index('datetime', inplace=True, drop=False)
 
         # Use pd.concat instead of append
         self._level2_buf = pd.concat([self._level2_buf, df])
@@ -30,7 +31,7 @@ class KafkaWithS3Feed:
         # Similar handling for candles
         df = pd.DataFrame([msg])
         df['close_time'] = pd.to_datetime(df['close_time'])
-        df.set_index('close_time', inplace=True)
+        df.set_index('close_time', inplace=True, drop=False)
         self._candles_buf = pd.concat([self._candles_buf, df])
 
     async def flush_buffers(self):
@@ -39,21 +40,25 @@ class KafkaWithS3Feed:
         In case of time lags, consider pandas buffers with many messages
         """
 
-        if not self.data:
-            # Initial data is not read from s3 yet
-            return
         merged_df = pd.merge_asof(left=self._candles_buf, right=self._level2_buf, left_index=True, right_index=True,
-                                  tolerance=self._merge_tolerance)
+                                  tolerance=self._merge_tolerance, direction="nearest")
+        merged_df = merged_df.dropna()
 
-        # Clean the original buffers by removing data that was successfully merged
         if not merged_df.empty:
-            merged_timestamps = merged_df.index
-            self._candles_buf = self._candles_buf[~self._candles_buf.index.isin(merged_timestamps)]
-            self._level2_buf = self._level2_buf[~self._level2_buf.index.isin(merged_timestamps)]
+            # Clean level2 buffer
+            level2_matched_mask = self._level2_buf.index.isin(merged_df["datetime"])
+            self._level2_buf = self._level2_buf[~level2_matched_mask]
 
-            # Clean the merged DataFrame from NaN values and append to main data
-            merged_df = merged_df.dropna()
-            self.data = self.data.append(merged_df)
+            # For candles
+            candles_matched_mask = self._candles_buf.index.isin(merged_df["close_time"])
+            self._candles_buf = self._candles_buf[~candles_matched_mask]
+
+            # Now we can clean close_time and set index and datetime to the latest value
+            merged_df["datetime"] =  merged_df[["datetime", "close_time"]].max(axis=1)
+            merged_df.set_index("datetime", inplace=True, drop=False)
+
+            # Append the merged data to the main dataframe
+            self.data = pd.concat([df for df in [self.data, merged_df] if not df.empty])
 
             self.new_data_event.set()
 
