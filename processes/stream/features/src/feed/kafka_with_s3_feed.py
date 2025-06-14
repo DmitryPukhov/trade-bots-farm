@@ -88,15 +88,15 @@ class KafkaWithS3Feed:
             if not (self._level2_buf.empty and self._candles_buf.empty):
                 await self.flush_buffers()
 
-                # Check if we have gap between s3 and kafka and try to load absent data from s3
-                time_gap = self._min_stream_datetime - self._max_history_datetime
-                if time_gap > self._history_stream_max_time_gap:
-                    # Don't go to s3 too often, wait some time
-                    await asyncio.sleep(self._initial_history_reload_interval.total_seconds())
-                    logging.info(
-                        f"Gap between s3 and kafka is {time_gap} > {self._history_stream_max_time_gap}. "
-                        f"Try to load new history from s3")
-                    await self.read_history()
+            # Check if we have gap between s3 and kafka and try to load absent data from s3
+            time_gap = self._min_stream_datetime - self._max_history_datetime
+            if time_gap > self._history_stream_max_time_gap:
+                # Don't go to s3 too often, wait some time
+                await asyncio.sleep(self._initial_history_reload_interval.total_seconds())
+                logging.info(
+                    f"Gap between s3 and kafka is {time_gap} > {self._history_stream_max_time_gap}. "
+                    f"Try to load new history from s3")
+                await self.read_history()
             else:
                 await asyncio.sleep(1)
 
@@ -122,4 +122,4 @@ class KafkaWithS3Feed:
 
         # Connect to kafka
         kafka_feed = KafkaFeed(level2_queue=self._level2_queue, candles_queue=self._candles_queue)
-        await kafka_feed.run(start_time=self._max_history_datetime)
+        await asyncio.gather(kafka_feed.run(start_time=self._max_history_datetime), self.processing_loop())
