@@ -66,7 +66,7 @@ class KafkaWithS3Feed:
 
             # Now we can clean close_time and set index and datetime to the latest value
             merged_df["datetime"] = merged_df[["datetime", "close_time"]].max(axis=1)
-            self._min_stream_datetime = min(self._min_stream_datetime, merged_df["datetime"].min())
+            self._min_stream_datetime = min(self._min_stream_datetime, merged_df["datetime"].min().tz_localize("UTC"))
             merged_df.set_index("datetime", inplace=True, drop=False)
 
             # Append the merged data to the main dataframe
@@ -89,7 +89,7 @@ class KafkaWithS3Feed:
                 await self.flush_buffers()
 
             # Check if we have gap between s3 and kafka and try to load absent data from s3
-            time_gap = self._min_stream_datetime - self._max_history_datetime
+            time_gap = self._min_stream_datetime.to_pydatetime() - self._max_history_datetime.to_pydatetime()
             if time_gap > self._history_stream_max_time_gap:
                 # Don't go to s3 too often, wait some time
                 await asyncio.sleep(self._initial_history_reload_interval.total_seconds())
