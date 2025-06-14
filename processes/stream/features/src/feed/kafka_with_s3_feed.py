@@ -2,27 +2,36 @@ import asyncio
 
 import pandas as pd
 
-from processes.stream.features.src.feed.kafka_feed import KafkaFeed
-from processes.stream.features.src.feed.s3_feed import S3Feed
+from feed.kafka_feed import KafkaFeed
+from feed.s3_feed import S3Feed
 
 
 class KafkaWithS3Feed:
     def __init__(self, feature_name: str, new_data_event: asyncio.Event):
-        self.data = None
+        self.data = pd.DataFrame()
         self._feature_name = feature_name
         self._candles_buf = pd.DataFrame()
         self._level2_buf = pd.DataFrame()
-        self._merge_tolerance = pd.Timedelta(miniutes=1)
-        self.data = None
+        self._merge_tolerance = pd.Timedelta(minutes=1)  # Fixed typo
         self._level2_queue = asyncio.Queue()
         self._candles_queue = asyncio.Queue()
         self.new_data_event = new_data_event
 
     async def on_level2(self, msg):
-        self._level2_buf.append(msg, ignore_index=True)
+        # Convert message to DataFrame row with datetime index
+        df = pd.DataFrame([msg])
+        df['datetime'] = pd.to_datetime(df['datetime'])
+        df.set_index('datetime', inplace=True)
+
+        # Use pd.concat instead of append
+        self._level2_buf = pd.concat([self._level2_buf, df])
 
     async def on_candle(self, msg):
-        self._candles_buf.append(msg, ignore_index=True)
+        # Similar handling for candles
+        df = pd.DataFrame([msg])
+        df['close_time'] = pd.to_datetime(df['close_time'])
+        df.set_index('close_time', inplace=True)
+        self._candles_buf = pd.concat([self._candles_buf, df])
 
     async def flush_buffers(self):
         """
