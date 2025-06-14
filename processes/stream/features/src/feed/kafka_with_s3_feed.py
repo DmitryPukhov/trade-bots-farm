@@ -1,6 +1,5 @@
 import asyncio
 
-import numpy as np
 import pandas as pd
 
 from feed.kafka_feed import KafkaFeed
@@ -54,7 +53,7 @@ class KafkaWithS3Feed:
             self._candles_buf = self._candles_buf[~candles_matched_mask]
 
             # Now we can clean close_time and set index and datetime to the latest value
-            merged_df["datetime"] =  merged_df[["datetime", "close_time"]].max(axis=1)
+            merged_df["datetime"] = merged_df[["datetime", "close_time"]].max(axis=1)
             merged_df.set_index("datetime", inplace=True, drop=False)
 
             # Append the merged data to the main dataframe
@@ -67,9 +66,9 @@ class KafkaWithS3Feed:
         while True:
             # Read buffers
             if not self._level2_queue.empty():
-                self._level2_buf.append(await self._level2_queue.get())
+                await self.on_level2(await self._level2_queue.get())
             if not self._candles_queue.empty():
-                self._candles_buf.append(await self._candles_queue.get())
+                await self.on_candle(await self._candles_queue.get())
 
             # Process new data if it comes
             if not (self._level2_buf.empty and self._candles_buf.empty):

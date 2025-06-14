@@ -102,3 +102,22 @@ class TestKafkaWithS3Feed:
         assert feed.data.empty
         assert not feed._candles_buf.empty
         assert not feed._level2_buf.empty
+
+    @pytest.mark.asyncio
+    async def test_processing_loop(self):
+        feed = KafkaWithS3Feed("test", asyncio.Event())
+
+        # Fill buffers
+        new_candle = {"close_time": "2020-01-01 00:00:00", "close": 100}
+        new_level2 = {"datetime": "2020-01-01 00:00:00", "bid": 200}
+        # Put messages in queues (non-blocking)
+        await feed._candles_queue.put(new_candle)
+        await feed._level2_queue.put(new_level2)
+        with pytest.raises(asyncio.TimeoutError):
+            await asyncio.wait_for(feed.processing_loop(), 0.5)
+
+        # Simple verify that buffers are flushed
+        assert feed._candles_buf.empty
+        assert feed._level2_buf.empty
+        assert not feed.data.empty
+
