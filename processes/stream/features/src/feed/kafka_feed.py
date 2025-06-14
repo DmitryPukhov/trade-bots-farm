@@ -1,10 +1,8 @@
 import asyncio
 import logging
 import os
-from collections import defaultdict
 
 from aiokafka import AIOKafkaConsumer
-from airflow.api_connexion.schemas.dataset_schema import queued_event_collection_schema
 
 
 class KafkaFeed:
@@ -59,4 +57,3 @@ class KafkaFeed:
         finally:
             # Will leave consumer group; perform autocommit if enabled.
             await consumer.stop()
-

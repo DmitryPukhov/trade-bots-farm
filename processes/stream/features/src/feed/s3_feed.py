@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta, date
 import pandas as pd
 import s3fs
 
-from processes.stream.features.src.features_metrics import FeaturesMetrics
+from features_metrics import FeaturesMetrics
 from s3_tools import S3Tools
 
 
@@ -52,13 +52,15 @@ class S3Feed:
         # Merge with respect to tolerance
 
         logging.info(f"Merge level2 and candles data with tolerance {self._merge_tolerance}")
-        merged_df = pd.merge_asof(level2_df, candles_df, left_index=True, right_index=True, tolerance=self._merge_tolerance).sort_index()
+        merged_df = pd.merge_asof(level2_df, candles_df, left_index=True, right_index=True,
+                                  tolerance=self._merge_tolerance).sort_index()
         merged_df_dirty_len = len(merged_df)
         merged_df = merged_df.dropna().sort_index()
 
         # Set metrics
         merged_df_len = len(merged_df)
-        FeaturesMetrics.input_s3_rows_not_merged.labels(feature=self._feature_name).inc(merged_df_dirty_len - merged_df_len)
+        FeaturesMetrics.input_s3_rows_not_merged.labels(feature=self._feature_name).inc(
+            merged_df_dirty_len - merged_df_len)
         FeaturesMetrics.input_s3_rows_good.labels(feature=self._feature_name).inc(merged_df_len)
 
         return merged_df
@@ -83,9 +85,9 @@ class S3Feed:
         df = await self._postread_proc(df, index_col)
 
         # Set metrics
-        FeaturesMetrics.input_s3_rows.labels(s3_dir = s3_dir).inc(len(df))
+        FeaturesMetrics.input_s3_rows.labels(s3_dir=s3_dir).inc(len(df))
         time_lag = (datetime.utcnow() - df.index.max()).total_seconds()
-        FeaturesMetrics.input_s3_time_lag_sec.labels(s3_dir = s3_dir).set(time_lag)
+        FeaturesMetrics.input_s3_time_lag_sec.labels(s3_dir=s3_dir).set(time_lag)
 
         return df
 
