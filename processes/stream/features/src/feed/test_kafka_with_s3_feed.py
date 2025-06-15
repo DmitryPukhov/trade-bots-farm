@@ -159,7 +159,10 @@ class TestKafkaWithS3Feed:
             await feed._candles_queue.put({"close_time": "2025-06-15 02:56", "close": 100})
             await feed._level2_queue.put({"datetime": "2025-06-15 02:56:00", "bid": 200})
 
-            # Run the feed for a while
+            # New data event is not set before running the feed
+            assert not feed.new_data_event.is_set()
+
+            # # Run the feed for a while
             with pytest.raises(asyncio.TimeoutError):
                 # Run the feed under test for a while
                 await asyncio.wait_for(feed.run_async(), 0.1)
@@ -180,3 +183,5 @@ class TestKafkaWithS3Feed:
                                                 pd.Timestamp("2025-06-15 02:55:00"),
                                                 pd.Timestamp("2025-06-15 02:56:00"),
                                                 ]
+            # Should notify the consumer
+            assert feed.new_data_event.is_set()
