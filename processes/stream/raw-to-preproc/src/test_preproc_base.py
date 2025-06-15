@@ -1,5 +1,5 @@
 import json
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
 import pandas as pd
 
@@ -12,7 +12,9 @@ class TestPreprocBase:
     def new_preproc_base():
         """ Preproc base with mocket aggregation function."""
         preproc_base = PreprocBase()
-        preproc_base._aggregate = MagicMock()
+        preproc_base._aggregate = AsyncMock()
+        preproc_base._aggregate.return_value = [1]
+
         return preproc_base
 
     @pytest.mark.asyncio
@@ -46,7 +48,7 @@ class TestPreprocBase:
 
         # Accumulate minute 2, process minute 1 and delete from buffer
         msg["tick"]["ts"] = ts3.value // 1_000_000
-        preprocessed = pd.DataFrame(await preproc_base.process(json.dumps(msg)))
+        preprocessed = await preproc_base.process(json.dumps(msg))
         assert len(preprocessed) == 1
         assert list(preproc_base._buffer.keys()) == [pd.Timestamp("2025-06-03 14:12:00")]
 

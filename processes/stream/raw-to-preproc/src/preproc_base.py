@@ -55,7 +55,8 @@ class PreprocBase:
         if time_from_buffer_started > timeout_from_buffer_started:
             # Process buffer minutes except current one (one previous minute)
             for buf_start_minute_ts, buf_messages in self._buffer.items()[:-1]:
-                out.append(self._aggregate(buf_messages))
+                aggregated_messages = await self._aggregate(buf_messages)
+                out.extend(aggregated_messages)
                 del self._buffer[buf_start_minute_ts]
 
         # Set metrics

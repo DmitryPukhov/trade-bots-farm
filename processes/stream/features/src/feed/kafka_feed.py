@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 from datetime import datetime
@@ -65,7 +66,14 @@ class KafkaFeed:
 
         try:
             async for msg in consumer:
-                self._queues[msg.topic].put_nowait(msg)
+                try:
+                    # Decode message and put it to queue
+                    data = json.loads(msg.value.decode('utf-8'))
+                    self._queues[msg.topic].put_nowait(data)
+                except json.JSONDecodeError as e:
+                    logging.error(f"Failed to decode JSON: {e}")
+                except UnicodeDecodeError as e:
+                    logging.error(f"Failed to decode message bytes: {e}")
         finally:
             # Will leave consumer group; perform autocommit if enabled.
             await consumer.stop()

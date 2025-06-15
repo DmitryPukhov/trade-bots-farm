@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+from typing import Optional
 
 import pandas as pd
 
@@ -23,8 +24,8 @@ class KafkaWithS3Feed:
         self._last_candle_time = pd.Timestamp(0)
 
         # Settings to track gap between s3 and kafka
-        self._max_history_datetime = self.data.index.max() if not self.data.empty else pd.Timestamp.min
-        self._min_stream_datetime = pd.Timestamp.max
+        self._max_history_datetime = None
+        self._min_stream_datetime = None
         self._history_stream_max_time_gap = pd.Timedelta(minutes=1)
         self._history_try_interval = pd.Timedelta(os.getenv("HISTORY_TRY_INTERVAL", "1m"))
 
@@ -67,7 +68,7 @@ class KafkaWithS3Feed:
 
             # Now we can clean close_time and set index and datetime to the latest value
             merged_df["datetime"] = merged_df[["datetime", "close_time"]].max(axis=1)
-            self._min_stream_datetime = min(self._min_stream_datetime, merged_df["datetime"].min())
+            self._min_stream_datetime = min(self._min_stream_datetime or pd.Timestamp.max, merged_df["datetime"].min())
             merged_df.set_index("datetime", inplace=True, drop=False)
 
             # Append the merged data to the main dataframe
@@ -90,9 +91,13 @@ class KafkaWithS3Feed:
                 await self.flush_buffers()
 
             # Check if we have gap between s3 and kafka and try to load absent data from s3
-            time_gap = self._min_stream_datetime.tz_localize(
-                "UTC").to_pydatetime() - self._max_history_datetime.tz_localize("UTC").to_pydatetime()
-            if time_gap > self._history_stream_max_time_gap:
+            if self._min_stream_datetime and self._max_history_datetime:
+                time_gap = self._min_stream_datetime.tz_localize(
+                    "UTC").to_pydatetime() - self._max_history_datetime.tz_localize("UTC").to_pydatetime()
+            else:
+                time_gap = None
+
+            if time_gap and time_gap > self._history_stream_max_time_gap:
                 # Don't go to s3 too often, wait some time
                 await asyncio.sleep(self._history_try_interval.total_seconds())
                 logging.info(
@@ -105,11 +110,13 @@ class KafkaWithS3Feed:
     async def read_history(self):
         """ Read history from s3 and put it to main dataframe"""
 
+        start_date = self._max_history_datetime.date() if self._max_history_datetime else None
+        end_date = self._min_stream_datetime.date() if self._min_stream_datetime else None
         # Read history from s3
         history_df = await self._s3_feed.read_history(
-            start_date=self._max_history_datetime.date(),
-            end_date=self._min_stream_datetime.date(),
-            modified_after=self._min_stream_datetime if self._min_stream_datetime.date() < pd.Timestamp.max.date() else pd.Timestamp.min)
+            start_date=start_date,
+            end_date=end_date,
+            modified_after= self._min_stream_datetime)
         if not history_df.empty:
             if not self.data.empty:
                 self._max_history_datetime = max(self._max_history_datetime, history_df.index.max())

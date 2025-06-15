@@ -17,7 +17,8 @@ class S3Tools:
             return []
 
         # Get all files in the directory, modified after given time and with date in name between [start_date,  end_date]
-        file_names = [obj['Key'] for obj in file_system.listdir(s3_dir) if obj["LastModified"].replace(tzinfo=None) >= modified_after]
+        file_names = [obj['Key'] for obj in file_system.listdir(s3_dir)
+                      if obj["LastModified"].replace(tzinfo=None) >= (modified_after or pd.Timestamp.min)]
         files_in_date_range = [name for name in file_names if
                                start_date <= S3Tools.get_file_date_from_name(name) <= end_date]
 
