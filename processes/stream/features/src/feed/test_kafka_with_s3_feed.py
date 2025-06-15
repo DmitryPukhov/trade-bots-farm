@@ -151,7 +151,7 @@ class TestKafkaWithS3Feed:
 
             # This feed is under test
             feed = KafkaWithS3Feed("test", asyncio.Event())
-            feed._initial_history_reload_interval = pd.Timedelta(0)
+            feed._history_try_interval = pd.Timedelta(0)
 
             # Kafka stream feed emulation
             await feed._candles_queue.put({"close_time": "2025-06-15 02:55", "close": 100})
