@@ -34,7 +34,8 @@ class S3Feed:
 
         logging.info(f"s3 endpoint url: {self._s3_endpoint_url}, "
                      f"level2_dir: {self._s3_level2_dir}, candles_dir: {self._s3_candles_dir}, "
-                     f"assess_key: ***{self._s3_access_key[:-3]}, secret_key: ***{self._s3_secret_key[-3]}")
+                     f"assess_key: ***{self._s3_access_key[:-3] if self._s3_access_key else '' },"
+                     f" secret_key: ***{self._s3_secret_key[-3] if self._s3_secret_key else ''}")
 
     async def _merge_inputs(self, level2_df, candles_df):
         # Merge with respect to tolerance
