@@ -1,24 +1,13 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 
 from dag_tools import tbf_task_operator
 
-# Default arguments for the DAG
-default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
-}
-
 # Define the DAG
 with DAG(
         'process_stream_raw_to_preproc',
-        default_args=default_args,
         schedule_interval=None,
         start_date=datetime(2023, 1, 1),
         catchup=False,
@@ -51,4 +40,4 @@ with DAG(
         parallel_tasks.append(task_operator)
 
     # Final workflow
-    EmptyOperator(task_id="start") >> parallel_tasks
+    parallel_tasks
