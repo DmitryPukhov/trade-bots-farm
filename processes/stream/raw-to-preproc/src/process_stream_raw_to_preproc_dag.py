@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.operators.empty import EmptyOperator
 
 from dag_tools import tbf_task_operator
 

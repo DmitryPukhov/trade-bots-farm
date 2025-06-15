@@ -1,11 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from airflow import DAG
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
-from common_tools import CommonTools
-
-# Define the DAG
 with DAG(
         'process_batch_full',
         schedule_interval=None,
@@ -14,18 +11,18 @@ with DAG(
         tags=['trade-bots-farm'],
         max_active_runs=1
 ) as dag:
-    CommonTools.init_logging()
+    """ Main batch DAG, triggers all batch loading and processing DAGs"""
 
     trigger_connector_batch_s3_external_dag = TriggerDagRunOperator(
         task_id='trigger_connector_batch_s3_external_dag',
         trigger_dag_id='connector_batch_s3_external',
-        execution_date='{{ ds }}',
+        execution_date='{{ ts }}',
         wait_for_completion=True,  # Will wait here
     )
     trigger_process_batch_raw_to_preproc_dag = TriggerDagRunOperator(
         task_id='trigger_process_batch_raw_to_preproc_dag',
         trigger_dag_id='process_batch_raw_to_preproc',
-        execution_date='{{ ds }}',
+        execution_date='{{ ts }}',
         wait_for_completion=True,  # Will wait here
     )
 
