@@ -1,9 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from airflow import DAG
-from airflow.operators.empty import EmptyOperator
 from airflow.models.baseoperator import chain
-
 from dag_tools import tbf_task_operator
 
 # Define the DAG
