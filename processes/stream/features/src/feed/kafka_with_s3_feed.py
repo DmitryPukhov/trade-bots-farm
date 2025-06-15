@@ -89,7 +89,8 @@ class KafkaWithS3Feed:
                 await self.flush_buffers()
 
             # Check if we have gap between s3 and kafka and try to load absent data from s3
-            time_gap = self._min_stream_datetime.tz_localize("UTC").to_pydatetime() - self._max_history_datetime.tz_localize("UTC").to_pydatetime()
+            time_gap = self._min_stream_datetime.tz_localize(
+                "UTC").to_pydatetime() - self._max_history_datetime.tz_localize("UTC").to_pydatetime()
             if time_gap > self._history_stream_max_time_gap:
                 # Don't go to s3 too often, wait some time
                 await asyncio.sleep(self._initial_history_reload_interval.total_seconds())
@@ -102,15 +103,16 @@ class KafkaWithS3Feed:
 
     async def read_history(self):
         """ Read history from s3 and put it to main dataframe"""
+
         # Read history from s3
         history_df = await self._s3_feed.read_history(
             start_date=self._max_history_datetime.date(),
             end_date=self._min_stream_datetime.date(),
-            modified_after=self._min_stream_datetime)
+            modified_after=self._min_stream_datetime if self._min_stream_datetime.date() < pd.Timestamp.max.date() else pd.Timestamp.min)
         if not history_df.empty:
             if not self.data.empty:
-                history_df = history_df[history_df.index not in self.data.index]
-            self._max_history_datetime = max(self._max_history_datetime, history_df.index.max())
+                self._max_history_datetime = max(self._max_history_datetime, history_df.index.max())
+                history_df = history_df[~history_df.index.isin(self.data.index)]
             self.data = pd.concat([self.data, history_df]).sort_index()
 
     async def run_async(self):
@@ -118,7 +120,6 @@ class KafkaWithS3Feed:
         # Initial read s3 history
         self._s3_feed = S3Feed(self._feature_name, merge_tolerance=self._merge_tolerance)
         await self.read_history()
-        # self.data = await self._s3_feed.read_history()
         self._max_history_datetime = self.data.index.max() if not self.data.empty else pd.Timestamp(0)
 
         # Connect to kafka
