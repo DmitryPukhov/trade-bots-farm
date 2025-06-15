@@ -140,6 +140,12 @@ do
         dag_name="process_batch_raw_to_preproc"
         deploy_module "$module_dir" "$dag_name"
   fi
+  if [[ "$dag" == "process_batch_full" || "$dag" == "all" ]]; then
+        matched=true
+        module_dir=$PROJECT_ROOT/processes/batch/full
+        dag_name="process_batch_full"
+        deploy_module "$module_dir" "$dag_name"
+  fi
 done
 
 
