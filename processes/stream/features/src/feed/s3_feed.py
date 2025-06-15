@@ -57,12 +57,9 @@ class S3Feed:
     async def _read_csv(self, s3_dir: str, daily_paths: [str], index_col) -> pd.DataFrame:
         """ Read daily files from s3 dir containing data between dates"""
 
-        # Find which files to read
-        # daily_paths = S3Tools.find_daily_files(self._s3_fs, s3_dir, start_date, end_date)
-
         # Read all files to a single dataframe
         daily_files = []
-        for i, daily_path in enumerate(daily_paths):
+        for i, daily_path in enumerate(daily_paths, 1):
             daily_path = f"s3://{daily_path}"
             logging.info(f"Reading {i}/{len(daily_paths)} file: {daily_path}")
             daily_df = pd.read_csv(daily_path, storage_options=self.storage_options)
