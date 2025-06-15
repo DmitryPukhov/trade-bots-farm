@@ -84,7 +84,7 @@ class ProcessStreamRawToPreprocApp:
             # logging.debug(f"Received data from topic {self._src_topic}, message: {preproc_msg.value()}")
             # Accumulate and maybe generate preproc messages
             preproc_msgs = await self._preprocessor.process(preproc_msg.value().decode('utf-8'))
-            preproc_msgs = await asyncio.gather(*preproc_msgs)
+            #preproc_msgs = await asyncio.gather(*preproc_msgs)
 
             # Normally 1 message in the list
             for preproc_msg in preproc_msgs:
