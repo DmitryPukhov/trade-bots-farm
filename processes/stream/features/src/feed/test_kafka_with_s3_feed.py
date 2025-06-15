@@ -1,6 +1,6 @@
 # test_kafka_with_s3_feed.py
 import asyncio
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch, MagicMock, call
 
 import pandas as pd
 import pytest
@@ -132,49 +132,55 @@ class TestKafkaWithS3Feed:
     @pytest.fixture
     def mock_s3_feed(self):
         """Fixture to create a mock S3Feed instance"""
-        mock = AsyncMock()
-        mock.read_history.return_value = pd.DataFrame({
-            "timestamp": [pd.Timestamp("2025-06-15 02:50:00")],
-            "value": [100]
-        })
-        return mock
+        return AsyncMock()
 
     @pytest.fixture
     def mock_kafka_feed(self):
         """Fixture to create a mock KafkaFeed instance"""
-        mock = AsyncMock()
-        mock.run = AsyncMock()
-        return mock
+        return AsyncMock()
 
     @pytest.mark.asyncio
     async def test_processing_loop_should_set_kafka_offsets_to_last_s3_data(self, mock_s3_feed, mock_kafka_feed):
 
-        mock_s3_feed.read_history.side_effect = [
-            # Initial call to load data from S3
-            pd.DataFrame([{"datetime": pd.Timestamp("2025-06-15 02:45:00")}]).set_index("datetime", drop=False),
-            # Second call to load additional data from S3 to close time gap
-            pd.DataFrame([{"datetime": pd.Timestamp("2025-06-15 02:50:00")}]).set_index("datetime", drop=False),
-        ]
+        # Configure s3 feed mock to return specific data
+        def read_history_side_effect():
+            """Generator that yields:
+            - First call: first_df
+            - Second call: second_df
+            - All subsequent calls: None
+            """
+            yield pd.DataFrame([{"datetime": pd.Timestamp("2025-06-15 02:45:00")}]).set_index("datetime", drop=False)
+            yield pd.DataFrame([{"datetime": pd.Timestamp("2025-06-15 02:55:00")}]).set_index("datetime", drop=False)
+            while True:
+                yield pd.DataFrame()
+
+        mock_s3_feed.read_history.side_effect = read_history_side_effect()
 
         with patch("feed.kafka_with_s3_feed.S3Feed", return_value=mock_s3_feed), \
                 patch("feed.kafka_with_s3_feed.KafkaFeed", return_value=mock_kafka_feed):
 
+            # This feed is under test
             feed = KafkaWithS3Feed("test", asyncio.Event())
             feed._initial_history_reload_interval = pd.Timedelta(0)
 
-            # Prepare kafka stream emulation
-            new_candle = {"close_time": "2020-06-15 02:55", "close": 100}
-            new_level2 = {"datetime": "2020-06-15 02:55:00", "bid": 200}
+            # Kafka stream feed emulation
+            new_candle = {"close_time": "2025-06-15 02:55", "close": 100}
+            new_level2 = {"datetime": "2025-06-15 02:55:00", "bid": 200}
             await feed._candles_queue.put(new_candle)
             await feed._level2_queue.put(new_level2)
 
+            # Run the feed for a while
             with pytest.raises(asyncio.TimeoutError):
-
                 # Run the feed under test for a while
-                await asyncio.wait_for(feed.run_async(), 0.5)
+                 await asyncio.wait_for(feed.run_async(), 0.1)
 
-            # Verify that feed tried to get previous kafka data just after s3 data ended
-            mock_kafka_feed.run.assert_called_with(start_time=pd.Timestamp("2025-06-15 02:45:00"))
-            # todo: verify that it was called twice
-            #mock_s3_feed.read_history.assert_called_with(end_time=[pd.Timestamp("2025-06-15 02:55:00")])
+            # Initial history load + next loads because stream data is too late after S3
+            assert mock_s3_feed.read_history.call_count == 2
 
+            # Assert initial call to load data from S3
+            assert mock_s3_feed.read_history.call_args_list[0] == call(
+                start_date = pd.Timestamp.min.date(), end_date=pd.Timestamp.max.date(), modified_after=pd.Timestamp.min)
+
+            # Assert incremental call to load data from S3 up to the beginning of the stream data
+            assert mock_s3_feed.read_history.call_args_list[1] == call(
+                start_date = pd.Timestamp("2025-06-15").date(), end_date= pd.Timestamp("2025-06-15").date(), modified_after=pd.Timestamp("2025-06-15 02:55:00"))
