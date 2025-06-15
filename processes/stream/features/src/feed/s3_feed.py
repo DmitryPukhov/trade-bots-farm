@@ -93,6 +93,7 @@ class S3Feed:
     async def read_history(self, start_date: date = None, end_date: date = None,
                            modified_after=pd.Timestamp.min.tz_localize("UTC")) -> pd.DataFrame:
         """ Read historical data from s3."""
+
         end_date = end_date or datetime.now(timezone.utc).date()
         start_date = start_date or end_date - timedelta(days=self.history_days_limit)
 
