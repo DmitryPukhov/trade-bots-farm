@@ -1,4 +1,4 @@
-import asyncio
+import logging
 
 import pandas as pd
 
@@ -10,10 +10,10 @@ class FeaturesCalc:
         self._feed = feed
 
     async def calc(self, df: pd.DataFrame):
-        return df
+        logging.info(f"Calculating features. Input shape: {df.shape}")
+        return pd.DataFrame()
 
     async def run_async(self):
         await self._feed.new_data_event.wait()
         df = self._feed.data.copy()
         features = await self.calc(df)
-        print(features)
