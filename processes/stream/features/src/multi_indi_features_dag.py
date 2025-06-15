@@ -4,7 +4,6 @@ from airflow import DAG
 
 from dag_tools import tbf_task_operator
 
-# Define the DAG
 with DAG(
         'process_stream_features_milti_indi',
         schedule_interval=None,
@@ -13,28 +12,11 @@ with DAG(
         tags=['trade-bots-farm'],
         max_active_runs=1
 ) as dag:
-    # create [(source, dest, kind)] from config
-    task_envs = [
-        # Process level2
-        {"KAFKA_TOPIC_SRC": "raw.htx.market.btc-usdt.depth.step13", "KAFKA_TOPIC_DST": "preproc.btc-usdt.level2.1min",
-         "KIND": "level2", "TICKER": "btc-usdt"},
-        # Process candles
-        {"KAFKA_TOPIC_SRC": "raw.htx.market.btc-usdt.kline.1min",
-         "KAFKA_TOPIC_DST": "preproc.btc-usdt.candles.1min",
-         "KIND": "candles", "TICKER": "btc-usdt"}
-    ]
+    """ Calculate multi indicator features from candles and level2"""
 
-    # Create tasks list for each source,  dest, kind
-    parallel_tasks = []
-    for task_env in task_envs:
-        ticker = "btc-usdt"
-        task_id = f"process_stream_features_multi_indi_{ticker}"
-        # Parallel process level2, candles, bid/ask if configured
-        task_operator = tbf_task_operator(
-            task_id=task_id,
-            wheel_file_name="trade_bots_farm_process_stream_features-0.1.0-py3-none-any.whl",
-            module_name="multi_indi_features_app",
-            class_name="MultiIndiFeaturesApp",
-            **{"env_vars": task_env})
-        parallel_tasks.append(task_operator)
-
+    task_id = f"process_stream_features_multi_indi_btc_usdt"
+    task_operator = tbf_task_operator(
+        task_id=task_id,
+        wheel_file_name="trade_bots_farm_process_stream_features-0.1.0-py3-none-any.whl",
+        module_name="multi_indi_features_app",
+        class_name="MultiIndiFeaturesApp")

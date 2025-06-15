@@ -134,6 +134,12 @@ do
         dag_name="process_stream_raw_to_preproc"
         deploy_module "$module_dir" "$dag_name"
   fi
+  if [[ "$dag" == "process_stream_features" || "$dag" == "all" ]]; then
+        matched=true
+        module_dir=$PROJECT_ROOT/processes/stream/features
+        dag_name="process_stream_features"
+        deploy_module "$module_dir" "$dag_name"
+  fi
   if [[ "$dag" == "process_batch_raw_to_preproc" || "$dag" == "all" ]]; then
         matched=true
         module_dir=$PROJECT_ROOT/processes/batch/raw-to-preproc
