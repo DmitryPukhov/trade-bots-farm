@@ -20,6 +20,7 @@ class KafkaWithS3Feed:
         self._level2_queue = asyncio.Queue()
         self._candles_queue = asyncio.Queue()
         self.new_data_event = new_data_event
+        self.stop_event = asyncio.Event()
         self._last_candle_time = pd.Timestamp(0)
 
         # Settings to track gap between s3 and kafka
@@ -29,6 +30,8 @@ class KafkaWithS3Feed:
         self._history_try_interval = pd.Timedelta(os.getenv("HISTORY_TRY_INTERVAL", "1min"))
 
         self._s3_feed = None
+        self._kafka_feed = None
+        self._last_tried_kafka_offsets_time   = None
 
     async def on_level2(self, msg):
         # Convert message to DataFrame row with datetime index
@@ -40,7 +43,6 @@ class KafkaWithS3Feed:
         self._level2_buf = pd.concat([self._level2_buf, df])
 
     async def on_candle(self, msg):
-        # Similar handling for candles
         df = pd.DataFrame([msg])
         df['close_time'] = pd.to_datetime(df['close_time'])
         df.set_index('close_time', inplace=True, drop=False)
@@ -53,7 +55,6 @@ class KafkaWithS3Feed:
         """
         if self._level2_buf.empty or self._candles_buf.empty:
             return
-
         merged_df = pd.merge_asof(left=self._candles_buf, right=self._level2_buf, left_index=True, right_index=True,
                                   tolerance=self._merge_tolerance, direction="nearest")
         merged_df = merged_df.dropna()
@@ -92,34 +93,35 @@ class KafkaWithS3Feed:
         If there is a time gap between s3 and kafka, try to load new history from s3
          or move kafka committed offset to the past
         """
-
-        def time_gap_log_message(time_gap_: pd.Timedelta):
-            logging.info(
-                f"Time gap between s3 and kafka is: {time_gap_}, max allowed: {self._history_stream_max_time_gap}. "
-                f"Max history datetime: {self._max_history_datetime}, min stream datetime: {self._min_stream_datetime}")
-
-        # If we have time gap, try to load more history from s3
-        time_gap = await self.get_time_gap()
-        if time_gap and time_gap > self._history_stream_max_time_gap:
-            # Don't go to s3 too often, wait some time
+        while not self.stop_event.is_set():
+            def time_gap_log_message(time_gap_: pd.Timedelta):
+                logging.info(
+                    f"Time gap between s3 and kafka is: {time_gap_}, max allowed: {self._history_stream_max_time_gap}. "
+                    f"Max history datetime: {self._max_history_datetime}, min stream datetime: {self._min_stream_datetime}")
+            # If we have time gap, try to load more history from s3
+            time_gap = await self.get_time_gap()
             await asyncio.sleep(self._history_try_interval.total_seconds())
-            logging.info(time_gap_log_message(time_gap))
-            logging.info(f"Try to load new history from s3")
-            await self.read_history()
+            if time_gap and time_gap > self._history_stream_max_time_gap:
+                # Don't go to s3 too often, wait some time
+                logging.info(time_gap_log_message(time_gap))
+                logging.info(f"Try to load new history from s3")
+                await self.read_history()
 
-        # If loading history above did not help, try to move kafka committed offsets down to the end of the history data
-        time_gap = await self.get_time_gap()
-        if time_gap and time_gap > self._history_stream_max_time_gap and self._max_history_datetime is not None:
-            logging.info(time_gap_log_message(time_gap))
-            logging.info(f"Move kafka committed offsets to max history datetime: {self._max_history_datetime}")
-            await self._s3_feed.move_committed_offsets(self._max_history_datetime)
-
-
+            # If loading history above did not help, try to move kafka committed offsets down to the end of the history data
+            time_gap = await self.get_time_gap()
+            if time_gap and time_gap > self._history_stream_max_time_gap and self._max_history_datetime is not None:
+                logging.info(time_gap_log_message(time_gap))
+                if self._last_tried_kafka_offsets_time is None :
+                    self._last_tried_kafka_offsets_time = self._min_stream_datetime
+                else:
+                    self._last_tried_kafka_offsets_time -= time_gap
+                logging.info(f"Move kafka committed offsets to max history datetime or below it: {self._last_tried_kafka_offsets_time}")
+                await self._kafka_feed.set_offsets_to_time(self._last_tried_kafka_offsets_time)
 
     async def processing_loop(self):
         """ Get new messages from stream, add to buffers, flush buffers to main dataframe"""
 
-        while True:
+        while not self.stop_event.is_set():
             # Read buffers
             if not self._level2_queue.empty():
                 await self.on_level2(await self._level2_queue.get())
@@ -129,9 +131,6 @@ class KafkaWithS3Feed:
             #  Process new data if it comes
             if not (self._level2_buf.empty and self._candles_buf.empty):
                 await self.flush_buffers()
-
-            # After the app is started, additional check to close time gap between history and kafka
-            await self.handle_time_gap()
 
             await asyncio.sleep(0.1)
 
@@ -155,8 +154,9 @@ class KafkaWithS3Feed:
         """ Initial read s3 history then listen kafka for new data and append to dataframe"""
         # Initial read s3 history
         self._s3_feed = S3Feed(self._feature_name, merge_tolerance=self._merge_tolerance)
+        task =  asyncio.create_task(self.handle_time_gap())
         await self.read_history()
 
         # Connect to kafka
-        kafka_feed = KafkaFeed(level2_queue=self._level2_queue, candles_queue=self._candles_queue)
-        await asyncio.gather(kafka_feed.run(start_time=self._max_history_datetime), self.processing_loop())
+        self._kafka_feed = KafkaFeed(level2_queue=self._level2_queue, candles_queue=self._candles_queue)
+        await asyncio.gather(self._kafka_feed.run(start_time=self._max_history_datetime), self.processing_loop())
