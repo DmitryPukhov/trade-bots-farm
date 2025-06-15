@@ -22,8 +22,8 @@ class KafkaWithS3Feed:
         self._last_candle_time = pd.Timestamp(0)
 
         # Settings to track gap between s3 and kafka
-        self._max_history_datetime = self.data.index.max() if not self.data.empty else pd.Timestamp.min.tz_localize("UTC")
-        self._min_stream_datetime = pd.Timestamp.max.tz_localize("UTC")
+        self._max_history_datetime = self.data.index.max() if not self.data.empty else pd.Timestamp.min
+        self._min_stream_datetime = pd.Timestamp.max
         self._history_stream_max_time_gap = pd.Timedelta(minutes=1)
         self._initial_history_reload_interval = pd.Timedelta(minutes=1)
 
@@ -66,7 +66,7 @@ class KafkaWithS3Feed:
 
             # Now we can clean close_time and set index and datetime to the latest value
             merged_df["datetime"] = merged_df[["datetime", "close_time"]].max(axis=1)
-            self._min_stream_datetime = min(self._min_stream_datetime, merged_df["datetime"].min().tz_localize("UTC"))
+            self._min_stream_datetime = min(self._min_stream_datetime, merged_df["datetime"].min())
             merged_df.set_index("datetime", inplace=True, drop=False)
 
             # Append the merged data to the main dataframe
@@ -89,7 +89,7 @@ class KafkaWithS3Feed:
                 await self.flush_buffers()
 
             # Check if we have gap between s3 and kafka and try to load absent data from s3
-            time_gap = self._min_stream_datetime.to_pydatetime() - self._max_history_datetime.to_pydatetime()
+            time_gap = self._min_stream_datetime.tz_localize("UTC").to_pydatetime() - self._max_history_datetime.tz_localize("UTC").to_pydatetime()
             if time_gap > self._history_stream_max_time_gap:
                 # Don't go to s3 too often, wait some time
                 await asyncio.sleep(self._initial_history_reload_interval.total_seconds())
@@ -108,7 +108,8 @@ class KafkaWithS3Feed:
             end_date=self._min_stream_datetime.date(),
             modified_after=self._min_stream_datetime)
         if not history_df.empty:
-            history_df = history_df[history_df.index not in self.data.index]
+            if not self.data.empty:
+                history_df = history_df[history_df.index not in self.data.index]
             self._max_history_datetime = max(self._max_history_datetime, history_df.index.max())
             self.data = pd.concat([self.data, history_df]).sort_index()
 
@@ -117,8 +118,8 @@ class KafkaWithS3Feed:
         # Initial read s3 history
         self._s3_feed = S3Feed(self._feature_name, merge_tolerance=self._merge_tolerance)
         await self.read_history()
-        self.data = await self._s3_feed.read_history()
-        self._max_history_datetime = self.data.index.max() if not self.data.empty else pd.Timestamp()
+        # self.data = await self._s3_feed.read_history()
+        self._max_history_datetime = self.data.index.max() if not self.data.empty else pd.Timestamp(0)
 
         # Connect to kafka
         kafka_feed = KafkaFeed(level2_queue=self._level2_queue, candles_queue=self._candles_queue)
