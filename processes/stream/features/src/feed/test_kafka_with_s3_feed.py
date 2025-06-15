@@ -172,7 +172,7 @@ class TestKafkaWithS3Feed:
 
             # Assert initial call to load data from S3
             assert mock_s3_feed.read_history.call_args_list[0] == call(
-                start_date=pd.Timestamp.min.date(), end_date=pd.Timestamp.max.date(), modified_after=pd.Timestamp.min)
+                start_date=None, end_date=None, modified_after=None)
 
             # Assert incremental call to load data from S3 up to the beginning of the stream data
             assert mock_s3_feed.read_history.call_args_list[1] == call(

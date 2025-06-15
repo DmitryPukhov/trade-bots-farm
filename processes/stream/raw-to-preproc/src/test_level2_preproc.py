@@ -76,4 +76,5 @@ class TestLevel2Preproc:
         aggregated = await Level2Preproc()._aggregate([raw_msg])
 
         # Just ensure something is calculated, no need to test pandas mean function
-        assert aggregated["bid_max"] == 102
+        assert len(aggregated) == 1
+        assert aggregated[0]["bid_max"] == 102

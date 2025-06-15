@@ -66,8 +66,8 @@ class Level2Preproc(PreprocBase):
         transformed = [self._transform_message(msg) for msg in raw_messages]
         transformed = await asyncio.gather(*transformed)
         df_transformed = pd.DataFrame(transformed)
-        df_aggregated = df_transformed.agg('mean')
+        df_aggregated = df_transformed.resample('1min', on='datetime').agg('mean')
         dt = df_transformed["datetime"].max()
         df_aggregated["datetime"] = str(dt)
-        res = df_aggregated.to_dict()
+        res = df_aggregated.to_dict(orient='records')
         return res
