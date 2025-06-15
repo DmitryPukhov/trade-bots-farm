@@ -22,7 +22,7 @@ class S3Tools:
         files_in_date_range = [name for name in file_names if
                                start_date <= S3Tools.get_file_date_from_name(name) <= end_date]
 
-        logging.info(f"Found {len(files_in_date_range)} files in {s3_dir} between {start_date} and {end_date}")
+        logging.info(f"Found {len(files_in_date_range)} files in {s3_dir}  between {start_date} and {end_date}, modified after {modified_after}")
         return sorted(files_in_date_range)
 
     @staticmethod

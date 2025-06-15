@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-from typing import Optional
 
 import pandas as pd
 
@@ -52,6 +51,8 @@ class KafkaWithS3Feed:
         If data in buffer is ready, put it to main merged dataframe. In good case each buffer contains one record per minute
         In case of time lags, consider pandas buffers with many messages
         """
+        if self._level2_buf.empty or self._candles_buf.empty:
+            return
 
         merged_df = pd.merge_asof(left=self._candles_buf, right=self._level2_buf, left_index=True, right_index=True,
                                   tolerance=self._merge_tolerance, direction="nearest")
@@ -116,7 +117,7 @@ class KafkaWithS3Feed:
         history_df = await self._s3_feed.read_history(
             start_date=start_date,
             end_date=end_date,
-            modified_after= self._min_stream_datetime)
+            modified_after=self._min_stream_datetime)
         if not history_df.empty:
             if not self.data.empty:
                 self._max_history_datetime = max(self._max_history_datetime, history_df.index.max())
