@@ -12,6 +12,7 @@ from urllib import parse
 
 from websockets import connect, exceptions
 
+
 class HtxWebSocketClient:
     def __init__(self,
                  receiver,
@@ -51,16 +52,15 @@ class HtxWebSocketClient:
                     self._websocket = websocket
                     self._reconnect_delay = self.heartbeat_timeout  # Reset delay after successful connection
                     await self._on_open()
-
                     try:
                         async for message in websocket:
                             await self._on_message(message)
                     except exceptions.ConnectionClosed as e:
                         await self._on_close(e.code, e.reason)
-                    except Exception as e:
-                        await self._on_error(e)
+                        raise e  # Reraise the exception for reconnection
 
             except Exception as e:
+                # Delay before reconnect
                 await self._on_error(e)
                 await self._handle_reconnect()
 
