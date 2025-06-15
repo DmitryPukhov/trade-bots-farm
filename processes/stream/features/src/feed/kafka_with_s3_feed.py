@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 
 import pandas as pd
 
@@ -25,7 +26,7 @@ class KafkaWithS3Feed:
         self._max_history_datetime = self.data.index.max() if not self.data.empty else pd.Timestamp.min
         self._min_stream_datetime = pd.Timestamp.max
         self._history_stream_max_time_gap = pd.Timedelta(minutes=1)
-        self._initial_history_reload_interval = pd.Timedelta(minutes=1)
+        self._history_try_interval = pd.Timedelta(os.getenv("HISTORY_TRY_INTERVAL", "1m"))
 
         self._s3_feed = None
 
@@ -93,9 +94,9 @@ class KafkaWithS3Feed:
                 "UTC").to_pydatetime() - self._max_history_datetime.tz_localize("UTC").to_pydatetime()
             if time_gap > self._history_stream_max_time_gap:
                 # Don't go to s3 too often, wait some time
-                await asyncio.sleep(self._initial_history_reload_interval.total_seconds())
+                await asyncio.sleep(self._history_try_interval.total_seconds())
                 logging.info(
-                    f"Gap between s3 and kafka is {time_gap} > {self._history_stream_max_time_gap}. "
+                    f"Gap between s3 and kafka is {time_gap}, it is more than allowed maximum {self._history_stream_max_time_gap}. "
                     f"Try to load new history from s3")
                 await self.read_history()
             else:
