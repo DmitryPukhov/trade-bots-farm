@@ -1,6 +1,6 @@
 # test_kafka_with_s3_feed.py
 import asyncio
-from unittest.mock import AsyncMock, patch, MagicMock, call
+from unittest.mock import AsyncMock, patch, call
 
 import pandas as pd
 import pytest
@@ -9,7 +9,6 @@ from feed.kafka_with_s3_feed import KafkaWithS3Feed
 
 
 class TestKafkaWithS3Feed:
-
 
     @pytest.mark.asyncio
     async def test_on_candle(self):
@@ -142,19 +141,10 @@ class TestKafkaWithS3Feed:
     @pytest.mark.asyncio
     async def test_processing_loop_should_set_kafka_offsets_to_last_s3_data(self, mock_s3_feed, mock_kafka_feed):
 
-        # Configure s3 feed mock to return specific data
-        def read_history_side_effect():
-            """Generator that yields:
-            - First call: first_df
-            - Second call: second_df
-            - All subsequent calls: None
-            """
-            yield pd.DataFrame([{"datetime": pd.Timestamp("2025-06-15 02:45:00")}]).set_index("datetime", drop=False)
-            yield pd.DataFrame([{"datetime": pd.Timestamp("2025-06-15 02:55:00")}]).set_index("datetime", drop=False)
-            while True:
-                yield pd.DataFrame()
-
-        mock_s3_feed.read_history.side_effect = read_history_side_effect()
+        # Configure the mock S3Feed to return the desired data
+        mock_s3_feed.read_history.side_effect = [
+            pd.DataFrame([{"datetime": pd.Timestamp("2025-06-15 02:45:00")}]).set_index("datetime", drop=False),
+            pd.DataFrame([{"datetime": pd.Timestamp("2025-06-15 02:55:00")}]).set_index("datetime", drop=False)]
 
         with patch("feed.kafka_with_s3_feed.S3Feed", return_value=mock_s3_feed), \
                 patch("feed.kafka_with_s3_feed.KafkaFeed", return_value=mock_kafka_feed):
@@ -164,23 +154,29 @@ class TestKafkaWithS3Feed:
             feed._initial_history_reload_interval = pd.Timedelta(0)
 
             # Kafka stream feed emulation
-            new_candle = {"close_time": "2025-06-15 02:55", "close": 100}
-            new_level2 = {"datetime": "2025-06-15 02:55:00", "bid": 200}
-            await feed._candles_queue.put(new_candle)
-            await feed._level2_queue.put(new_level2)
+            await feed._candles_queue.put({"close_time": "2025-06-15 02:55", "close": 100})
+            await feed._level2_queue.put({"datetime": "2025-06-15 02:55:00", "bid": 200})
+            await feed._candles_queue.put({"close_time": "2025-06-15 02:56", "close": 100})
+            await feed._level2_queue.put({"datetime": "2025-06-15 02:56:00", "bid": 200})
 
             # Run the feed for a while
             with pytest.raises(asyncio.TimeoutError):
                 # Run the feed under test for a while
-                 await asyncio.wait_for(feed.run_async(), 0.1)
+                await asyncio.wait_for(feed.run_async(), 0.1)
 
             # Initial history load + next loads because stream data is too late after S3
             assert mock_s3_feed.read_history.call_count == 2
 
             # Assert initial call to load data from S3
             assert mock_s3_feed.read_history.call_args_list[0] == call(
-                start_date = pd.Timestamp.min.date(), end_date=pd.Timestamp.max.date(), modified_after=pd.Timestamp.min)
+                start_date=pd.Timestamp.min.date(), end_date=pd.Timestamp.max.date(), modified_after=pd.Timestamp.min)
 
             # Assert incremental call to load data from S3 up to the beginning of the stream data
             assert mock_s3_feed.read_history.call_args_list[1] == call(
-                start_date = pd.Timestamp("2025-06-15").date(), end_date= pd.Timestamp("2025-06-15").date(), modified_after=pd.Timestamp("2025-06-15 02:55:00"))
+                start_date=pd.Timestamp("2025-06-15").date(), end_date=pd.Timestamp("2025-06-15").date(),
+                modified_after=pd.Timestamp("2025-06-15 02:55:00"))
+
+            assert feed.data.index.tolist() == [pd.Timestamp("2025-06-15 02:45:00"),
+                                                pd.Timestamp("2025-06-15 02:55:00"),
+                                                pd.Timestamp("2025-06-15 02:56:00"),
+                                                ]
