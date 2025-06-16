@@ -3,7 +3,6 @@ import logging
 import os
 
 import pandas as pd
-from anyio import sleep
 
 from feed.kafka_feed import KafkaFeed
 from feed.s3_feed import S3Feed
@@ -62,6 +61,9 @@ class KafkaWithS3Feed:
         if self._level2_buf.empty or self._candles_buf.empty:
             self._logger.debug("Buffers are empty. Skipping flushing")
             return
+
+        is_good_gap_at_start, time_gap_at_start = await self.get_time_gap(supress_logging=True)
+
         merged_df = pd.merge_asof(left=self._candles_buf, right=self._level2_buf, left_index=True, right_index=True,
                                   tolerance=self._merge_tolerance, direction="nearest")
         merged_df = merged_df.dropna()
@@ -86,19 +88,39 @@ class KafkaWithS3Feed:
                                f"level2 buf size: {len(self._level2_buf)}, "
                                f"candles buf size: {len(self._candles_buf)}")
 
-            # Notify about new data
-            self.new_data_event.set()
+            # If time gap is good, notify about new data
+            is_good_gap, time_gap = await self.get_time_gap(supress_logging=True)
+            if is_good_gap:
+                # When initial time gap is closed, write to log about it. It happens only once.
+                if not is_good_gap_at_start:
+                    self._logger.info(
+                        f"Time gap is good now. Old time gap: {time_gap_at_start}, new time gap: {time_gap}, "
+                        f"max allowed time gap: {self._history_stream_max_time_gap}, "
+                        f"max history datetime: {self._max_history_datetime}, "
+                        f"min stream datetime: {self._min_stream_datetime}"
+                    )
+                # Notify that new data is available
+                self.new_data_event.set()
 
-    async def get_time_gap(self) -> pd.Timedelta:
+    async def get_time_gap(self, supress_logging=False) -> (bool, pd.Timedelta):
         """ Calculate the time gap between the last message from s3 and the first message from kafka"""
+
         if self._min_stream_datetime and self._max_history_datetime:
             time_gap = self._min_stream_datetime.tz_localize(
                 "UTC").to_pydatetime() - self._max_history_datetime.tz_localize("UTC").to_pydatetime()
+            time_gap = max(time_gap, pd.Timedelta(seconds=0))
+            is_good_gap = time_gap < self._history_stream_max_time_gap
         else:
             time_gap = None
-        self._logger.debug(f"Calculated time gap: {time_gap}. "
-                           f"Max history datetime: {self._max_history_datetime}, min stream datetime: {self._min_stream_datetime}")
-        return time_gap
+            is_good_gap = False
+        log_msg = f"Calculated time gap: {time_gap}, is good: {is_good_gap}. max allowed: {self._history_stream_max_time_gap}."
+        f"Max history datetime: {self._max_history_datetime}, min stream datetime: {self._min_stream_datetime}"
+        if not supress_logging:
+            self._logger.info(log_msg)
+        else:
+            self._logger.debug(log_msg)
+
+        return is_good_gap, time_gap
 
     async def handle_time_gap(self):
         """
@@ -106,25 +128,21 @@ class KafkaWithS3Feed:
          or move kafka committed offset to the past
         """
         while not self.stop_event.is_set():
-            def time_gap_log_message(time_gap_: pd.Timedelta):
-                self._logger.info(
-                    f"Time gap between s3 and kafka is: {time_gap_}, max allowed: {self._history_stream_max_time_gap}. "
-                    f"Max history datetime: {self._max_history_datetime}, min stream datetime: {self._min_stream_datetime}")
 
             self._logger.debug(f"Checking time gap with interval {self._history_try_interval.total_seconds()} sec")
             # If we have time gap, try to load more history from s3
-            time_gap = await self.get_time_gap()
+            is_good_gap, _ = await self.get_time_gap()
 
-            if time_gap and time_gap > self._history_stream_max_time_gap:
+            if not is_good_gap:
                 # Don't go to s3 too often, wait some time
-                self._logger.info(time_gap_log_message(time_gap))
+                # self._logger.info(time_gap_log_message(time_gap))
                 self._logger.info(f"Try to load new history from s3")
                 await self.read_history()
 
             # If loading history above did not help, try to move kafka committed offsets down to the end of the history data
-            time_gap = await self.get_time_gap()
-            if time_gap and time_gap > self._history_stream_max_time_gap and self._max_history_datetime is not None:
-                self._logger.info(time_gap_log_message(time_gap))
+            is_good_gap, time_gap = await self.get_time_gap()
+            if not is_good_gap:
+                # self._logger.info(time_gap_log_message(time_gap))
                 if self._last_tried_kafka_offsets_time is None:
                     self._last_tried_kafka_offsets_time = self._min_stream_datetime
                 else:
