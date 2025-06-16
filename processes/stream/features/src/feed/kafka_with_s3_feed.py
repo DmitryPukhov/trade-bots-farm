@@ -83,6 +83,7 @@ class KafkaWithS3Feed:
             merged_df.set_index("datetime", inplace=True, drop=False)
 
             # Append the merged data to the main dataframe
+            merged_df = merged_df[~merged_df.index.isin(self.data.index)]
             self.data = pd.concat([df for df in [self.data, merged_df] if not df.empty])
             self._logger.debug(f"Flush buffers complete. Data size: {len(self.data)}, "
                                f"level2 buf size: {len(self._level2_buf)}, "
@@ -189,8 +190,8 @@ class KafkaWithS3Feed:
         """ Initial read s3 history then listen kafka for new data and append to dataframe"""
         # Initial read s3 history
         self._s3_feed = S3Feed(self._feature_name, merge_tolerance=self._merge_tolerance)
-        task = asyncio.create_task(self.handle_time_gap())
         await self.read_history()
+        task = asyncio.create_task(self.handle_time_gap())
 
         # Connect to kafka
         self._kafka_feed = KafkaFeed(level2_queue=self._level2_queue, candles_queue=self._candles_queue)
