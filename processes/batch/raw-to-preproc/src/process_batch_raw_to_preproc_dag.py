@@ -5,6 +5,18 @@ from airflow.models.baseoperator import chain
 from dag_tools import tbf_task_operator
 
 # Define the DAG
+task_envs = [
+
+    # Process level2
+    {"S3_SRC_DIR": "trade-bots-farm/data/raw/pytrade2/BTC-USDT/level2",
+     "S3_DST_DIR": "trade-bots-farm/data/preproc/BTC-USDT/level2",
+     "KIND": "level2", "TICKER": "BTC-USDT"},
+
+    # Process candles
+    {"S3_SRC_DIR": "trade-bots-farm/data/raw/pytrade2/BTC-USDT/candles",
+     "S3_DST_DIR": "trade-bots-farm/data/preproc/BTC-USDT/candles",
+     "KIND": "candles", "TICKER": "BTC-USDT"},
+]
 with DAG(
         'process_batch_raw_to_preproc',
         schedule_interval=None,
@@ -14,17 +26,6 @@ with DAG(
         max_active_runs=1
 ) as dag:
     # create [(source, dest, kind)] from config
-    task_envs = [
-        # Process candles
-        {"S3_SRC_DIR": "trade-bots-farm/data/raw/pytrade2/BTC-USDT/candles",
-         "S3_DST_DIR": "trade-bots-farm/data/preproc/BTC-USDT/candles",
-         "KIND": "candles", "TICKER": "BTC-USDT"},
-
-        # Process level2
-        {"S3_SRC_DIR": "trade-bots-farm/data/raw/pytrade2/BTC-USDT/level2",
-         "S3_DST_DIR": "trade-bots-farm/data/preproc/BTC-USDT/level2",
-         "KIND": "level2", "TICKER": "BTC-USDT"},
-    ]
 
     # Create tasks list for each source,  dest, kind
     tasks = []
