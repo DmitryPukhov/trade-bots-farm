@@ -53,6 +53,7 @@ class HtxWebSocketClient:
             try:
                 message = await self.msg_queue.get()
                 await self._on_message(message)
+                await asyncio.sleep(0.001)
             except Exception as e:
                 logging.error(f"Error processing messages: {e}")
 
@@ -73,7 +74,7 @@ class HtxWebSocketClient:
                     except exceptions.ConnectionClosed as e:
                         await self._on_close(e.code, e.reason)
                         raise e  # Reraise the exception for reconnection
-
+                    await asyncio.sleep(0.01)
             except Exception as e:
                 # Delay before reconnect
                 await self._on_error(e)
