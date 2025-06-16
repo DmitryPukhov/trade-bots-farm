@@ -12,6 +12,7 @@ class KafkaWithS3Feed:
     """ Read history data from s3 then listen kafka for new data"""
 
     def __init__(self, feature_name: str, new_data_event: asyncio.Event):
+        self._logger = logging.getLogger(__class__.__name__)
         self.data = pd.DataFrame()
         self._feature_name = feature_name
         self._candles_buf = pd.DataFrame()
@@ -31,7 +32,7 @@ class KafkaWithS3Feed:
 
         self._s3_feed = None
         self._kafka_feed = None
-        self._last_tried_kafka_offsets_time   = None
+        self._last_tried_kafka_offsets_time = None
 
     async def on_level2(self, msg):
         # Convert message to DataFrame row with datetime index
@@ -41,19 +42,24 @@ class KafkaWithS3Feed:
 
         # Use pd.concat instead of append
         self._level2_buf = pd.concat([self._level2_buf, df])
+        self._logger.debug(f"Got level2 message {msg}. Last level2 message time {self._level2_buf.index[-1]}")
 
     async def on_candle(self, msg):
         df = pd.DataFrame([msg])
         df['close_time'] = pd.to_datetime(df['close_time'])
         df.set_index('close_time', inplace=True, drop=False)
         self._candles_buf = pd.concat([self._candles_buf, df])
+        self._logger.debug(f"Got candle message {msg}. Last candle message time {self._candles_buf.index[-1]}")
 
     async def flush_buffers(self):
         """
         If data in buffer is ready, put it to main merged dataframe. In good case each buffer contains one record per minute
         In case of time lags, consider pandas buffers with many messages
         """
+        self._logger.debug(
+            f"Flushing buffers. Level2 buf size: {len(self._level2_buf)}, candles buf size: {len(self._candles_buf)}")
         if self._level2_buf.empty or self._candles_buf.empty:
+            self._logger.debug("Buffers are empty. Skipping flushing")
             return
         merged_df = pd.merge_asof(left=self._candles_buf, right=self._level2_buf, left_index=True, right_index=True,
                                   tolerance=self._merge_tolerance, direction="nearest")
@@ -75,6 +81,9 @@ class KafkaWithS3Feed:
 
             # Append the merged data to the main dataframe
             self.data = pd.concat([df for df in [self.data, merged_df] if not df.empty])
+            self._logger.debug(f"Flush buffers complete. Data size: {len(self.data)}, "
+                               f"level2 buf size: {len(self._level2_buf)}, "
+                               f"candles buf size: {len(self._candles_buf)}")
 
             # Notify about new data
             self.new_data_event.set()
@@ -86,6 +95,8 @@ class KafkaWithS3Feed:
                 "UTC").to_pydatetime() - self._max_history_datetime.tz_localize("UTC").to_pydatetime()
         else:
             time_gap = None
+        self._logger.debug(f"Calculated time gap: {time_gap}. "
+                           f"Max history datetime: {self._max_history_datetime}, min stream datetime: {self._min_stream_datetime}")
         return time_gap
 
     async def handle_time_gap(self):
@@ -95,28 +106,33 @@ class KafkaWithS3Feed:
         """
         while not self.stop_event.is_set():
             def time_gap_log_message(time_gap_: pd.Timedelta):
-                logging.info(
+                self._logger.info(
                     f"Time gap between s3 and kafka is: {time_gap_}, max allowed: {self._history_stream_max_time_gap}. "
                     f"Max history datetime: {self._max_history_datetime}, min stream datetime: {self._min_stream_datetime}")
+
+            self._logger.debug(f"Checking time gap with interval {self._history_try_interval.total_seconds()} sec")
             # If we have time gap, try to load more history from s3
             time_gap = await self.get_time_gap()
-            await asyncio.sleep(self._history_try_interval.total_seconds())
+
             if time_gap and time_gap > self._history_stream_max_time_gap:
                 # Don't go to s3 too often, wait some time
-                logging.info(time_gap_log_message(time_gap))
-                logging.info(f"Try to load new history from s3")
+                self._logger.info(time_gap_log_message(time_gap))
+                self._logger.info(f"Try to load new history from s3")
                 await self.read_history()
 
             # If loading history above did not help, try to move kafka committed offsets down to the end of the history data
             time_gap = await self.get_time_gap()
             if time_gap and time_gap > self._history_stream_max_time_gap and self._max_history_datetime is not None:
-                logging.info(time_gap_log_message(time_gap))
-                if self._last_tried_kafka_offsets_time is None :
+                self._logger.info(time_gap_log_message(time_gap))
+                if self._last_tried_kafka_offsets_time is None:
                     self._last_tried_kafka_offsets_time = self._min_stream_datetime
                 else:
                     self._last_tried_kafka_offsets_time -= time_gap
-                logging.info(f"Move kafka committed offsets to max history datetime or below it: {self._last_tried_kafka_offsets_time}")
+                self._logger.info(
+                    f"Move kafka committed offsets to max history datetime or below it: {self._last_tried_kafka_offsets_time}")
                 await self._kafka_feed.set_offsets_to_time(self._last_tried_kafka_offsets_time)
+
+            await asyncio.sleep(self._history_try_interval.total_seconds())
 
     async def processing_loop(self):
         """ Get new messages from stream, add to buffers, flush buffers to main dataframe"""
@@ -129,7 +145,7 @@ class KafkaWithS3Feed:
                 await self.on_candle(await self._candles_queue.get())
 
             #  Process new data if it comes
-            if not (self._level2_buf.empty and self._candles_buf.empty):
+            if not (self._level2_buf.empty or self._candles_buf.empty):
                 await self.flush_buffers()
 
             await asyncio.sleep(0.1)
@@ -154,7 +170,7 @@ class KafkaWithS3Feed:
         """ Initial read s3 history then listen kafka for new data and append to dataframe"""
         # Initial read s3 history
         self._s3_feed = S3Feed(self._feature_name, merge_tolerance=self._merge_tolerance)
-        task =  asyncio.create_task(self.handle_time_gap())
+        task = asyncio.create_task(self.handle_time_gap())
         await self.read_history()
 
         # Connect to kafka
