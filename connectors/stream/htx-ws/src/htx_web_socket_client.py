@@ -53,7 +53,6 @@ class HtxWebSocketClient:
             try:
                 message = await self.msg_queue.get()
                 await self._on_message(message)
-                ConnectorStreamHtxMetrics.messages_in_queue.labels(websocket=self.url).set(self.msg_queue.qsize())
             except Exception as e:
                 logging.error(f"Error processing messages: {e}")
 
@@ -69,6 +68,8 @@ class HtxWebSocketClient:
                     try:
                         async for message in websocket:
                             await self.msg_queue.put(message)
+                            ConnectorStreamHtxMetrics.messages_in_queue.labels(websocket=self.url).set(self.msg_queue.qsize())
+
                     except exceptions.ConnectionClosed as e:
                         await self._on_close(e.code, e.reason)
                         raise e  # Reraise the exception for reconnection
