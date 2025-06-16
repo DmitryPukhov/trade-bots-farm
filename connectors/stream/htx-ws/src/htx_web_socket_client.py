@@ -12,6 +12,8 @@ from urllib import parse
 
 from websockets import connect, exceptions
 
+from connector_stream_htx_metrics import ConnectorStreamHtxMetrics
+
 
 class HtxWebSocketClient:
     def __init__(self,
@@ -41,10 +43,22 @@ class HtxWebSocketClient:
         self.last_heartbeat = datetime.utcnow()  # record last heartbeat time
         self.receiver = receiver
         self._websocket = None
+        self.msg_queue = asyncio.Queue()
         logging.info(f"Initialized, key: ***{access_key[-3:]}, secret: ***{secret_key[-3:]}")
 
-    async def connect(self):
-        self._running = True
+    async def process_msg_queue_loop(self):
+        """ Process messages from the queue"""
+
+        while self._running:
+            try:
+                message = await self.msg_queue.get()
+                await self._on_message(message)
+                ConnectorStreamHtxMetrics.messages_in_queue.labels(websocket=self.url).set(self.msg_queue.qsize())
+            except Exception as e:
+                logging.error(f"Error processing messages: {e}")
+
+    async def read_messages_loop(self):
+        """ Read messages from websocket, put to the queue """
         while self._running:
             try:
                 logging.info(f"Connecting to {self.url}...")
@@ -54,7 +68,7 @@ class HtxWebSocketClient:
                     await self._on_open()
                     try:
                         async for message in websocket:
-                            await self._on_message(message)
+                            await self.msg_queue.put(message)
                     except exceptions.ConnectionClosed as e:
                         await self._on_close(e.code, e.reason)
                         raise e  # Reraise the exception for reconnection
@@ -63,6 +77,11 @@ class HtxWebSocketClient:
                 # Delay before reconnect
                 await self._on_error(e)
                 await self._handle_reconnect()
+
+    async def run_async(self):
+        self._running = True
+        # Message processing loop
+        await asyncio.gather(self.process_msg_queue_loop(), self.read_messages_loop())
 
     async def _handle_reconnect(self):
         if not self._running:

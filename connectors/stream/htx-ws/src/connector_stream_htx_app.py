@@ -45,7 +45,7 @@ class ConnectorStreamHtxApp:
 
         # Connect to HTX and listen to the messages
         try:
-            await asyncio.gather(client.connect(),  # web socket event loop
+            await asyncio.gather(client.run_async(),  # web socket event loop
                                  ConnectorStreamHtxMetrics().push_to_gateway_periodical()  # push metrics to gateway periodically
                                  )
 

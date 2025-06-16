@@ -12,6 +12,7 @@ class CommonTools:
     def _load_config():
         """Load configuration file with fallback support"""
         config_name = "logging.yaml"
+        dev_path = os.path.join("../config", config_name)
         try:
             # Try package resources first (works when installed)
             from importlib.resources import files
@@ -19,11 +20,12 @@ class CommonTools:
             return yaml.safe_load(config_text)
         except:
             # Fallback for development environment
-            dev_path = os.path.join("../config", config_name)
             print(f"Read config from {Path(dev_path).absolute()}")
-            with open(dev_path) as f:
-                return yaml.safe_load(f)
-
+            if os.path.exists(dev_path):
+                with open(dev_path) as f:
+                    return yaml.safe_load(f)
+            else:
+                logging.warning(f"Config {config_name} not found in package resources or in folder {dev_path}")
     @staticmethod
     def init_logging():
         # Basic config
@@ -37,7 +39,8 @@ class CommonTools:
 
         # Load logging.yaml
         config = CommonTools._load_config()
-        logging.config.dictConfig(config)
+        if config:
+            logging.config.dictConfig(config)
 
         # Test logging
         print("Logging init done. Test messages are below.")
