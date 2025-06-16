@@ -50,8 +50,6 @@ class KafkaFeed:
                 f"    Last committed: {committed[tp] or 'None'}\n"
                 f"    Last available: {end[tp]}"
             )
-
-        message.append(f"\nLogged at: {datetime.now().isoformat()}")
         return "\n".join(message)
 
     async def set_offsets_to_time(self, target_time: datetime):
