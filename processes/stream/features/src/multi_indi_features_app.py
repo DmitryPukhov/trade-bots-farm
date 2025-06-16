@@ -2,6 +2,7 @@ import asyncio
 
 from common_tools import CommonTools
 from features_calc import FeaturesCalc
+from features_metrics import FeaturesMetrics
 from feed.kafka_with_s3_feed import KafkaWithS3Feed
 
 
@@ -19,7 +20,9 @@ class MultiIndiFeaturesApp:
         stop_event = asyncio.Event()
         kafka_with_s3_feed = KafkaWithS3Feed("multi_indi_features", new_data_event=new_data_event, stop_event=stop_event)
         features = FeaturesCalc(kafka_with_s3_feed, stop_event)
-        await asyncio.gather(features.run_async(), kafka_with_s3_feed.run_async())
+        await asyncio.gather(features.run_async(),
+                             kafka_with_s3_feed.run_async(),
+                             FeaturesMetrics.push_to_gateway_periodical())
 
     def run(self):
         asyncio.run(self.run_async())

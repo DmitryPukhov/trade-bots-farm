@@ -53,6 +53,15 @@ class FeaturesMetrics(MetricsBase):
         namespace=namespace,
         registry=MetricsBase._registry
     )
+
+    feature_calc_duration_sec = Gauge(
+        '_feature_calc_duration_sec',
+        'How long it took to calculate features',
+        ['topic'],
+        namespace=namespace,
+        registry=MetricsBase._registry
+    )
+
     output_messages = Counter(
         '_feature_output_messages',
         'Total number of output features',
