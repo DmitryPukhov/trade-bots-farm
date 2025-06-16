@@ -42,7 +42,7 @@ class FeaturesCalc:
         candles_features = CandlesMultiIndiFeatures.multi_indi_features(candles_by_periods)
 
         # Calculate features, clean time gaps
-        features = pd.merge_asof(candles_features, level2_features, left_index = True, right_index=True)
+        features = pd.merge_asof(level2_features, candles_features, left_index = True, right_index=True)
         features = FeatureCleaner.clean(df, features).dropna()
         return features
 
