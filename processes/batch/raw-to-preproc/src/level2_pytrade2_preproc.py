@@ -9,4 +9,4 @@ class Level2PyTrade2Preproc:
     Just a wrapper to call a library function"""
 
     def process(self, raw_level2_df: pd.DataFrame) -> pd.DataFrame:
-        return Level2Features().expectation(raw_level2_df)
+        Level2Features().expectation(raw_level2_df).resample("1min", label = "right", closed = "right").agg("mean")
