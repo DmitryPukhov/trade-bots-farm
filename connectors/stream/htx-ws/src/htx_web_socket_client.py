@@ -70,11 +70,11 @@ class HtxWebSocketClient:
                         async for message in websocket:
                             await self.msg_queue.put(message)
                             ConnectorStreamHtxMetrics.messages_in_queue.labels(websocket=self.url).set(self.msg_queue.qsize())
+                            await asyncio.sleep(0.001)
 
                     except exceptions.ConnectionClosed as e:
                         await self._on_close(e.code, e.reason)
                         raise e  # Reraise the exception for reconnection
-                    await asyncio.sleep(0.01)
             except Exception as e:
                 # Delay before reconnect
                 await self._on_error(e)
