@@ -3,6 +3,7 @@ import logging
 
 import pandas as pd
 
+from pytrade2.features.CandlesFeatures import CandlesFeatures
 from pytrade2.features.CandlesMultiIndiFeatures import CandlesMultiIndiFeatures
 from feed.kafka_with_s3_feed import KafkaWithS3Feed
 from pytrade2.features.FeatureCleaner import FeatureCleaner
@@ -33,16 +34,16 @@ class FeaturesCalc:
         logging.info(f"Calculating features. Last input time: {df.index.max()}")
 
         # Level2 features
-        level2_df = df[self.input_level2_cols]
+        level2_df = df[self.input_level2_cols].sort_index()
         level2_features = Level2MultiIndiFeatures.level2_features_of(level2_df, self.features_level2_periods)
 
         # Candles features
-        candles_df = df[self.input_candles_cols]
-        candles_by_periods = {period: candles_df.resample(period).agg('last').dropna() for period in self.features_candles_periods}
+        candles_1min_df = df[self.input_candles_cols].sort_index()
+        candles_by_periods = CandlesFeatures.rolling_candles_by_periods(candles_1min_df, self.features_candles_periods)
         candles_features = CandlesMultiIndiFeatures.multi_indi_features(candles_by_periods)
 
         # Calculate features, clean time gaps
-        features = pd.merge_asof(level2_features, candles_features, left_index = True, right_index=True)
+        features = pd.merge_asof(candles_features, level2_features, left_index = True, right_index=True)
         features = FeatureCleaner.clean(df, features).dropna()
         return features
 
