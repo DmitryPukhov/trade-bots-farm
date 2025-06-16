@@ -14,12 +14,6 @@ class FeaturesCalc:
     def __init__(self, feed: KafkaWithS3Feed, stop_event: asyncio.Event):
         self._feed = feed
         self._stop_event = stop_event
-        print (pd.__version__)
-        # Input columns
-        # self.input_level2_cols = [
-        #     "datetime", "l2_bid_max", "l2_bid_vol_sum", "l2_bid_mul_vol_sum", "l2_bid_expect", "l2_ask_min", "l2_ask_vol_sum",
-        #     "l2_ask_mul_vol_sum", "l2_ask_expect", "l2_expect"
-        # ]
         self.input_level2_cols = [
             "datetime", "l2_bid_max","l2_bid_expect", "l2_bid_vol", "l2_ask_min",  "l2_ask_expect", "l2_ask_vol"
         ]
@@ -42,8 +36,8 @@ class FeaturesCalc:
         candles_by_periods = CandlesFeatures.rolling_candles_by_periods(candles_1min_df, self.features_candles_periods)
         candles_features = CandlesMultiIndiFeatures.multi_indi_features(candles_by_periods)
 
-        # Calculate features, clean time gaps
-        features = pd.merge_asof(candles_features, level2_features, left_index = True, right_index=True)
+        # Inner merge level2 and candles features, clean and drop NaN
+        features = pd.merge(candles_features, level2_features, left_index = True, right_index=True)
         features = FeatureCleaner.clean(df, features).dropna()
         return features
 
