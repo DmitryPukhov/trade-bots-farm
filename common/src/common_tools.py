@@ -20,6 +20,7 @@ class CommonTools:
         except:
             # Fallback for development environment
             dev_path = os.path.join("../config", config_name)
+            print(f"Read config from {Path(dev_path).absolute()}")
             with open(dev_path) as f:
                 return yaml.safe_load(f)
 
@@ -35,7 +36,8 @@ class CommonTools:
         )
 
         # Load logging.yaml
-        CommonTools._load_config()
+        config = CommonTools._load_config()
+        logging.config.dictConfig(config)
 
         # Test logging
         print("Logging init done. Test messages are below.")

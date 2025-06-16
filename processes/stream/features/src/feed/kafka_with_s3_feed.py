@@ -3,6 +3,7 @@ import logging
 import os
 
 import pandas as pd
+from anyio import sleep
 
 from feed.kafka_feed import KafkaFeed
 from feed.s3_feed import S3Feed
@@ -11,7 +12,7 @@ from feed.s3_feed import S3Feed
 class KafkaWithS3Feed:
     """ Read history data from s3 then listen kafka for new data"""
 
-    def __init__(self, feature_name: str, new_data_event: asyncio.Event):
+    def __init__(self, feature_name: str, new_data_event: asyncio.Event, stop_event: asyncio.Event):
         self._logger = logging.getLogger(__class__.__name__)
         self.data = pd.DataFrame()
         self._feature_name = feature_name
@@ -21,7 +22,7 @@ class KafkaWithS3Feed:
         self._level2_queue = asyncio.Queue()
         self._candles_queue = asyncio.Queue()
         self.new_data_event = new_data_event
-        self.stop_event = asyncio.Event()
+        self.stop_event = stop_event
         self._last_candle_time = pd.Timestamp(0)
 
         # Settings to track gap between s3 and kafka
@@ -57,7 +58,7 @@ class KafkaWithS3Feed:
         In case of time lags, consider pandas buffers with many messages
         """
         self._logger.debug(
-            f"Flushing buffers. Level2 buf size: {len(self._level2_buf)}, candles buf size: {len(self._candles_buf)}")
+            f"Flushing buffers. Level2 buf size: {len(self._level2_buf)}, candles buf size: {len(self._candles_buf)}, data size:{len(self.data)}")
         if self._level2_buf.empty or self._candles_buf.empty:
             self._logger.debug("Buffers are empty. Skipping flushing")
             return
