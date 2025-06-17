@@ -107,7 +107,7 @@ do
   echo "Processing dag=$dag"
   if [[ "$dag" == "pytrade2" || "$dag" == "all" ]]; then
       matched=true
-      echo "Deploy common dag tools"
+      echo "Deploy pytrade2"
       build_copy_module "$PROJECT_ROOT/libs/pytrade2"
   fi
   if [[ "$dag" == "common" || "$dag" == "all" ]]; then
