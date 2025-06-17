@@ -5,7 +5,6 @@ description = "Streaming features calculation"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    #"google-re2==0.0.0",  # exclude google providers with their errors
     "pytrade2",
     "trade-bots-farm-common",
     "python-dotenv",
