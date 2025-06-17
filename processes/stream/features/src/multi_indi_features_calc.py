@@ -31,7 +31,7 @@ class MultiIndiFeaturesCalc:
         """ Features calculation"""
 
         start_ts = datetime.now()
-        logging.debug(f"Calculating features. Last input time: {df.index.max()}")
+        logging.debug(f"Calculating features with datatime after: {df.index.max()}")
 
         # Drop duplicates
         #df = df.groupby(df.index).last()
