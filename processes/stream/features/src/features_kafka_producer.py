@@ -35,7 +35,7 @@ class FeaturesKafkaProducer:
         self._logger.info(f"Getting last produced datetime for {self.features_topic}")
         group_id = f"{self.__class__.__name__}"
 
-        consumer = AIOKafkaConsumer(  # *self.features_topic,
+        consumer = AIOKafkaConsumer(  self.features_topic,
             bootstrap_servers=self._bootstrap_servers,
             group_id=group_id)
         await consumer.start()
@@ -66,8 +66,8 @@ class FeaturesKafkaProducer:
             return last_time
 
     async def produce_features(self, features_df: pd.DataFrame):
-
-        self._logger.debug(f"Producing {len(features_df)} features to {features_df.empty:_topic}")
+        print(f"Producing {len(features_df)} features to {self.features_topic}")
+        self._logger.debug(f"Producing {len(features_df)} features to {self.features_topic}")
         if features_df.empty:
             return
 
