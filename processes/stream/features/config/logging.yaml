@@ -19,3 +19,11 @@ loggers:
     level: INFO
     handlers: [ consoleHandler ]
     propagate: no
+  FeaturesKafkaProducer:
+    level: INFO
+    handlers: [ consoleHandler ]
+    propagate: no
+  MultiIndiFeaturesCalc:
+    level: INFO
+    handlers: [ consoleHandler ]
+    propagate: no
