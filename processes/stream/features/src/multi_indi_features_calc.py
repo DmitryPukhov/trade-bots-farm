@@ -33,6 +33,10 @@ class MultiIndiFeaturesCalc:
         start_ts = datetime.now()
         logging.debug(f"Calculating features. Last input time: {df.index.max()}")
 
+        # Drop duplicates
+        #df = df.groupby(df.index).last()
+        df = df.resample("1min").last()
+
         # Level2 features
         level2_df = df[self._input_level2_cols].sort_index()
         level2_features = Level2MultiIndiFeatures.level2_features_of(level2_df, self.features_level2_periods)
