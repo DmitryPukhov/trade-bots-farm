@@ -83,6 +83,7 @@ class HtxWebSocketClient:
             except Exception as e:
                 # Delay before reconnect
                 await self._on_error(e)
+                await asyncio.sleep(0.1)
                 await self._handle_reconnect()
 
     async def run_async(self):
