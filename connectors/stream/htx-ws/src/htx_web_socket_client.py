@@ -57,6 +57,10 @@ class HtxWebSocketClient:
                 await asyncio.sleep(0.001)
             except Exception as e:
                 logging.error(f"Error processing messages: {e}")
+                # Close the web socket and it will be reconnected
+                await self._websocket.close()
+                await asyncio.sleep(0.001)
+
 
     async def read_messages_loop(self):
         """ Read messages from websocket, put to the queue """
