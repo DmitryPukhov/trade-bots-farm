@@ -33,10 +33,6 @@ class MultiIndiFeaturesCalc:
         start_ts = datetime.now()
         logging.debug(f"Calculating features. Last input time: {df.index.max()}")
 
-        # Drop duplicates
-        #df = df.groupby(df.index).last()
-        df = df.resample("1min").last()
-
         # Level2 features
         level2_df = df[self._input_level2_cols].sort_index()
         level2_features = Level2MultiIndiFeatures.level2_features_of(level2_df, self.features_level2_periods)
@@ -44,6 +40,9 @@ class MultiIndiFeaturesCalc:
 
         # Candles features
         candles_1min_df = df[self._input_candles_cols].sort_index()
+        candles_1min_df["close_time"] = candles_1min_df.index
+        candles_1min_df["open_time"] = candles_1min_df["close_time"] - pd.Timedelta("1min")
+
         candles_by_periods = CandlesFeatures.rolling_candles_by_periods(candles_1min_df, self.features_candles_periods)
         candles_features = CandlesMultiIndiFeatures.multi_indi_features(candles_by_periods)
         await asyncio.sleep(0.001)
