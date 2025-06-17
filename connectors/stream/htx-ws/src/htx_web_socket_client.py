@@ -8,9 +8,10 @@ import os
 from collections import defaultdict
 from datetime import timedelta, datetime
 from hashlib import sha256
+from typing import Optional
 from urllib import parse
 
-from websockets import connect, exceptions
+from websockets import connect, exceptions, ClientConnection
 
 from connector_stream_htx_metrics import ConnectorStreamHtxMetrics
 
@@ -42,7 +43,7 @@ class HtxWebSocketClient:
         self._reconnect_delay = self.heartbeat_timeout
         self.last_heartbeat = datetime.utcnow()  # record last heartbeat time
         self.receiver = receiver
-        self._websocket = None
+        self._websocket:Optional[ClientConnection] = None
         self.msg_queue = asyncio.Queue()
         logging.info(f"Initialized, key: ***{access_key[-3:]}, secret: ***{secret_key[-3:]}")
 
@@ -62,7 +63,7 @@ class HtxWebSocketClient:
         while self._running:
             try:
                 logging.info(f"Connecting to {self.url}...")
-                async with connect(self.url) as websocket:
+                async with connect(self.url, max_queue=64) as websocket:
                     self._websocket = websocket
                     self._reconnect_delay = self.heartbeat_timeout  # Reset delay after successful connection
                     await self._on_open()
@@ -203,6 +204,8 @@ class HtxWebSocketClient:
                 logging.error(f"Got message with error: {jdata}")
         except Exception as e:
             logging.error(e)
+            # Raise the exception again for reconnection
+            raise e
 
     async def _on_close(self, code, reason):
         logging.info(f"WebSocket connection closed: code={code}, reason={reason}")
