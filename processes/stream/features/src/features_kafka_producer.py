@@ -82,11 +82,11 @@ class FeaturesKafkaProducer:
 
         try:
             # Convert each row to dict and send to Kafka
-            for _, row in features_df.iterrows():
+            for dt, row in features_df.iterrows():
                 message = row.to_dict()
                 self._logger.debug(f"Sending to kafka topic {self.features_topic} message: {message}")
                 message_encoded = json.dumps(message).encode('utf-8')
-                await self._producer.send(self.features_topic, value=message_encoded, timestamp_ms=row.datetime.timestamp())
+                await self._producer.send(self.features_topic, value=message_encoded, timestamp_ms=dt.value)
                 await self._producer.flush()
             await self._producer.flush()
             self._last_produced_datetime = features_df.index.max()
