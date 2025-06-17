@@ -89,6 +89,6 @@ class FeaturesKafkaProducer:
                 await self._producer.send(self.features_topic, value=message_encoded, timestamp_ms=row.datetime.timestamp())
                 await self._producer.flush()
             await self._producer.flush()
-            self.last_produced_datetime = features_df.index.max()
+            self._last_produced_datetime = features_df.index.max()
         except Exception as e:
             self._logger.error(f"Error producing messages: {str(e)}")
