@@ -1,5 +1,5 @@
 [project]
-name = "trade-bots-farm-stream-features"
+name = "trade-bots-farm-process-stream-features"
 version = "0.1.0"
 description = "Streaming features calculation"
 readme = "README.md"
