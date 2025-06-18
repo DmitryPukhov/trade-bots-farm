@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import uuid
 from datetime import datetime
 
 from aiokafka import AIOKafkaConsumer, TopicPartition, OffsetAndMetadata
@@ -19,9 +20,10 @@ class KafkaFeed:
         self.kafka_offset = os.environ.get("KAFKA_OFFSET", "latest")
         self._queues = {self.level2_topic: level2_queue, self.candles_topic: candles_queue}
         self._consumer = None
+        self._consumer_group_suffix = os.environ.get("KAFKA_CONSUMER_GROUP_SUFFIX","")
 
     async def create_consumer(self) -> AIOKafkaConsumer:
-        group_id = f"{self.ticker}_{self.__class__.__name__}"
+        group_id = f"{self.ticker}_{self.__class__.__name__}{self._consumer_group_suffix}"
 
         consumer = AIOKafkaConsumer(*self._topics,
                                     bootstrap_servers=self.bootstrap_servers,
