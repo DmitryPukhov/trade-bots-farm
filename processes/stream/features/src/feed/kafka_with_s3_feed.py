@@ -171,17 +171,21 @@ class KafkaWithS3Feed:
         """ Get new messages from stream, add to buffers, flush buffers to main dataframe"""
 
         while not self.stop_event.is_set():
+            is_new_data = False
             # Read buffers
             if not self._level2_queue.empty():
                 await self.on_level2(await self._level2_queue.get())
+                is_new_data |= True
             if not self._candles_queue.empty():
                 await self.on_candle(await self._candles_queue.get())
+                is_new_data |= True
 
             #  Process new data if it comes
-            if not (self._level2_buf.empty or self._candles_buf.empty):
+            if is_new_data:
                 await self.flush_buffers()
-
-            await asyncio.sleep(0.1)
+                await asyncio.sleep(0)
+            else:
+                await asyncio.sleep(1)
 
     async def read_history(self):
         """ Read history from s3 and put it to main dataframe"""
