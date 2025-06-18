@@ -73,6 +73,12 @@ class FeaturesKafkaProducer:
             # Final value across all partitions
             return self._last_produced_datetime
 
+    @staticmethod
+    async def encode_message(message: dict)->bytes:
+        message["datetime"] = str(message["datetime"])
+        message_encoded = json.dumps(message).encode('utf-8')
+        return message_encoded
+
 
     async def produce_features(self, features_df: pd.DataFrame):
         """ Producer features dataframe to Kafka"""
@@ -87,7 +93,7 @@ class FeaturesKafkaProducer:
             for dt, row in features_df.iterrows():
                 message = row.to_dict()
                 self._logger.debug(f"Sending to kafka topic {self.features_topic} message: {message}")
-                message_encoded = json.dumps(message).encode('utf-8')
+                message_encoded = await self.encode_message(message)
                 await self._producer.send(self.features_topic, value=message_encoded, timestamp_ms=dt.value)
                 #await self._producer.send(self.features_topic, value=message_encoded)
                 await self._producer.flush()
