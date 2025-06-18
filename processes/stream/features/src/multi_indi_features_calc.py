@@ -34,7 +34,7 @@ class MultiIndiFeaturesCalc:
         logging.debug(f"Calculating features with datatime after: {df.index.max()}")
 
         # Drop duplicates
-        #df = df.groupby(df.index).last()
+        # df = df.groupby(df.index).last()
         df = df.resample("1min").last()
 
         # Level2 features
@@ -55,8 +55,8 @@ class MultiIndiFeaturesCalc:
         features = pd.merge(candles_features, level2_features, left_index=True, right_index=True)
         features = FeatureCleaner.clean(df, features).dropna()
 
-        # Drop previously produced
-        features_new = features[features.index > old_datetime]
+        # Drop previously produced. If features topic does not exist or don't contain records, no filter
+        features_new = features[features.index > old_datetime] if old_datetime else features
         await asyncio.sleep(0.001)
 
         # Set metrics
