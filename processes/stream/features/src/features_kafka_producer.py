@@ -29,8 +29,8 @@ class FeaturesKafkaProducer:
             await self._producer.start()
 
 
-    async def get_last_produced_datetime(self) -> pd.Timestamp:
-
+    async def get_last_produced_feature_datetime(self) -> pd.Timestamp:
+        """ Get datetime of last feature produced"""
         if self._last_produced_datetime:
             # We already have the last produced datetime
             return self._last_produced_datetime
@@ -62,7 +62,8 @@ class FeaturesKafkaProducer:
                     #kafka_msg = await consumer.getone()
                     kafka_msg = await asyncio.wait_for(consumer.getone(), timeout=1)
                     #msg = json.loads(kafka_msg.value.decode('utf-8'))
-                    msg_time = pd.Timestamp(kafka_msg.timestamp, unit='ms')
+                    #msg_time_str = json.loads(kafka_msg.value)["datetime"]
+                    msg_time = pd.Timestamp(json.loads(kafka_msg.value)["datetime"], unit='ms')
                     last_time = max(last_time, msg_time)
         except Exception as e:
             self._logger.error(f"Error getting last produced datetime: {str(e)}")
