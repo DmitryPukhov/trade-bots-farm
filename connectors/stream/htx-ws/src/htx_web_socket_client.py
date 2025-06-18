@@ -172,9 +172,9 @@ class HtxWebSocketClient:
         delay = 0.1
         try:
             await self._websocket.send(message)
-        except asyncio.QueueFull:
+        except Exception as e:
             # Wait a bit and retry
-            logging.warning(f"Message queue is full, waiting {delay} seconds before next retry")
+            logging.warning(f"Sending message to websocket failed, waiting {delay} seconds before next retry. Error is {e}")
             await asyncio.sleep(delay)
             delay *= 2
             await self._websocket.send(message)
@@ -222,6 +222,7 @@ class HtxWebSocketClient:
                 logging.error(f"Got message with error: {jdata}")
         except Exception as e:
             logging.error(e)
+
             # Raise the exception again for reconnection
             raise e
 

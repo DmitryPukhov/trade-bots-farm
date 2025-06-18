@@ -28,6 +28,7 @@ class KafkaRawProducer:
         if not topic.startswith(prefix): topic = prefix + topic
         #logging.debug(f"Raw message: {raw_message}")
         self._producer.produce(topic, json.dumps(raw_message))
+        self._producer.flush()
 
         # Set metrics
         ConnectorStreamHtxMetrics.message_processed.labels(topic=topic).inc(1)
