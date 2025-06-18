@@ -74,8 +74,8 @@ class HtxWebSocketClient:
                     try:
                         async for message in websocket:
                             await self.msg_queue.put(message)
+                            await asyncio.sleep(0)
                             ConnectorStreamHtxMetrics.messages_in_queue.labels(websocket=self.url).set(self.msg_queue.qsize())
-                            await asyncio.sleep(0.001)
 
                     except exceptions.ConnectionClosed as e:
                         await self._on_close(e.code, e.reason)
@@ -83,7 +83,7 @@ class HtxWebSocketClient:
             except Exception as e:
                 # Delay before reconnect
                 await self._on_error(e)
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0)
                 await self._handle_reconnect()
 
     async def run_async(self):
@@ -112,7 +112,7 @@ class HtxWebSocketClient:
             # Some endpoints requires this signature data, others just returns invalid command error and continue to work.
             signature_data = self._get_signature_data()  # signature data
             await self._websocket.send(json.dumps(signature_data))  # as json string to be send
-
+            await asyncio.sleep(0)
         await self.subscribe_events()
 
     async def subscribe_events(self):
@@ -121,6 +121,7 @@ class HtxWebSocketClient:
             params = json.dumps({"sub": topic})
             logging.info(f"Subscribing to socket data, params: {params}")
             await self._websocket.send(params)  # as json string to be send
+            await asyncio.sleep(0)
 
     async def _get_signature_data(self) -> dict:
         # it's utc time and an example is 2017-05-11T15:19:30
@@ -178,6 +179,7 @@ class HtxWebSocketClient:
             if 'ping' in jdata:
                 sdata = plain.replace('ping', 'pong')
                 await self._websocket.send(sdata)
+                await asyncio.sleep(0)
                 return
             elif 'op' in jdata:
                 # Order and accounts notifications like {op: "notify", topic: "orders_cross@btc-usdt", data: []}
@@ -191,6 +193,7 @@ class HtxWebSocketClient:
                 elif opdata == 'ping':
                     sdata = plain.replace('ping', 'pong')
                     await self._websocket.send(sdata)
+                    await asyncio.sleep(0)
                 else:
                     pass
             elif 'action' in jdata:
@@ -198,6 +201,7 @@ class HtxWebSocketClient:
                 if opdata == 'ping':
                     sdata = plain.replace('ping', 'pong')
                     await self._websocket.send(sdata)
+                    await asyncio.sleep(0)
                     return
                 else:
                     pass
