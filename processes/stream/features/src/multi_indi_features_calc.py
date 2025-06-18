@@ -66,5 +66,5 @@ class MultiIndiFeaturesCalc:
         time_lag_sec = max(0.0, (datetime.now() - features_new.index.max()).total_seconds())
         await asyncio.sleep(0.001)
         FeaturesMetrics.feature_time_lag_sec.labels(self._metrics_labels).set(time_lag_sec)
-
+        features_new["datetime"] = features_new.index
         return features_new

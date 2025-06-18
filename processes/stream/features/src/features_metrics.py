@@ -14,6 +14,14 @@ class FeaturesMetrics(MetricsBase):
         namespace=namespace,
         registry=MetricsBase._registry
     )
+    produced_kafka_messages = Counter(
+        '_kafka_produced_messages',
+        'Total number of input Kafka messages',
+        ['topic'],
+        namespace=namespace,
+        registry=MetricsBase._registry
+    )
+
 
     input_s3_rows = Counter(
         '_input_s3_rows',
