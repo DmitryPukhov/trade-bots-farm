@@ -29,9 +29,16 @@ class MultiIndiFeaturesCalc:
 
     async def calc(self, df: pd.DataFrame, old_datetime: pd.Timestamp = pd.Timestamp.min):
         """ Features calculation"""
+        if df.empty:
+            self._logger.debug("Input dataframe is empty, nothing to do")
+            return pd.DataFrame()
+        if df.index[-1] <= old_datetime:
+            self._logger.debug(f"Dataframe last index: {df.index[-1]} is before previously calculated: {old_datetime}, nothing to do")
+            return pd.DataFrame()
 
+        # Logging
+        logging.debug(f"Calculating features on input interval from {df.index[0]} to {df.index[-1]}")
         start_ts = datetime.now()
-        logging.debug(f"Calculating features with datatime after: {df.index.max()}")
 
         # Drop duplicates
         # df = df.groupby(df.index).last()
@@ -66,5 +73,5 @@ class MultiIndiFeaturesCalc:
         time_lag_sec = max(0.0, (datetime.now() - features_new.index.max()).total_seconds())
         await asyncio.sleep(0.001)
         FeaturesMetrics.feature_time_lag_sec.labels(self._metrics_labels).set(time_lag_sec)
-        features_new["datetime"] = features_new.index
+        features_new["datetime"] = features_new.index.copy()
         return features_new
