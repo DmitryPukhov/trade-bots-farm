@@ -53,15 +53,15 @@ class TestLevel2Preproc:
         }
         transformed = await Level2Preproc()._transform_message(raw_msg)
 
-        assert transformed.bid_max == 102
-        assert transformed.ask_min == 103
-        assert transformed.bid_vol_sum == 3
-        assert transformed.ask_vol_sum == 7
-        assert transformed.bid_mul_vol_sum == 101 * 1 + 102 * 2
-        assert transformed.ask_mul_vol_sum == 103 * 3 + 104 * 4
-        assert transformed.bid_expect == (101 * 1 + 102 * 2) / (1 + 2)
-        assert transformed.ask_expect == (103 * 3 + 104 * 4) / (3 + 4)
-        assert transformed.expect ==((103 * 3 + 104 * 4) - (101 * 1 + 102 * 2)) / (1 + 2 + 3 + 4)
+        assert transformed.l2_bid_max == 102
+        assert transformed.l2_ask_min == 103
+        assert transformed.l2_bid_vol_sum == 3
+        assert transformed.l2_ask_vol_sum == 7
+        assert transformed.l2_bid_mul_vol_sum == 101 * 1 + 102 * 2
+        assert transformed.l2_ask_mul_vol_sum == 103 * 3 + 104 * 4
+        assert transformed.l2_bid_expect == (101 * 1 + 102 * 2) / (1 + 2)
+        assert transformed.l2_ask_expect == (103 * 3 + 104 * 4) / (3 + 4)
+        assert transformed.l2_expect == ((103 * 3 + 104 * 4) - (101 * 1 + 102 * 2)) / (1 + 2 + 3 + 4)
 
     @pytest.mark.asyncio
     async def test_aggregate(self):
