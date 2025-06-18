@@ -43,8 +43,10 @@ class FeaturesApp:
         # Create feed which reads history then listens to new data in kafka
         new_data_event = asyncio.Event()
         stop_event = asyncio.Event()
-        self._feed = KafkaWithS3Feed(self.app_name, new_data_event=new_data_event, stop_event=stop_event)
         self._kafka_producer = FeaturesKafkaProducer()
+        old_datetime = await self._kafka_producer.get_last_produced_datetime()
+
+        self._feed = KafkaWithS3Feed(self.app_name, new_data_event=new_data_event, stop_event=stop_event, old_datetime=old_datetime)
 
         # Run the processes
         await asyncio.gather(self.processing_loop(),
