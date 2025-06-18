@@ -21,21 +21,25 @@ class KafkaRawProducer:
         self._producer = Producer(conf)
 
     async def on_message(self, topic, raw_message):
-        now = datetime.datetime.now(timezone.utc)
+        try:
+            now = datetime.datetime.now(timezone.utc)
 
-        # Produce message to kafka
-        prefix = "raw.htx."
-        if not topic.startswith(prefix): topic = prefix + topic
-        #logging.debug(f"Raw message: {raw_message}")
-        self._producer.produce(topic, json.dumps(raw_message))
-        self._producer.flush()
+            # Produce message to kafka
+            prefix = "raw.htx."
+            if not topic.startswith(prefix): topic = prefix + topic
+            #logging.debug(f"Raw message: {raw_message}")
+            self._producer.produce(topic, json.dumps(raw_message))
+            self._producer.flush()
 
-        # Set metrics
-        ConnectorStreamHtxMetrics.message_processed.labels(topic=topic).inc(1)
+            # Set metrics
+            ConnectorStreamHtxMetrics.message_processed.labels(topic=topic).inc(1)
 
-        # Time lag metric
-        message_ts = raw_message["tick"]["ts"] if "ts" in raw_message[
-            "tick"] else raw_message["ts"]
-        message_dt = datetime.datetime.fromtimestamp(message_ts / 1000, tz=timezone.utc)
-        lag_sec = (now - message_dt).total_seconds()
-        ConnectorStreamHtxMetrics.time_lag_sec.labels(topic=topic).set(lag_sec)
+            # Time lag metric
+            message_ts = raw_message["tick"]["ts"] if "ts" in raw_message[
+                "tick"] else raw_message["ts"]
+            message_dt = datetime.datetime.fromtimestamp(message_ts / 1000, tz=timezone.utc)
+            lag_sec = (now - message_dt).total_seconds()
+            ConnectorStreamHtxMetrics.time_lag_sec.labels(topic=topic).set(lag_sec)
+        except Exception as e:
+            logging.error(f"Error producing message to kafka topic: {topic}")
+            raise e
