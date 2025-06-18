@@ -32,7 +32,7 @@ class FeaturesApp:
             self._feed.new_data_event.clear()
             input_df = self._feed.data.copy()
 
-            old_datetime = await self._kafka_producer.get_last_produced_datetime()
+            old_datetime = await self._kafka_producer.get_last_produced_feature_datetime()
             # Calculate features
             features_df = await self._features_calc.calc(input_df, old_datetime)
             await asyncio.sleep(0.001)
@@ -44,7 +44,7 @@ class FeaturesApp:
         new_data_event = asyncio.Event()
         stop_event = asyncio.Event()
         self._kafka_producer = FeaturesKafkaProducer()
-        old_datetime = await self._kafka_producer.get_last_produced_datetime()
+        old_datetime = await self._kafka_producer.get_last_produced_feature_datetime()
 
         self._feed = KafkaWithS3Feed(self.app_name, new_data_event=new_data_event, stop_event=stop_event, old_datetime=old_datetime)
 
