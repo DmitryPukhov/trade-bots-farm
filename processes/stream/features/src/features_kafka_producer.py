@@ -59,7 +59,8 @@ class FeaturesKafkaProducer:
             for partition, offset in end_offsets.items():
                 if offset > 0:  # If partition has messages
                     consumer.seek(partition, offset - 1)  # Seek to last message
-                    kafka_msg = await consumer.getone()
+                    #kafka_msg = await consumer.getone()
+                    kafka_msg = await asyncio.wait_for(consumer.getone(), timeout=1)
                     #msg = json.loads(kafka_msg.value.decode('utf-8'))
                     msg_time = pd.Timestamp(kafka_msg.timestamp, unit='ms')
                     last_time = max(last_time, msg_time)
