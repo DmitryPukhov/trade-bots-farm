@@ -63,7 +63,7 @@ class MultiIndiFeaturesCalc:
         features = FeatureCleaner.clean(df, features).dropna()
 
         # Drop previously produced. If features topic does not exist or don't contain records, no filter
-        features_new = features[features.index > old_datetime] if old_datetime else features
+        features_new = features[features.index > old_datetime] if old_datetime and not features.empty else features
         await asyncio.sleep(0.001)
 
         # Set metrics
