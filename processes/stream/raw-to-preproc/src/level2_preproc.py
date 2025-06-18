@@ -14,15 +14,15 @@ class Level2Preproc(PreprocBase):
     class _PreprocMessageEntity:
         """ Intermediate entity for preprocessed level2 message inside a minute"""
         datetime: pd.Timestamp
-        bid_max: float
-        bid_vol_sum: float
-        bid_mul_vol_sum: float
-        bid_expect: float
-        ask_min: float
-        ask_vol_sum: float
-        ask_mul_vol_sum: float
-        ask_expect: float
-        expect: float
+        l2_bid_max: float
+        l2_bid_vol_sum: float
+        l2_bid_mul_vol_sum: float
+        l2_bid_expect: float
+        l2_ask_min: float
+        l2_ask_vol_sum: float
+        l2_ask_mul_vol_sum: float
+        l2_ask_expect: float
+        l2_expect: float
 
     async def _transform_message(self, raw_message) -> _PreprocMessageEntity:
         """ Calculates big, ask, bid/ask expectations and returns them"""
@@ -51,10 +51,10 @@ class Level2Preproc(PreprocBase):
 
         ts = pd.Timestamp(raw_message['tick']['ts'] , unit='ms')
         return self._PreprocMessageEntity(datetime=ts,
-                                          bid_max=max(bids)[0], bid_vol_sum=bid_vol_sum,
-                                          bid_mul_vol_sum=bid_mul_vol_sum,
-                                          bid_expect=bid_expect, ask_min=min(asks)[0], ask_vol_sum=ask_vol_sum,
-                                          ask_mul_vol_sum=ask_mul_vol_sum, ask_expect=ask_expect, expect=expect)
+                                          l2_bid_max=max(bids)[0], l2_bid_vol_sum=bid_vol_sum,
+                                          l2_bid_mul_vol_sum=bid_mul_vol_sum,
+                                          l2_bid_expect=bid_expect, l2_ask_min=min(asks)[0], l2_ask_vol_sum=ask_vol_sum,
+                                          l2_ask_mul_vol_sum=ask_mul_vol_sum, l2_ask_expect=ask_expect, l2_expect=expect)
     #
     async def _aggregate(self, raw_messages: []) -> dict:
         """
