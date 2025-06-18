@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -6,6 +7,7 @@ import pandas as pd
 from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
 
 from common_tools import CommonTools
+from features_metrics import FeaturesMetrics
 
 
 class FeaturesKafkaProducer:
@@ -87,7 +89,10 @@ class FeaturesKafkaProducer:
                 self._logger.debug(f"Sending to kafka topic {self.features_topic} message: {message}")
                 message_encoded = json.dumps(message).encode('utf-8')
                 await self._producer.send(self.features_topic, value=message_encoded, timestamp_ms=dt.value)
+                #await self._producer.send(self.features_topic, value=message_encoded)
                 await self._producer.flush()
+                await asyncio.sleep(0)
+                FeaturesMetrics.produced_kafka_messages.labels(topic=self.features_topic).inc()# Add a small delay to avoid overwhelming the producer
             await self._producer.flush()
             self._last_produced_datetime = features_df.index.max()
         except Exception as e:
