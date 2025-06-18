@@ -11,7 +11,7 @@ from feed.s3_feed import S3Feed
 class KafkaWithS3Feed:
     """ Read history data from s3 then listen kafka for new data"""
 
-    def __init__(self, feature_name: str, new_data_event: asyncio.Event, stop_event: asyncio.Event):
+    def __init__(self, feature_name: str, new_data_event: asyncio.Event, stop_event: asyncio.Event, old_datetime: pd.Timestamp):
         self._logger = logging.getLogger(__class__.__name__)
         self.data = pd.DataFrame()
         self._feature_name = feature_name
@@ -33,23 +33,26 @@ class KafkaWithS3Feed:
         self._s3_feed = None
         self._kafka_feed = None
         self._last_tried_kafka_offsets_time = None
+        self._old_datetime = old_datetime
 
     async def on_level2(self, msg):
         # Convert message to DataFrame row with datetime index
         df = pd.DataFrame([msg])
-        df['datetime'] = pd.to_datetime(df['datetime'])
+        dt = pd.to_datetime(msg['datetime'])
+        df['datetime'] = dt
         df.set_index('datetime', inplace=True, drop=False)
 
         # Use pd.concat instead of append
         self._level2_buf = pd.concat([self._level2_buf, df])
-        self._logger.debug(f"Got level2 message {msg}. Last level2 message time {self._level2_buf.index[-1]}")
+        self._logger.debug(f"Got level2 message. datetime: {dt}, message: {msg}")
 
     async def on_candle(self, msg):
         df = pd.DataFrame([msg])
-        df['close_time'] = pd.to_datetime(df['close_time'])
+        dt = pd.to_datetime(msg['close_time'])
+        df['close_time'] = dt
         df.set_index('close_time', inplace=True, drop=False)
         self._candles_buf = pd.concat([self._candles_buf, df])
-        self._logger.debug(f"Got candle message {msg}. Last candle message time {self._candles_buf.index[-1]}")
+        self._logger.debug(f"Got candle message. datetime: {dt}, message: {msg}")
 
     async def flush_buffers(self):
         """
@@ -58,9 +61,19 @@ class KafkaWithS3Feed:
         """
         self._logger.debug(
             f"Flushing buffers. Level2 buf size: {len(self._level2_buf)}, candles buf size: {len(self._candles_buf)}, data size:{len(self.data)}")
+
+        # Buffer checks, latest bound should be after start_datetime
         if self._level2_buf.empty or self._candles_buf.empty:
             self._logger.debug("Buffers are empty. Skipping flushing")
             return
+        if self._old_datetime:
+            last_level2_datetime = self._level2_buf.index.max()
+            last_candles_datetime = self._candles_buf.index.max()
+
+            if last_level2_datetime <= self._old_datetime or last_candles_datetime <= self._old_datetime:
+                self._logger.debug(f"Buffer is too old. Last level2: {self._level2_buf.index.max()}, candle: {self._candles_buf.index.max()}, but should be after {self._old_datetime}.")
+                return
+        self._logger.debug(f"Buffer has new messages after {self._old_datetime}.")
 
         is_good_gap_at_start, time_gap_at_start = await self.get_time_gap(supress_logging=True)
 
