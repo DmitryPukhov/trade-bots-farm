@@ -63,7 +63,9 @@ class MultiIndiFeaturesCalc:
         features = FeatureCleaner.clean(df, features).dropna()
 
         # Drop previously produced. If features topic does not exist or don't contain records, no filter
+        self._logger.debug(f"Last processed dt: {old_datetime}. Input last index:{df.index[-1]}, features last index:{features.index[-1]}, Input max index:{df.index.max()}, features max index:{features.index.max()}")
         features_new = features[features.index > old_datetime] if old_datetime and not features.empty else features
+        self._logger.debug(f"New features new len: {len(features_new)}, from {features_new.index[0] if not features_new.empty else 'None'} to {features_new.index[-1] if not features_new.empty else 'None'}")
         await asyncio.sleep(0.001)
 
         # Set metrics
