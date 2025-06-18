@@ -55,7 +55,7 @@ class KafkaFeed:
     async def set_offsets_to_time(self, target_time: datetime):
         """Set kafka topic offsets to target time in past"""
         logging.info(await self.offsets_report_msg(f"Before setting offsets to {target_time}"))
-
+        # Ensure we're subscribed and partitions are assigned
         for topic in self._topics:
             logging.info(f"Setting offsets to {target_time} for topic {topic}")
             partitions = [TopicPartition(topic, p) for p in self._consumer.partitions_for_topic(topic)]
@@ -74,7 +74,9 @@ class KafkaFeed:
                     target_offset = offsets[tp].offset
 
                 # Commit and seek to the target offset
+
                 await self._consumer.commit({tp: OffsetAndMetadata(target_offset, "")})
+                await asyncio.sleep(0)  # Give some time to commit
                 self._consumer.seek(tp, target_offset)
 
                 # Verify the new position
@@ -93,6 +95,7 @@ class KafkaFeed:
         # Consumer initialization
         self._consumer = await self.create_consumer()
         await self._consumer.start()
+        await asyncio.sleep(0)  # Wait for consumer to start
         await self.set_offsets_to_time(start_time)
 
         try:
