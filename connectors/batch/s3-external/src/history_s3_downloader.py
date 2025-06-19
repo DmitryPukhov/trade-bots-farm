@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 
@@ -34,7 +35,6 @@ class HistoryS3Downloader:
         self._s3_internal_fs = s3fs.S3FileSystem(client_kwargs={"endpoint_url": self._dst_s3_endpoint_url},
                                                  key=self._dst_s3_access_key,
                                                  secret=self._dst_s3_secret_key)
-        self._metrics = ConnectorBatchS3ExternalMetrics()
 
     async def _transfer_file(self, external_s3_dir: str, internal_s3_dir: str, file_name: str):
         """ Download a single file from external S3 to internal S3 """
@@ -46,7 +46,7 @@ class HistoryS3Downloader:
             with self._s3_external_fs.open(src_path, 'rb') as src_file:
                 with self._s3_internal_fs.open(dst_path, 'wb') as dest_file:
                     dest_file.write(src_file.read())
-                    self._metrics.files_transferred.labels(external_s3_dir=external_s3_dir).inc()
+                    ConnectorBatchS3ExternalMetrics.files_transferred.labels(external_s3_dir=external_s3_dir).inc()
         except Exception as e:
             logging.error(f"Failed to download {src_path} to {dst_path}. {e}")
             raise e
@@ -73,4 +73,5 @@ class HistoryS3Downloader:
                 f"Downloading  [{i}/{total_count}] {self._s3_external_fs.client_kwargs.get("endpoint_url")}/{self._src_s3_dir}/{file_name} "
                 f"to {self._s3_internal_fs.client_kwargs.get("endpoint_url")}/{self._dst_s3_dir}/{file_name}")
             await self._transfer_file(self._src_s3_dir, self._dst_s3_dir, file_name)
+            await asyncio.sleep(0)
         logging.info("Download completed")

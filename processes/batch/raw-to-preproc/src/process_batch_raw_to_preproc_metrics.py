@@ -21,8 +21,6 @@ class ProcessBatchRawToPreprocMetrics(MetricsBase):
         registry = MetricsBase._registry
     )
 
-
-
     job_runs = Counter(
         '_job_runs',
         'Total runs of this job',
