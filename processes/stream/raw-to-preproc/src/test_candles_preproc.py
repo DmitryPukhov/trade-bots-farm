@@ -7,6 +7,7 @@ from candles_preproc import CandlesPreproc
 
 
 class TestCandlesPreproc:
+
     @pytest.mark.asyncio
     async def test_process(self):
         ts1 = pd.Timestamp("2025-06-03 14:11:00")

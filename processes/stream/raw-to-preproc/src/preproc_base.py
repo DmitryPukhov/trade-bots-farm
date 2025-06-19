@@ -19,7 +19,7 @@ class PreprocBase:
         logging.info(f"{self.__class__.__name__} initialized with order timeout %s", self._order_timeout)
 
     async def process(self, raw_message: str) -> []:
-        """ Process a raw message, returns processed messages if time comes or [] if not
+        """ Accumulate and process a raw message, returns processed messages if time comes or [] if not
          Example of raw message
          {
              "ch": "market.BTC-USDT.depth.step13",

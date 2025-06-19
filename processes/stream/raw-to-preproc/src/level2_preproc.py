@@ -35,7 +35,6 @@ class Level2Preproc(PreprocBase):
         if not raw_messages:
             return []
         converted_raw_df = await self._htx_raw_to_pytrade2_raw_df(raw_messages)
-        no_dt_cols = set(converted_raw_df.columns) - set("datetime")
         level2_df = Level2Features().expectation(converted_raw_df).resample("1min", label = "right", closed = "right").mean()
         level2_df["datetime"] = level2_df.index.astype("str")
         out_dict = level2_df.to_dict(orient='records')
