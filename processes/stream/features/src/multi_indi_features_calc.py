@@ -43,7 +43,7 @@ class MultiIndiFeaturesCalc:
 
         # Drop duplicates
         # df = df.groupby(df.index).last()
-        input_df = input_df.resample("1min").last()
+        #input_df = input_df.resample("1min").last()
 
         # Level2 features
         level2_df = input_df[self._input_level2_cols].sort_index()
