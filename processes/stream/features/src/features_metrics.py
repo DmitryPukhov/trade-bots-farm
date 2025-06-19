@@ -54,45 +54,45 @@ class FeaturesMetrics(MetricsBase):
         registry=MetricsBase._registry
     )
 
-    feature_time_lag_sec = Gauge(
-        '_feature_time_lag_sec',
+    features_time_lag_sec = Gauge(
+        '_features_time_lag_sec',
         'Lag between feature timestamp and current time',
         ['topic'],
         namespace=namespace,
         registry=MetricsBase._registry
     )
 
-    feature_calc_duration_sec = Gauge(
-        '_feature_calc_duration_sec',
+    features_calc_duration_sec = Gauge(
+        '_features_calc_duration_sec',
         'How long it took to calculate features',
         ['topic'],
         namespace=namespace,
         registry=MetricsBase._registry
     )
-    dirty_features = Counter(
-        '_feature_dirty',
+    features_dirty_rows = Counter(
+        '_features_dirty_rows',
         'Calculated but not cleaned',
         ['topic'],
         namespace=namespace,
         registry=MetricsBase._registry
     )
-    dirty_cleaned = Counter(
-        '_feature_cleaned',
+    features_cleaned_rows = Counter(
+        '_features_cleaned_rows',
         'Cleaned but can contain already processed features',
         ['topic'],
         namespace=namespace,
         registry=MetricsBase._registry
     )
-    new_features = Counter(
-        '_feature_new',
+    features_new_rows = Counter(
+        '_features_new_rows',
         'Cleaned new features',
         ['topic'],
         namespace=namespace,
         registry=MetricsBase._registry
     )
 
-    output_messages = Counter(
-        '_feature_output',
+    features_output_rows = Counter(
+        '_features_output_rows',
         'Total number of output features',
         ['topic'],
         namespace=namespace,
