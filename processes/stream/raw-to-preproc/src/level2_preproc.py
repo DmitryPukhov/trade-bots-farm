@@ -1,10 +1,9 @@
-import asyncio
 from dataclasses import dataclass
 
 import pandas as pd
 
 from preproc_base import PreprocBase
-from process_stream_raw_to_preproc_metrics import ProcessStreamRawToPreprocMetrics
+from pytrade2.features.level2.Level2Features import Level2Features
 
 
 class Level2Preproc(PreprocBase):
@@ -49,25 +48,39 @@ class Level2Preproc(PreprocBase):
         # Bidask expectation
         expect = (ask_mul_vol_sum - bid_mul_vol_sum) / (ask_vol_sum + bid_vol_sum)
 
-        ts = pd.Timestamp(raw_message['tick']['ts'] , unit='ms')
+        ts = pd.Timestamp(raw_message['tick']['ts'], unit='ms')
         return self._PreprocMessageEntity(datetime=ts,
                                           l2_bid_max=max(bids)[0], l2_bid_vol_sum=bid_vol_sum,
                                           l2_bid_mul_vol_sum=bid_mul_vol_sum,
                                           l2_bid_expect=bid_expect, l2_ask_min=min(asks)[0], l2_ask_vol_sum=ask_vol_sum,
-                                          l2_ask_mul_vol_sum=ask_mul_vol_sum, l2_ask_expect=ask_expect, l2_expect=expect)
-    #
-    async def _aggregate(self, raw_messages: []) -> dict:
+                                          l2_ask_mul_vol_sum=ask_mul_vol_sum, l2_ask_expect=ask_expect,
+                                          l2_expect=expect)
+
+    @staticmethod
+    async def _htx_raw_to_pytrade2_raw_df(htx_raw_messages: [dict]) -> [dict]:
+        # Extract bids and asks from htx raw messages
+        pytrade2_rows = []
+        for htx_raw_message in htx_raw_messages:
+            dt = pd.Timestamp(htx_raw_message["tick"]["ts"], unit='ms')
+            bids = [{"datetime": dt, "bid": bid[0], "bid_vol": bid[1]} for bid in htx_raw_message["tick"]["bids"]]
+            pytrade2_rows.extend(bids)
+            asks = [{"datetime": dt, "ask": ask[0], "ask_vol": ask[1]} for ask in htx_raw_message["tick"]["asks"]]
+            pytrade2_rows.extend(asks)
+
+        # Convert to dataframe
+        pytrade2_df = pd.DataFrame(pytrade2_rows, columns =["datetime", "bid", "bid_vol", "ask", "ask_vol"])
+        pytrade2_df["datetime"] = pytrade2_df["datetime"].astype('datetime64[ms]')
+        pytrade2_df = pytrade2_df.set_index('datetime', drop=False)
+        return pytrade2_df
+
+    async def _aggregate(self, raw_messages: []) -> []:
         """
         Aggregate accumulated messages within a minute.
         Method is called once a minute
         """
         if not raw_messages:
             return []
-        transformed = [self._transform_message(msg) for msg in raw_messages]
-        transformed = await asyncio.gather(*transformed)
-        df_transformed = pd.DataFrame(transformed)
-        df_aggregated = df_transformed.resample('1min', on='datetime').agg('mean')
-        dt = df_transformed["datetime"].max()
-        df_aggregated["datetime"] = str(dt)
-        res = df_aggregated.to_dict(orient='records')
+        raw_df = self._htx_raw_to_pytrade2_raw_df(raw_messages)
+        level2_df = Level2Features().expectation(raw_df)
+        res = level2_df.to_dict(orient='records')
         return res
