@@ -68,7 +68,7 @@ class TestLevel2Preproc:
         assert converted.empty
 
     @pytest.mark.asyncio
-    async def test_htx_raw_to_pytrade2_raw_df_should_convert_list_of_single_msg(self):
+    async def test_htx_raw_to_pytrade2_raw_df_should_convert_list_of_msg(self):
         raw_msgs = [
             {
                 "ch": "topic1",

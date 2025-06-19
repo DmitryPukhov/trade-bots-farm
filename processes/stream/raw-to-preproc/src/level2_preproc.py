@@ -22,8 +22,9 @@ class Level2Preproc(PreprocBase):
 
         # Convert to dataframe
         pytrade2_df = pd.DataFrame(pytrade2_rows, columns =["datetime", "bid", "bid_vol", "ask", "ask_vol"])
-        pytrade2_df["datetime"] = pytrade2_df["datetime"].astype('datetime64[ms]')
-        pytrade2_df = pytrade2_df.set_index('datetime', drop=False)
+        pytrade2_df["datetime"] = pytrade2_df["datetime"].astype("datetime64[ms]")
+        pytrade2_df.index = pytrade2_df["datetime"]
+
         return pytrade2_df
 
     async def _aggregate(self, raw_messages: []) -> []:
@@ -34,6 +35,8 @@ class Level2Preproc(PreprocBase):
         if not raw_messages:
             return []
         converted_raw_df = await self._htx_raw_to_pytrade2_raw_df(raw_messages)
-        level2_df = Level2Features().expectation(converted_raw_df).resample("1min", label = "right", closed = "right").agg("mean")
+        no_dt_cols = set(converted_raw_df.columns) - set("datetime")
+        level2_df = Level2Features().expectation(converted_raw_df).resample("1min", label = "right", closed = "right").mean()
+        level2_df["datetime"] = level2_df.index.astype("str")
         out_dict = level2_df.to_dict(orient='records')
         return out_dict
