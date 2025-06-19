@@ -13,6 +13,14 @@ class ProcessBatchRawToPreprocMetrics(MetricsBase):
         namespace = namespace,
         registry = MetricsBase._registry
     )
+    rows = Counter(
+        '_rows',
+        'Total rows in input datasets',
+        ['s3_dir'],
+        namespace = namespace,
+        registry = MetricsBase._registry
+    )
+
 
 
     job_runs = Counter(
