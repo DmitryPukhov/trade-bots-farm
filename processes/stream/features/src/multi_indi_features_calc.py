@@ -27,13 +27,13 @@ class MultiIndiFeaturesCalc:
         self.features_level2_periods = os.getenv("FEATURES_LEVEL2_PERIODS", "1min").replace(" ", "").split(",")
         self._metrics_labels = metrics_labels
 
-    async def calc(self, input_df: pd.DataFrame, old_datetime: pd.Timestamp = pd.Timestamp.min):
+    async def calc(self, input_df: pd.DataFrame, previous_datetime: pd.Timestamp = pd.Timestamp.min):
         """ Features calculation"""
         if input_df.empty:
             self._logger.debug("Input dataframe is empty, nothing to do")
             return pd.DataFrame()
-        if input_df.index[-1] <= old_datetime:
-            self._logger.debug(f"Dataframe last index: {input_df.index[-1]} is before previously calculated: {old_datetime}, nothing to do")
+        if input_df.index[-1] <= previous_datetime:
+            self._logger.debug(f"Dataframe last index: {input_df.index[-1]} is before previously calculated: {previous_datetime}, nothing to do")
             return pd.DataFrame()
 
         # Logging
@@ -66,8 +66,8 @@ class MultiIndiFeaturesCalc:
         FeaturesMetrics.features_cleaned_rows.labels(self._metrics_labels).inc(len(features))
 
         # Drop previously produced. If features topic does not exist or don't contain records, no filter
-        self._logger.debug(f"Last processed dt: {old_datetime}. Input last index:{input_df.index[-1]}, features last index:{features.index[-1]}, Input max index:{input_df.index.max()}, features max index:{features.index.max()}")
-        features_new = features[features.index > old_datetime] if old_datetime and not features.empty else features
+        self._logger.debug(f"Last processed dt: {previous_datetime}. Input last index:{input_df.index[-1]}, features last index:{features.index[-1]}, Input max index:{input_df.index.max()}, features max index:{features.index.max()}")
+        features_new = features[features.index > previous_datetime] if previous_datetime and not features.empty else features
         self._logger.debug(f"New features new len: {len(features_new)}, from {features_new.index[0] if not features_new.empty else 'None'} to {features_new.index[-1] if not features_new.empty else 'None'}")
         FeaturesMetrics.features_new_rows.labels(self._metrics_labels).inc(len(features_new))
         await asyncio.sleep(0)
