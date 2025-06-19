@@ -38,8 +38,8 @@ class MultiIndiFeaturesCalc:
 
         # Logging
         logging.debug(f"Calculating features on input interval from {input_df.index[0]} to {input_df.index[-1]}")
-        FeaturesMetrics.input_kafka_messages.labels(self._metrics_labels).inc(len(input_df))
         start_ts = datetime.now()
+        FeaturesMetrics.input_rows.labels(self._metrics_labels).inc(len(input_df))
 
         # Drop duplicates
         # df = df.groupby(df.index).last()
@@ -60,12 +60,16 @@ class MultiIndiFeaturesCalc:
 
         # Inner merge level2 and candles features, clean and drop NaN
         features = pd.merge(candles_features, level2_features, left_index=True, right_index=True)
+        FeaturesMetrics.dirty_features.labels(self._metrics_labels).inc(len(features))
+
         features = FeatureCleaner.clean(input_df, features).dropna()
+        FeaturesMetrics.dirty_cleaned.labels(self._metrics_labels).inc(len(features))
 
         # Drop previously produced. If features topic does not exist or don't contain records, no filter
         self._logger.debug(f"Last processed dt: {old_datetime}. Input last index:{input_df.index[-1]}, features last index:{features.index[-1]}, Input max index:{input_df.index.max()}, features max index:{features.index.max()}")
         features_new = features[features.index > old_datetime] if old_datetime and not features.empty else features
         self._logger.debug(f"New features new len: {len(features_new)}, from {features_new.index[0] if not features_new.empty else 'None'} to {features_new.index[-1] if not features_new.empty else 'None'}")
+        FeaturesMetrics.new_features.labels(self._metrics_labels).inc(len(features_new))
         await asyncio.sleep(0)
 
         # Set metrics

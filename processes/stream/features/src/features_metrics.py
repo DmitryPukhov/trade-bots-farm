@@ -6,13 +6,14 @@ from metrics_base import MetricsBase
 class FeaturesMetrics(MetricsBase):
     namespace = "process_stream_features"
     # Kafka and s3 input messages
-    input_kafka_messages = Counter(
-        '_kafka_input_messages',
-        'Total number of candles + level2 messages, input for feature calculator',
+    input_rows = Counter(
+        '_input_rows',
+        'Total number of candles + level2 input rows come to feature calculator',
         ['topic'],
         namespace=namespace,
         registry=MetricsBase._registry
     )
+
     produced_kafka_messages = Counter(
         '_kafka_produced_messages',
         'Total number of features sent to Kafka',
@@ -82,7 +83,7 @@ class FeaturesMetrics(MetricsBase):
         namespace=namespace,
         registry=MetricsBase._registry
     )
-    new = Counter(
+    new_features = Counter(
         '_feature_new',
         'Cleaned new features',
         ['topic'],
