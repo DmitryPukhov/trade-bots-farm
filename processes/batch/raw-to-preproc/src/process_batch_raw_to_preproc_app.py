@@ -61,12 +61,17 @@ class ProcessBatchRawToPreprocApp:
             "secret": self._s3_secret_key,
             "client_kwargs": {"endpoint_url": self._s3_endpoint_url},
         }
-        src_df = pd.read_csv(src_path, compression='zip', storage_options=storage_options)
-        dst_df = self._preprocessor.process(src_df)
-        if not dst_df.empty:
 
+        src_df = pd.read_csv(src_path, compression='zip', storage_options=storage_options)
+        self._metrics.rows.labels(s3_dir=self._src_s3_dir).inc(len(src_df))
+
+        # The main transformation
+        dst_df = self._preprocessor.process(src_df)
+
+        if not dst_df.empty:
             # Write to preprocessed s3 folder
             dst_df.to_csv(dst_path, storage_options=storage_options)
+            self._metrics.rows.labels(s3_dir=self._dst_s3_dir).inc(len(dst_df))
 
             # Update metrics
             self._metrics.files_transferred.labels(preproc_s3_dir = self._dst_s3_dir).inc()# inc file count metric
@@ -74,10 +79,17 @@ class ProcessBatchRawToPreprocApp:
         else:
             logging.info(f"Processed output is empty for  {src_path} file")
 
+
     async def preprocess_files(self):
         logging.info(
             f"Preprocess s3 files in {self._s3_endpoint_url}/{self._src_s3_dir}, "
             f"write result to {self._s3_endpoint_url}/{self._dst_s3_dir}")
+
+        # Set metrics to 0
+        self._metrics.rows.labels(s3_dir=self._src_s3_dir).set(0)  # reset rows metric
+        self._metrics.rows.labels(s3_dir=self._dst_s3_dir).set(0)  # reset rows metric
+
+
         # Get file names, not processed yet or updated in source folder
         files = S3Tools.find_updated_files(pd.Timestamp.now() - pd.Timedelta(days=self.history_days_limit),  # from
                                            pd.Timestamp.now(),  # to
