@@ -10,7 +10,7 @@ from feed.kafka_with_s3_feed import KafkaWithS3Feed
 from multi_indi_features_calc import MultiIndiFeaturesCalc
 
 
-class FeaturesApp:
+class StreamFeaturesApp:
     """ Main class"""
 
     def __init__(self):
@@ -58,4 +58,4 @@ class FeaturesApp:
 
 
 if __name__ == '__main__':
-    FeaturesApp().run()
+    StreamFeaturesApp().run()

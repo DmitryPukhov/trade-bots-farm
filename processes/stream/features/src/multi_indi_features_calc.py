@@ -47,16 +47,15 @@ class MultiIndiFeaturesCalc:
         # Level2 features
         level2_df = df[self._input_level2_cols].sort_index()
         level2_features = Level2MultiIndiFeatures.level2_features_of(level2_df, self.features_level2_periods)
-        await asyncio.sleep(0.001)
+        await asyncio.sleep(0)
 
         # Candles features
         candles_1min_df = df[self._input_candles_cols].sort_index()
         candles_1min_df["close_time"] = candles_1min_df.index
         candles_1min_df["open_time"] = candles_1min_df["close_time"] - pd.Timedelta("1min")
-
         candles_by_periods = CandlesFeatures.rolling_candles_by_periods(candles_1min_df, self.features_candles_periods)
         candles_features = CandlesMultiIndiFeatures.multi_indi_features(candles_by_periods)
-        await asyncio.sleep(0.001)
+        await asyncio.sleep(0)
 
         # Inner merge level2 and candles features, clean and drop NaN
         features = pd.merge(candles_features, level2_features, left_index=True, right_index=True)
@@ -66,14 +65,15 @@ class MultiIndiFeaturesCalc:
         self._logger.debug(f"Last processed dt: {old_datetime}. Input last index:{df.index[-1]}, features last index:{features.index[-1]}, Input max index:{df.index.max()}, features max index:{features.index.max()}")
         features_new = features[features.index > old_datetime] if old_datetime and not features.empty else features
         self._logger.debug(f"New features new len: {len(features_new)}, from {features_new.index[0] if not features_new.empty else 'None'} to {features_new.index[-1] if not features_new.empty else 'None'}")
-        await asyncio.sleep(0.001)
+        await asyncio.sleep(0)
 
         # Set metrics
         duration = (datetime.now() - start_ts).total_seconds()
         FeaturesMetrics.feature_calc_duration_sec.labels(self._metrics_labels).set(duration)
-
         time_lag_sec = max(0.0, (datetime.now() - features_new.index.max()).total_seconds())
         await asyncio.sleep(0.001)
+        FeaturesMetrics.output_messages.labels(self._metrics_labels).inc()
         FeaturesMetrics.feature_time_lag_sec.labels(self._metrics_labels).set(time_lag_sec)
         features_new["datetime"] = features_new.index.copy()
+
         return features_new
