@@ -85,9 +85,9 @@ class ProcessBatchRawToPreprocApp:
             f"Preprocess s3 files in {self._s3_endpoint_url}/{self._src_s3_dir}, "
             f"write result to {self._s3_endpoint_url}/{self._dst_s3_dir}")
 
-        # Set metrics to 0
-        self._metrics.rows.labels(s3_dir=self._src_s3_dir).set(0)  # reset rows metric
-        self._metrics.rows.labels(s3_dir=self._dst_s3_dir).set(0)  # reset rows metric
+        # # Set metrics to 0
+        # self._metrics.rows.labels(s3_dir=self._src_s3_dir).reset()
+        # self._metrics.rows.labels(s3_dir=self._dst_s3_dir).clear()
 
 
         # Get file names, not processed yet or updated in source folder
@@ -106,10 +106,11 @@ class ProcessBatchRawToPreprocApp:
             await self._process_file(src_path, dst_path)
 
     async def run_async(self):
-        # Set up metrics background task
-        self._metrics.job_runs.inc()
         _ = asyncio.create_task(self._metrics.push_to_gateway_periodical())
         await asyncio.sleep(0.001)
+
+        # Set up metrics background task
+        self._metrics.job_runs.inc()
 
         # Preprocess and complete
         await self.preprocess_files()
