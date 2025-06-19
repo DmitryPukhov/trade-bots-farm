@@ -46,7 +46,6 @@ class HistoryS3Downloader:
             with self._s3_external_fs.open(src_path, 'rb') as src_file:
                 with self._s3_internal_fs.open(dst_path, 'wb') as dest_file:
                     dest_file.write(src_file.read())
-                    ConnectorBatchS3ExternalMetrics.files_transferred.labels(external_s3_dir=external_s3_dir).inc()
         except Exception as e:
             logging.error(f"Failed to download {src_path} to {dst_path}. {e}")
             raise e
@@ -55,6 +54,10 @@ class HistoryS3Downloader:
         """ Download new history data from external s3 to internal s3.
         :returns: True if any files were downloaded, False otherwise.
         """
+
+        # Reset metrics
+        ConnectorBatchS3ExternalMetrics.files_transferred.labels(external_s3_dir=self._src_s3_dir).reset()
+        await ConnectorBatchS3ExternalMetrics.push_to_gateway_()
 
         # Determine what to download
         logging.info(
@@ -73,5 +76,7 @@ class HistoryS3Downloader:
                 f"Downloading  [{i}/{total_count}] {self._s3_external_fs.client_kwargs.get("endpoint_url")}/{self._src_s3_dir}/{file_name} "
                 f"to {self._s3_internal_fs.client_kwargs.get("endpoint_url")}/{self._dst_s3_dir}/{file_name}")
             await self._transfer_file(self._src_s3_dir, self._dst_s3_dir, file_name)
+            ConnectorBatchS3ExternalMetrics.files_transferred.labels(external_s3_dir=self._src_s3_dir).inc()
+
             await asyncio.sleep(0)
         logging.info("Download completed")
