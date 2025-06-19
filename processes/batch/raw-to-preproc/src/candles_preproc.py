@@ -15,7 +15,7 @@ class CandlesPreproc:
         if bad_col in raw_candles.columns:
             del raw_candles[bad_col]
         columns = raw_candles.columns.tolist()
-        resampled_df = raw_candles.resample("1min", on="close_time").agg("last").reset_index()
+        resampled_df = raw_candles.resample("1min", on="close_time", label="right", closed="right").agg("last").reset_index()
         resampled_df[["open_time", "close_time"]] = resampled_df[["open_time", "close_time"]].astype('str')
         resampled_df = resampled_df[columns]
         return resampled_df
