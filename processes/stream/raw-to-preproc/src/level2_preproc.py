@@ -80,7 +80,7 @@ class Level2Preproc(PreprocBase):
         """
         if not raw_messages:
             return []
-        raw_df = self._htx_raw_to_pytrade2_raw_df(raw_messages)
-        level2_df = Level2Features().expectation(raw_df)
-        res = level2_df.to_dict(orient='records')
-        return res
+        converted_raw_df = await self._htx_raw_to_pytrade2_raw_df(raw_messages)
+        level2_df = Level2Features().expectation(converted_raw_df)
+        out_dict = level2_df.to_dict(orient='records')
+        return out_dict

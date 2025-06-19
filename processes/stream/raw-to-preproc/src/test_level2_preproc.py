@@ -79,9 +79,9 @@ class TestLevel2Preproc:
         }
         aggregated = await Level2Preproc()._aggregate([raw_msg])
 
-        # Just ensure something is calculated, no need to test pandas mean function
+        # Just ensure something is calculated, don't test level2 features logic here
         assert len(aggregated) == 1
-        assert aggregated[0]["bid_max"] == 102
+        assert aggregated[0]["l2_bid_max"] == 102
 
     @pytest.mark.asyncio
     async def test_htx_raw_to_pytrade2_raw_df_should_convert_empty_list(self):
