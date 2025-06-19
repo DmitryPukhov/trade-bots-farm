@@ -6,10 +6,9 @@ from metrics_base import MetricsBase
 class FeaturesMetrics(MetricsBase):
     namespace = "process_stream_features"
     # Kafka and s3 input messages
-    # Kakfa and s3 input time lag
     input_kafka_messages = Counter(
         '_kafka_input_messages',
-        'Total number of input Kafka messages',
+        'Total number of candles + level2 messages, input for feature calculator',
         ['topic'],
         namespace=namespace,
         registry=MetricsBase._registry

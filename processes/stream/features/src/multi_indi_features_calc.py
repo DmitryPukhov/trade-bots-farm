@@ -27,30 +27,31 @@ class MultiIndiFeaturesCalc:
         self.features_level2_periods = os.getenv("FEATURES_LEVEL2_PERIODS", "1min").replace(" ", "").split(",")
         self._metrics_labels = metrics_labels
 
-    async def calc(self, df: pd.DataFrame, old_datetime: pd.Timestamp = pd.Timestamp.min):
+    async def calc(self, input_df: pd.DataFrame, old_datetime: pd.Timestamp = pd.Timestamp.min):
         """ Features calculation"""
-        if df.empty:
+        if input_df.empty:
             self._logger.debug("Input dataframe is empty, nothing to do")
             return pd.DataFrame()
-        if df.index[-1] <= old_datetime:
-            self._logger.debug(f"Dataframe last index: {df.index[-1]} is before previously calculated: {old_datetime}, nothing to do")
+        if input_df.index[-1] <= old_datetime:
+            self._logger.debug(f"Dataframe last index: {input_df.index[-1]} is before previously calculated: {old_datetime}, nothing to do")
             return pd.DataFrame()
 
         # Logging
-        logging.debug(f"Calculating features on input interval from {df.index[0]} to {df.index[-1]}")
+        logging.debug(f"Calculating features on input interval from {input_df.index[0]} to {input_df.index[-1]}")
+        FeaturesMetrics.input_kafka_messages.labels(self._metrics_labels).inc(len(input_df))
         start_ts = datetime.now()
 
         # Drop duplicates
         # df = df.groupby(df.index).last()
-        df = df.resample("1min").last()
+        input_df = input_df.resample("1min").last()
 
         # Level2 features
-        level2_df = df[self._input_level2_cols].sort_index()
+        level2_df = input_df[self._input_level2_cols].sort_index()
         level2_features = Level2MultiIndiFeatures.level2_features_of(level2_df, self.features_level2_periods)
         await asyncio.sleep(0)
 
         # Candles features
-        candles_1min_df = df[self._input_candles_cols].sort_index()
+        candles_1min_df = input_df[self._input_candles_cols].sort_index()
         candles_1min_df["close_time"] = candles_1min_df.index
         candles_1min_df["open_time"] = candles_1min_df["close_time"] - pd.Timedelta("1min")
         candles_by_periods = CandlesFeatures.rolling_candles_by_periods(candles_1min_df, self.features_candles_periods)
@@ -59,10 +60,10 @@ class MultiIndiFeaturesCalc:
 
         # Inner merge level2 and candles features, clean and drop NaN
         features = pd.merge(candles_features, level2_features, left_index=True, right_index=True)
-        features = FeatureCleaner.clean(df, features).dropna()
+        features = FeatureCleaner.clean(input_df, features).dropna()
 
         # Drop previously produced. If features topic does not exist or don't contain records, no filter
-        self._logger.debug(f"Last processed dt: {old_datetime}. Input last index:{df.index[-1]}, features last index:{features.index[-1]}, Input max index:{df.index.max()}, features max index:{features.index.max()}")
+        self._logger.debug(f"Last processed dt: {old_datetime}. Input last index:{input_df.index[-1]}, features last index:{features.index[-1]}, Input max index:{input_df.index.max()}, features max index:{features.index.max()}")
         features_new = features[features.index > old_datetime] if old_datetime and not features.empty else features
         self._logger.debug(f"New features new len: {len(features_new)}, from {features_new.index[0] if not features_new.empty else 'None'} to {features_new.index[-1] if not features_new.empty else 'None'}")
         await asyncio.sleep(0)
