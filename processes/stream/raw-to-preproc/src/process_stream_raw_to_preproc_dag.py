@@ -17,7 +17,8 @@ with DAG(
 
     task_envs = [
         # Process level2
-        {"KAFKA_TOPIC_SRC": "raw.htx.market.btc-usdt.depth.step13", "KAFKA_TOPIC_DST": "preproc.btc-usdt.level2.1min",
+        {"KAFKA_TOPIC_SRC": "raw.htx.market.btc-usdt.depth.step13",
+         "KAFKA_TOPIC_DST": "preproc.btc-usdt.level2.1min",
          "KIND": "level2", "TICKER": "btc-usdt"},
         # Process candles
         {"KAFKA_TOPIC_SRC": "raw.htx.market.btc-usdt.kline.1min",
