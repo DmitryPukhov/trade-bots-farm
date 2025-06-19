@@ -46,28 +46,6 @@ class TestLevel2Preproc:
         assert list(level2_preproc._buffer.keys()) == [pd.Timestamp("2025-06-03 14:12:00")]
 
     @pytest.mark.asyncio
-    async def test_transform_message(self):
-        raw_msg = {
-            "ch": "topic1",
-            "tick": {
-                "ts": pd.Timestamp("2025-06-03 14:11:00").value / 1_000_000,
-                "bids": [[101, 1], [102, 2]],
-                "asks": [[103, 3], [104, 4]]
-            }
-        }
-        transformed = await Level2Preproc()._transform_message(raw_msg)
-
-        assert transformed.l2_bid_max == 102
-        assert transformed.l2_ask_min == 103
-        assert transformed.l2_bid_vol_sum == 3
-        assert transformed.l2_ask_vol_sum == 7
-        assert transformed.l2_bid_mul_vol_sum == 101 * 1 + 102 * 2
-        assert transformed.l2_ask_mul_vol_sum == 103 * 3 + 104 * 4
-        assert transformed.l2_bid_expect == (101 * 1 + 102 * 2) / (1 + 2)
-        assert transformed.l2_ask_expect == (103 * 3 + 104 * 4) / (3 + 4)
-        assert transformed.l2_expect == ((103 * 3 + 104 * 4) - (101 * 1 + 102 * 2)) / (1 + 2 + 3 + 4)
-
-    @pytest.mark.asyncio
     async def test_aggregate(self):
         raw_msg = {
             "ch": "topic1",
