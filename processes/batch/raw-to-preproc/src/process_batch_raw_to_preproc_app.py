@@ -86,8 +86,10 @@ class ProcessBatchRawToPreprocApp:
             f"write result to {self._s3_endpoint_url}/{self._dst_s3_dir}")
 
         # # Set metrics to 0
-        # self._metrics.rows.labels(s3_dir=self._src_s3_dir).reset()
-        # self._metrics.rows.labels(s3_dir=self._dst_s3_dir).clear()
+        logging.info("Reset metrics to initial values")
+        self._metrics.rows.labels(s3_dir=self._src_s3_dir).reset()
+        self._metrics.rows.labels(s3_dir=self._dst_s3_dir).reset()
+        await ProcessBatchRawToPreprocMetrics.push_to_gateway_()
 
 
         # Get file names, not processed yet or updated in source folder
@@ -95,7 +97,7 @@ class ProcessBatchRawToPreprocApp:
                                            pd.Timestamp.now(),  # to
                                            self._s3_file_system, self._src_s3_dir,
                                            self._s3_file_system, self._dst_s3_dir)
-        await asyncio.sleep(0.001)
+        await asyncio.sleep(0)
         total_files = len(files)
         logging.info(f"Found {total_files} files to process")
         for i, file_name in enumerate(files, 1):
