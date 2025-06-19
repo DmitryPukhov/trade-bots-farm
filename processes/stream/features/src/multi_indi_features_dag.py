@@ -18,5 +18,5 @@ with DAG(
     task_operator = tbf_task_operator(
         task_id=task_id,
         wheel_file_name="trade_bots_farm_process_stream_features-0.1.0-py3-none-any.whl",
-        module_name="features_app",
+        module_name="stream_features_app",
         class_name="FeaturesApp")
