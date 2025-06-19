@@ -18,5 +18,5 @@ class Level2PyTrade2Preproc:
         df["datetime"] = pd.to_datetime(df["datetime"])
         df.set_index("datetime", drop=False, inplace=True)
         # Preproc and resample to 1min
-        df = Level2Features().expectation(df).resample("1min", label = "right", closed = "right").agg("mean")
+        df = Level2Features().expectation(df)
         return df
