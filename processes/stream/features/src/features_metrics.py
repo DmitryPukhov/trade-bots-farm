@@ -16,7 +16,7 @@ class FeaturesMetrics(MetricsBase):
     )
     produced_kafka_messages = Counter(
         '_kafka_produced_messages',
-        'Total number of input Kafka messages',
+        'Total number of features sent to Kafka',
         ['topic'],
         namespace=namespace,
         registry=MetricsBase._registry
@@ -69,9 +69,30 @@ class FeaturesMetrics(MetricsBase):
         namespace=namespace,
         registry=MetricsBase._registry
     )
+    dirty_features = Counter(
+        '_feature_dirty',
+        'Calculated but not cleaned',
+        ['topic'],
+        namespace=namespace,
+        registry=MetricsBase._registry
+    )
+    dirty_cleaned = Counter(
+        '_feature_cleaned',
+        'Cleaned but can contain already processed features',
+        ['topic'],
+        namespace=namespace,
+        registry=MetricsBase._registry
+    )
+    new = Counter(
+        '_feature_new',
+        'Cleaned new features',
+        ['topic'],
+        namespace=namespace,
+        registry=MetricsBase._registry
+    )
 
     output_messages = Counter(
-        '_feature_output_messages',
+        '_feature_output',
         'Total number of output features',
         ['topic'],
         namespace=namespace,
