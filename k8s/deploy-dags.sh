@@ -152,6 +152,19 @@ do
         dag_name="process_batch_full"
         deploy_module "$module_dir" "$dag_name"
   fi
+  if [[ "$dag" == "process_stream_full" || "$dag" == "all" ]]; then
+        matched=true
+        module_dir=$PROJECT_ROOT/processes/stream/full
+        dag_name="stream_full"
+        deploy_module "$module_dir" "$dag_name"
+  fi
+  if [[ "$dag" == "run_all" || "$dag" == "all" ]]; then
+        matched=true
+        module_dir=$PROJECT_ROOT/processes/run_all
+        dag_name="run_all"
+        deploy_module "$module_dir" "$dag_name"
+  fi
+
 done
 
 
