@@ -98,17 +98,4 @@ class FeaturesMetrics(MetricsBase):
         namespace=namespace,
         registry=MetricsBase._registry
     )
-    features_last_datetime = Gauge(
-        '_features_last_datetime',
-        'Last datetime of features',
-        ['topic'],
-        namespace=namespace,
-        registry=MetricsBase._registry
-    ),
-    features_previous_datetime = Gauge(
-        '_features_previoous_datetime',
-        'Last datetime of previous feature batch',
-        ['topic'],
-        namespace=namespace,
-        registry=MetricsBase._registry
-    )
+

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import math
 import os
 from datetime import datetime, timezone, timedelta, date
 
@@ -23,7 +24,9 @@ class S3Feed:
         self._s3_fs = s3fs.S3FileSystem(client_kwargs={"endpoint_url": self._s3_endpoint_url},
                                         key=self._s3_access_key,
                                         secret=self._s3_secret_key)
-        self.history_days_limit = int(os.environ.get("HISTORY_DAYS", "1"))
+        #self.history_days_limit = int(os.environ.get("HISTORY_DAYS", "1"))
+        self.history_minutes_limit = int(os.environ.get("HISTORY_MINUTES", "1600"))
+        self.history_days_limit = math.ceil(self.history_minutes_limit / 1440.0)
         self.storage_options = {
             "key": self._s3_access_key,
             "secret": self._s3_secret_key,
@@ -104,5 +107,8 @@ class S3Feed:
 
         # Read and merge level2 and candles
         level2_df = await self._read_csv(self._s3_level2_dir, level2_paths, "datetime")
+        level2_df = level2_df[level2_df.index >= level2_df.index[-1] - pd.Timedelta(minutes=self.history_minutes_limit)]
+
         candles_df = await self._read_csv(self._s3_candles_dir, candles_paths, "close_time")
+        candles_df = candles_df[candles_df.index >= candles_df.index[-1] - pd.Timedelta(minutes=self.history_minutes_limit)]
         return await self._merge_inputs(level2_df, candles_df)
