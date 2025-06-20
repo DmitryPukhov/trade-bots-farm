@@ -88,7 +88,7 @@ deploy_module() {
   copy_dags "$module_dir" "$module_name"
 
   # Build module itself and copy it to airflow
-  #build_copy_module "$module_dir"
+  build_copy_module "$module_dir"
 }
 
 
