@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+from typing import Optional
 
 import pandas as pd
 
@@ -29,9 +30,10 @@ class KafkaWithS3Feed:
         self._min_stream_datetime = None  # Updated when reading first messages from kafka
         self._history_stream_max_time_gap = pd.Timedelta(minutes=1)
         self._history_try_interval = pd.Timedelta(os.getenv("HISTORY_TRY_INTERVAL", "1min"))
+        self.history_minutes_limit = int(os.environ.get("HISTORY_MINUTES", "1600"))
 
-        self._s3_feed = None
-        self._kafka_feed = None
+        self._s3_feed:Optional[S3Feed] = None
+        self._kafka_feed:Optional[KafkaFeed] = None
         self._last_tried_kafka_offsets_time = None
         self._old_datetime = old_datetime
 
@@ -101,6 +103,7 @@ class KafkaWithS3Feed:
             self._logger.debug(f"Flush buffers complete. Data size: {len(self.data)}, "
                                f"level2 buf size: {len(self._level2_buf)}, "
                                f"candles buf size: {len(self._candles_buf)}")
+            self.data = self.data[-self.history_minutes_limit:]
 
             # If time gap is good, notify about new data
             is_good_gap, time_gap = await self.get_time_gap(supress_logging=True)

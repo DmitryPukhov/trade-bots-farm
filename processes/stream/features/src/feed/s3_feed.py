@@ -107,8 +107,8 @@ class S3Feed:
 
         # Read and merge level2 and candles
         level2_df = await self._read_csv(self._s3_level2_dir, level2_paths, "datetime")
-        level2_df = level2_df[level2_df.index >= level2_df.index[-1] - pd.Timedelta(minutes=self.history_minutes_limit)]
+        #level2_df = level2_df[level2_df.index >= level2_df.index[-1] - pd.Timedelta(minutes=self.history_minutes_limit)]
 
         candles_df = await self._read_csv(self._s3_candles_dir, candles_paths, "close_time")
-        candles_df = candles_df[candles_df.index >= candles_df.index[-1] - pd.Timedelta(minutes=self.history_minutes_limit)]
+        #candles_df = candles_df[candles_df.index >= candles_df.index[-1] - pd.Timedelta(minutes=self.history_minutes_limit)]
         return await self._merge_inputs(level2_df, candles_df)
