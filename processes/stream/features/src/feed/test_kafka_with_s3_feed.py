@@ -10,7 +10,7 @@ class TestKafkaWithS3Feed:
 
     async def new_kafka_with_s3_feed(self):
         from feed.kafka_with_s3_feed import KafkaWithS3Feed
-        return KafkaWithS3Feed("test", asyncio.Event(), asyncio.Event())
+        return KafkaWithS3Feed("test", asyncio.Event(), asyncio.Event(), pd.Timestamp.min)
     @pytest.mark.asyncio
     async def test_on_candle(self):
         feed = await self.new_kafka_with_s3_feed()
