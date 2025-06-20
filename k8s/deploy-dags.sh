@@ -13,11 +13,12 @@ AIRFLOW_DAGS_DIR=/opt/airflow/dags
 AIRFLOW_ENV_DIR="/opt/trade-bots-farm/environment"
 AIRFLOW_WHEELS_DIR="/opt/trade-bots-farm/wheels"
 echo "Airflow webserver: $AIRFLOW_WEBSERVER"
-copy_dag_tools(){
-  # Copy common dag tool
-    dag_tools_file="$PROJECT_ROOT/common/src/dag_tools.py"
-    echo "Copying $dag_tools_file to $AIRFLOW_WEBSERVER:$AIRFLOW_DAGS_DIR"
-    kubectl cp "$dag_tools_file" "$AIRFLOW_WEBSERVER":"$AIRFLOW_DAGS_DIR"
+
+copy_common_tools(){
+  # Copy common module tool
+    common_tools_file="$PROJECT_ROOT/common/src/common_tools.py"
+    echo "Copying $common_tools_file to $AIRFLOW_WEBSERVER:$AIRFLOW_DAGS_DIR"
+    kubectl cp "$common_tools_file" "$AIRFLOW_WEBSERVER":"$AIRFLOW_DAGS_DIR"
 
 }
 
@@ -27,24 +28,24 @@ copy_dags() {
       echo "Error: module_dir is parameter is required"
       return 1
   fi
-  dag_name=$2
-  if [ -z "$dag_name" ]; then
-      echo "Error: dag_name is parameter is required"
+  module_name=$2
+  if [ -z "$module_name" ]; then
+      echo "Error: module_name is parameter is required"
       return 1
   fi
 
-  copy_dag_tools
+  copy_common_tools
 
-  # Find dags files in module, copy them to airflow
+  # Find modules files in module, copy them to airflow
   for dag_src in "$module_dir"/src/*_dag.py
   do
-    # Copy the dag
+    # Copy the module
     echo "Copying $dag_src to $AIRFLOW_WEBSERVER:$AIRFLOW_DAGS_DIR"
     kubectl cp "$dag_src" "$AIRFLOW_WEBSERVER":$AIRFLOW_DAGS_DIR
 
     # Copy .env file
     src_env_file="$module_dir/.env"
-    dst_env_file="$AIRFLOW_ENV_DIR/$dag_name.env"
+    dst_env_file="$AIRFLOW_ENV_DIR/$module_name.env"
     echo "Copying $src_env_file to $AIRFLOW_WEBSERVER:$dst_env_file"
     kubectl cp "$src_env_file" "$AIRFLOW_WEBSERVER":$dst_env_file
   done
@@ -73,21 +74,21 @@ build_copy_module() {
 
 deploy_module() {
   module_dir=$1
-  dag_name=$2
+  module_name=$2
   if [ -z "$module_dir" ]; then
       echo "Error: module_dir is parameter is required"
       return 1
   fi
-  if [ -z "$dag_name" ]; then
-      echo "Error: dag_name is parameter is required"
+  if [ -z "$module_name" ]; then
+      echo "Error: module_name is parameter is required"
       return 1
   fi
 
-  # Copy dags from module to airflow
-  copy_dags "$module_dir" "$dag_name"
+  # Copy modules from module to airflow
+  copy_dags "$module_dir" "$module_name"
 
   # Build module itself and copy it to airflow
-  build_copy_module "$module_dir"
+  #build_copy_module "$module_dir"
 }
 
 
@@ -97,79 +98,79 @@ deploy_module() {
 
 set -e # Exit on error
 
-dags=$*
-echo "Dags to redeploy: $dags"
+modules=$*
+echo "Dags to redeploy: $modules"
 
 matched=false
 
-for dag in $dags
+for module in $modules
 do
-  echo "Processing dag=$dag"
-  if [[ "$dag" == "pytrade2" || "$dag" == "all" ]]; then
+  echo "Processing module=$module"
+  if [[ "$module" == "pytrade2" || "$module" == "all" ]]; then
       matched=true
       echo "Deploy pytrade2"
       build_copy_module "$PROJECT_ROOT/libs/pytrade2"
   fi
-  if [[ "$dag" == "common" || "$dag" == "all" ]]; then
+  if [[ "$module" == "common" || "$module" == "all" ]]; then
       matched=true
-      echo "Deploy common dag tools"
+      echo "Deploy common module tools"
       build_copy_module "$PROJECT_ROOT/common"
-      copy_dag_tools
+      copy_common_tools
   fi
-  if [[ "$dag" == "connector_stream_htx" || "$dag" == "all" ]]; then
+  if [[ "$module" == "connector_stream_htx" || "$module" == "all" ]]; then
         matched=true
         module_dir=$PROJECT_ROOT/connectors/stream/htx-ws
-        dag_name="connector_stream_htx"
-        deploy_module "$module_dir" "$dag_name"
+        module_name="connector_stream_htx"
+        deploy_module "$module_dir" "$module_name"
   fi
-  if [[ "$dag" == "connector_batch_s3_external" || "$dag" == "all" ]]; then
+  if [[ "$module" == "connector_batch_s3_external" || "$module" == "all" ]]; then
         matched=true
         module_dir=$PROJECT_ROOT/connectors/batch/s3-external
-        dag_name="connector_batch_s3_external"
-        deploy_module "$module_dir" "$dag_name"
+        module_name="connector_batch_s3_external"
+        deploy_module "$module_dir" "$module_name"
   fi
-  if [[ "$dag" == "process_stream_raw_to_preproc" || "$dag" == "all" ]]; then
+  if [[ "$module" == "process_stream_raw_to_preproc" || "$module" == "all" ]]; then
         matched=true
         module_dir=$PROJECT_ROOT/processes/stream/raw-to-preproc
-        dag_name="process_stream_raw_to_preproc"
-        deploy_module "$module_dir" "$dag_name"
+        module_name="process_stream_raw_to_preproc"
+        deploy_module "$module_dir" "$module_name"
   fi
-  if [[ "$dag" == "process_stream_features" || "$dag" == "all" ]]; then
+  if [[ "$module" == "process_stream_features" || "$module" == "all" ]]; then
         matched=true
         module_dir=$PROJECT_ROOT/processes/stream/features
-        dag_name="process_stream_features_multi_indi"
-        deploy_module "$module_dir" "$dag_name"
+        module_name="process_stream_features_multi_indi"
+        deploy_module "$module_dir" "$module_name"
   fi
-  if [[ "$dag" == "process_batch_raw_to_preproc" || "$dag" == "all" ]]; then
+  if [[ "$module" == "process_batch_raw_to_preproc" || "$module" == "all" ]]; then
         matched=true
         module_dir=$PROJECT_ROOT/processes/batch/raw-to-preproc
-        dag_name="process_batch_raw_to_preproc"
-        deploy_module "$module_dir" "$dag_name"
+        module_name="process_batch_raw_to_preproc"
+        deploy_module "$module_dir" "$module_name"
   fi
-  if [[ "$dag" == "process_batch_full" || "$dag" == "all" ]]; then
+  if [[ "$module" == "process_batch_full" || "$module" == "all" ]]; then
         matched=true
         module_dir=$PROJECT_ROOT/processes/batch/full
-        dag_name="process_batch_full"
-        deploy_module "$module_dir" "$dag_name"
+        module_name="process_batch_full"
+        deploy_module "$module_dir" "$module_name"
   fi
-  if [[ "$dag" == "process_stream_full" || "$dag" == "all" ]]; then
+  if [[ "$module" == "process_stream_full" || "$module" == "all" ]]; then
         matched=true
         module_dir=$PROJECT_ROOT/processes/stream/full
-        dag_name="stream_full"
-        deploy_module "$module_dir" "$dag_name"
+        module_name="stream_full"
+        deploy_module "$module_dir" "$module_name"
   fi
-  if [[ "$dag" == "run_all" || "$dag" == "all" ]]; then
+  if [[ "$module" == "process_common" || "$module" == "all" ]]; then
         matched=true
-        module_dir=$PROJECT_ROOT/processes/run_all
-        dag_name="run_all"
-        deploy_module "$module_dir" "$dag_name"
+        module_dir=$PROJECT_ROOT/processes/common
+        module_name="process_common"
+        deploy_module "$module_dir" "$module_name"
   fi
 
 done
 
 
 if [[ "$matched" == false ]]; then
-    echo "ALERT: No matching condition found for dag=$dag"
+    echo "ALERT: No matching condition found for module=$module"
     exit 1  # Optional: exit with error code
 fi
 
