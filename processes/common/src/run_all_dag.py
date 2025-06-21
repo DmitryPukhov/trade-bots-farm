@@ -22,7 +22,7 @@ with DAG(
     )
 
     # Add a sleep before a batch to be sure that external s3 data are ready
-    sleep_minutes = int(Variable.get("sleep_before_batch_minutes", default_var=5))
+    sleep_minutes = int(Variable.get("sleep_before_batch_minutes", default_var=3))
     sleep_task_id = f'sleep_before_batch_{sleep_minutes}_minutes'
     sleep_task = TimeDeltaSensor(
         task_id=sleep_task_id,
