@@ -35,7 +35,7 @@ def stop_all_running_dags(**context):
                 task.end_date = datetime.now(timezone.utc)
 
             # Then mark the DAG run as failed
-            dag_run.state = State.FAILED
+            dag_run.state = State.SUCCESS
             dag_run.end_date = datetime.now(timezone.utc)
 
             session.commit()
