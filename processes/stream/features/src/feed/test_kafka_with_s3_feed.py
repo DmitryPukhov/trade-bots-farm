@@ -135,7 +135,7 @@ class TestKafkaWithS3Feed:
         return AsyncMock()
 
     @pytest.mark.asyncio
-    async def test_processing_loop_should_set_kafka_offsets_to_last_s3_data(self, mock_s3_feed, mock_kafka_feed):
+    async def test_if_time_gap_should_read_history_incrementally(self, mock_s3_feed, mock_kafka_feed):
 
         # Configure the mock S3Feed to return the desired data
         mock_s3_feed.read_history.side_effect = [
