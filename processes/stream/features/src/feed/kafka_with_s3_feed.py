@@ -153,22 +153,26 @@ class KafkaWithS3Feed:
         # Main loop: check time gap, try to incrementally load new history, try to move kafka offsets
         is_good_gap = False
         while not self.stop_event.is_set() and not is_good_gap:
+            try:
+                # Read s3 history
+                is_good_gap, time_gap = await self.get_time_gap()
+                if not is_good_gap:
+                    self._logger.info(f"Try to load new history from s3")
+                    await self.read_history()
+                # Move kafka offsets before last s3 data
+                is_good_gap, time_gap = await self.get_time_gap()
+                if not is_good_gap:
+                    if self._last_tried_kafka_offsets_time is None:
+                        self._last_tried_kafka_offsets_time = self._min_stream_datetime
+                    else:
+                        self._last_tried_kafka_offsets_time -= time_gap
+                    self._logger.info(
+                        f"Move kafka committed offsets to max history datetime or below it: {self._last_tried_kafka_offsets_time}")
+                    await self._kafka_feed.set_offsets_to_time(self._last_tried_kafka_offsets_time)
+            except Exception as e:
+                logging.error(f"Error while handling time gap: {e}")
 
-            # Read s3 history
-            is_good_gap, time_gap = await self.get_time_gap()
-            if not is_good_gap:
-                self._logger.info(f"Try to load new history from s3")
-                await self.read_history()
-            # Move kafka offsets before last s3 data
-            is_good_gap, time_gap = await self.get_time_gap()
-            if not is_good_gap:
-                if self._last_tried_kafka_offsets_time is None:
-                    self._last_tried_kafka_offsets_time = self._min_stream_datetime
-                else:
-                    self._last_tried_kafka_offsets_time -= time_gap
-                self._logger.info(
-                    f"Move kafka committed offsets to max history datetime or below it: {self._last_tried_kafka_offsets_time}")
-                await self._kafka_feed.set_offsets_to_time(self._last_tried_kafka_offsets_time)
+            # Wait some time and check again
             if not is_good_gap:
                 await asyncio.sleep(self._history_try_interval.total_seconds())
                 is_good_gap, time_gap = await self.get_time_gap()
