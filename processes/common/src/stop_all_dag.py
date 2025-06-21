@@ -31,7 +31,7 @@ def stop_all_running_dags(**context):
 
             for task in running_tasks:
                 logging.info(f"  - Failing task: {task.task_id}")
-                task.state = State.FAILED
+                task.state = State.SUCCESS
                 task.end_date = datetime.now(timezone.utc)
 
             # Then mark the DAG run as failed
