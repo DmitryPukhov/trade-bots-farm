@@ -30,3 +30,6 @@ test = [
     "httpx",           # For async HTTP tests (if needed)
     "asynctest"        # Legacy support (if needed)
 ]
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
