@@ -61,6 +61,7 @@ class KafkaWithS3Feed:
         If data in buffer is ready, put it to main merged dataframe. In good case each buffer contains one record per minute
         In case of time lags, consider pandas buffers with many messages
         """
+
         self._logger.debug(
             f"Flushing buffers. Level2 buf size: {len(self._level2_buf)}, candles buf size: {len(self._candles_buf)}, data size:{len(self.data)}")
 
@@ -77,41 +78,41 @@ class KafkaWithS3Feed:
                 return
         self._logger.debug(f"Buffer has new messages after {self._old_datetime}.")
 
-        is_good_gap_at_start, time_gap_at_start = await self.get_time_gap(supress_logging=True)
+        is_good_time_gap_previous, time_gap_previous = await self.get_time_gap(supress_logging=True)
 
-        merged_df = pd.merge_asof(left=self._candles_buf, right=self._level2_buf, left_index=True, right_index=True,
+        stream_df = pd.merge_asof(left=self._candles_buf, right=self._level2_buf, left_index=True, right_index=True,
                                   tolerance=self._merge_tolerance, direction="nearest")
-        merged_df = merged_df.dropna()
+        stream_df = stream_df.dropna()
 
-        if not merged_df.empty:
+        if not stream_df.empty:
             # Clean level2 buffer
-            level2_matched_mask = self._level2_buf.index.isin(merged_df["datetime"])
+            level2_matched_mask = self._level2_buf.index.isin(stream_df["datetime"])
             self._level2_buf = self._level2_buf[~level2_matched_mask]
 
             # For candles
-            candles_matched_mask = self._candles_buf.index.isin(merged_df["close_time"])
+            candles_matched_mask = self._candles_buf.index.isin(stream_df["close_time"])
             self._candles_buf = self._candles_buf[~candles_matched_mask]
 
             # Now we can clean close_time and set index and datetime to the latest value
-            merged_df["datetime"] = merged_df[["datetime", "close_time"]].max(axis=1)
-            self._min_stream_datetime = min(self._min_stream_datetime or pd.Timestamp.max, merged_df["datetime"].min())
-            merged_df.set_index("datetime", inplace=True, drop=False)
+            stream_df["datetime"] = stream_df[["datetime", "close_time"]].max(axis=1)
+            self._min_stream_datetime = min(self._min_stream_datetime or pd.Timestamp.max, stream_df["datetime"].min())
+            stream_df.set_index("datetime", inplace=True, drop=False)
 
             # Append the merged data to the main dataframe
-            merged_df = merged_df[~merged_df.index.isin(self.data.index)]
-            self.data = pd.concat([df for df in [self.data, merged_df] if not df.empty])
+            stream_df = stream_df[~stream_df.index.isin(self.data.index)]
+            self.data = pd.concat([df for df in [self.data, stream_df] if not df.empty])
             self._logger.debug(f"Flush buffers complete. Data size: {len(self.data)}, "
                                f"level2 buf size: {len(self._level2_buf)}, "
                                f"candles buf size: {len(self._candles_buf)}")
             self.data = self.data[-self.history_minutes_limit:]
 
             # If time gap is good, notify about new data
-            is_good_gap, time_gap = await self.get_time_gap(supress_logging=True)
-            if is_good_gap:
+            is_good_time_gap, time_gap = await self.get_time_gap(supress_logging=True)
+            if is_good_time_gap:
                 # When initial time gap is closed, write to log about it. It happens only once.
-                if not is_good_gap_at_start:
+                if not is_good_time_gap_previous:
                     self._logger.info(
-                        f"Time gap is good now. Old time gap: {time_gap_at_start}, new time gap: {time_gap}, "
+                        f"Time gap is good now. Old time gap: {time_gap_previous}, new time gap: {time_gap}, "
                         f"max allowed time gap: {self._history_stream_max_time_gap}, "
                         f"max history datetime: {self._max_history_datetime}, "
                         f"min stream datetime: {self._min_stream_datetime}"
@@ -139,27 +140,29 @@ class KafkaWithS3Feed:
 
         return is_good_gap, time_gap
 
-    async def handle_time_gap(self):
+    async def handle_time_gap_periodically(self):
         """
         If there is a time gap between s3 and kafka, try to load new history from s3
          or move kafka committed offset to the past
         """
-        while not self.stop_event.is_set():
 
-            self._logger.debug(f"Checking time gap with interval {self._history_try_interval.total_seconds()} sec")
-            # If we have time gap, try to load more history from s3
-            is_good_gap, _ = await self.get_time_gap()
+        # Initial history already loaded, kafka is not started yet, so wait for kafka to start
+        self._logger.debug(f"Checking time gap with interval {self._history_try_interval.total_seconds()} sec")
+        await asyncio.sleep(self._history_try_interval.total_seconds())
 
+        # Main loop: check time gap, try to incrementally load new history, try to move kafka offsets
+        is_good_gap = False
+        while not self.stop_event.is_set() and not is_good_gap:
+
+            # Read s3 history
+            is_good_gap, time_gap = await self.get_time_gap()
             if not is_good_gap:
-                # Don't go to s3 too often, wait some time
-                # self._logger.info(time_gap_log_message(time_gap))
                 self._logger.info(f"Try to load new history from s3")
                 await self.read_history()
 
-            # If loading history above did not help, try to move kafka committed offsets down to the end of the history data
+            # Move kafka offsets before last s3 data
             is_good_gap, time_gap = await self.get_time_gap()
             if not is_good_gap:
-                # self._logger.info(time_gap_log_message(time_gap))
                 if self._last_tried_kafka_offsets_time is None:
                     self._last_tried_kafka_offsets_time = self._min_stream_datetime
                 else:
@@ -167,8 +170,11 @@ class KafkaWithS3Feed:
                 self._logger.info(
                     f"Move kafka committed offsets to max history datetime or below it: {self._last_tried_kafka_offsets_time}")
                 await self._kafka_feed.set_offsets_to_time(self._last_tried_kafka_offsets_time)
+            if not is_good_gap:
+                await asyncio.sleep(self._history_try_interval.total_seconds())
+                is_good_gap, time_gap = await self.get_time_gap()
 
-            await asyncio.sleep(self._history_try_interval.total_seconds())
+        logging.info(f"Exiting time gap checking loop because of time gap is good")
 
     async def processing_loop(self):
         """ Get new messages from stream, add to buffers, flush buffers to main dataframe"""
@@ -208,11 +214,14 @@ class KafkaWithS3Feed:
 
     async def run_async(self):
         """ Initial read s3 history then listen kafka for new data and append to dataframe"""
-        # Initial read s3 history
+
+        # Initial read s3 history, modified after last kafka message = None, i.e. read all history
         self._s3_feed = S3Feed(self._feature_name, merge_tolerance=self._merge_tolerance)
         await self.read_history()
-        task = asyncio.create_task(self.handle_time_gap())
 
-        # Connect to kafka
+        # Check time gap in background, if it is bad, both read history incremental and move kafka offsets down
+        task = asyncio.create_task(self.handle_time_gap_periodically())
+
+        # Connect to kafka and listen for new data
         self._kafka_feed = KafkaFeed(level2_queue=self._level2_queue, candles_queue=self._candles_queue)
         await asyncio.gather(self._kafka_feed.run(start_time=self._max_history_datetime), self.processing_loop())

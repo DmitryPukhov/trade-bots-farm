@@ -171,9 +171,9 @@ class TestKafkaWithS3Feed:
                 start_date=None, end_date=None, modified_after=None)
 
             # Assert incremental call to load data from S3 up to the beginning of the stream data
-            # assert mock_s3_feed.read_history.call_args_list[1] == call(
-            #     start_date=pd.Timestamp("2025-06-15").date(), end_date=pd.Timestamp("2025-06-15").date(),
-            #     modified_after=pd.Timestamp("2025-06-15 02:55:00"))
+            assert mock_s3_feed.read_history.call_args_list[1] == call(
+                start_date=pd.Timestamp("2025-06-15").date(), end_date=pd.Timestamp("2025-06-15").date(),
+                modified_after=pd.Timestamp("2025-06-15 02:55:00"))
 
             assert feed.data.index.tolist() == [pd.Timestamp("2025-06-15 02:45:00"),
                                                 pd.Timestamp("2025-06-15 02:55:00"),
