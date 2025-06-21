@@ -1,7 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from airflow import DAG
+from airflow.models import Variable
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.sensors.time_delta import TimeDeltaSensor
 
 with DAG(
         'run_all',
@@ -18,6 +20,15 @@ with DAG(
         trigger_dag_id='process_stream_full',
         execution_date='{{ ts }}',
     )
+
+    # Add a sleep before a batch to be sure that external s3 data are ready
+    sleep_minutes = int(Variable.get("sleep_before_batch_minutes", default_var=3))
+    sleep_task_id = f'sleep_before_batch_{sleep_minutes}_minutes'
+    sleep_task = TimeDeltaSensor(
+        task_id=sleep_task_id,
+        delta=timedelta(minutes=sleep_minutes),  # Use param or default
+    )
+
     process_batch_full = TriggerDagRunOperator(
         task_id='trigger_process_batch_full_dag',
         trigger_dag_id='process_batch_full',
@@ -25,5 +36,5 @@ with DAG(
         wait_for_completion=True,  # Will wait batch here
     )
 
-    # Trigger streams forever, then do full batch load and process, wait for batch completion
-    process_stream_full >> process_batch_full
+    # Trigger streams forever, wait for external s3 data ready then do full batch load and process, wait for batch completion
+    process_stream_full >> sleep_task >> process_batch_full
