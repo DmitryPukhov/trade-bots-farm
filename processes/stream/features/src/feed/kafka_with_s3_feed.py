@@ -159,7 +159,6 @@ class KafkaWithS3Feed:
             if not is_good_gap:
                 self._logger.info(f"Try to load new history from s3")
                 await self.read_history()
-
             # Move kafka offsets before last s3 data
             is_good_gap, time_gap = await self.get_time_gap()
             if not is_good_gap:

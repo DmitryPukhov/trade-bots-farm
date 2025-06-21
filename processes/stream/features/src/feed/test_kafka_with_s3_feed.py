@@ -135,7 +135,7 @@ class TestKafkaWithS3Feed:
         return AsyncMock()
 
     @pytest.mark.asyncio
-    async def test_if_time_gap_should_read_history_incrementally(self, mock_s3_feed, mock_kafka_feed):
+    async def test_run_when_time_gap_should_read_history_incrementally(self, mock_s3_feed, mock_kafka_feed):
 
         # Configure the mock S3Feed to return the desired data
         mock_s3_feed.read_history.side_effect = [
@@ -181,3 +181,47 @@ class TestKafkaWithS3Feed:
                                                 ]
             # Should notify the consumer
             assert feed.new_data_event.is_set()
+
+    @pytest.mark.asyncio
+    async def test_run_when_time_gap_should_move_offsets(self, mock_s3_feed, mock_kafka_feed):
+
+        # History data ends at 02:45
+        mock_s3_feed.read_history.side_effect = [
+            pd.DataFrame([{"datetime": pd.Timestamp("2025-06-15 02:45:00")}]).set_index("datetime", drop=False),
+            pd.DataFrame([{"datetime": pd.Timestamp("2025-06-15 02:45:01")}]).set_index("datetime", drop=False)]
+
+        with patch("feed.kafka_with_s3_feed.S3Feed", return_value=mock_s3_feed), \
+                patch("feed.kafka_with_s3_feed.KafkaFeed", return_value=mock_kafka_feed):
+
+            # This feed is under test
+            feed = await self.new_kafka_with_s3_feed()
+            feed._history_try_interval = pd.Timedelta(0)
+
+            # Feed data starts at 02:55, we have 10 minutes time gap between kafka and s3
+            await feed._candles_queue.put({"close_time": "2025-06-15 02:55", "close": 100})
+            await feed._level2_queue.put({"datetime": "2025-06-15 02:55:00", "bid": 200})
+            await feed._candles_queue.put({"close_time": "2025-06-15 02:56", "close": 100})
+            await feed._level2_queue.put({"datetime": "2025-06-15 02:56:00", "bid": 200})
+
+            # New data event is not set before running the feed
+            assert not feed.new_data_event.is_set()
+
+            # # Run the feed for a while
+            with pytest.raises(asyncio.TimeoutError):
+                # Run the feed under test for a while
+                await asyncio.wait_for(feed.run_async(), 0.1)
+
+            # This data should come from both s3 and kafka
+            assert feed.data.index.tolist() == [pd.Timestamp("2025-06-15 02:45:00"),
+                                                pd.Timestamp("2025-06-15 02:45:01"),
+                                                pd.Timestamp("2025-06-15 02:55:00"),
+                                                pd.Timestamp("2025-06-15 02:56:00"),
+                                                ]
+
+            # Should try to move kafka offset to the end of s3 data
+            args = mock_kafka_feed.set_offsets_to_time.call_args_list
+            assert len(args) == 1
+            assert args[0].args == (pd.Timestamp("2025-06-15 02:55:00"),)
+
+            # The data is inconsistent, no new data event
+            assert not feed.new_data_event.is_set()
