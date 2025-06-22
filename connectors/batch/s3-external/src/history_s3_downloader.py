@@ -35,20 +35,27 @@ class HistoryS3Downloader:
         self._s3_internal_fs = s3fs.S3FileSystem(client_kwargs={"endpoint_url": self._dst_s3_endpoint_url},
                                                  key=self._dst_s3_access_key,
                                                  secret=self._dst_s3_secret_key)
+        self._file_download_attempts = os.environ.get("FILE_DOWNLOAD_ATTEMPTS", 3)
 
     async def _transfer_file(self, external_s3_dir: str, internal_s3_dir: str, file_name: str):
         """ Download a single file from external S3 to internal S3 """
 
         src_path = f"{external_s3_dir}/{file_name}"
         dst_path = f"{internal_s3_dir}/{file_name}"
-        try:
-            logging.info(f"Downloading {self._s3_external_fs.client_kwargs["endpoint_url"]}{src_path} to {dst_path}")
-            with self._s3_external_fs.open(src_path, 'rb') as src_file:
-                with self._s3_internal_fs.open(dst_path, 'wb') as dest_file:
-                    dest_file.write(src_file.read())
-        except Exception as e:
-            logging.error(f"Failed to download {src_path} to {dst_path}. {e}")
-            raise e
+        is_downloaded = False
+        for attempt in range(1, self._file_download_attempts + 1):
+            try:
+                logging.info(f"Downloading {self._s3_external_fs.client_kwargs['endpoint_url']}/{src_path} to {dst_path}")
+                with self._s3_external_fs.open(src_path, 'rb') as src_file:
+                    with self._s3_internal_fs.open(dst_path, 'wb') as dest_file:
+                        dest_file.write(src_file.read())
+                is_downloaded = True
+            except Exception as e:
+                # Log error and retry
+                logging.error(f"Attempt {attempt}/{self._file_download_attempts} failed to download {src_path} to {dst_path}. {e}")
+
+        if not is_downloaded:
+            raise IOError(f"Failed to download {src_path} to {dst_path} in {self._file_download_attempts} attempts")
 
     async def update_local_history(self, start_date=pd.Timestamp.min, end_date=pd.Timestamp.max):
         """ Download new history data from external s3 to internal s3.
