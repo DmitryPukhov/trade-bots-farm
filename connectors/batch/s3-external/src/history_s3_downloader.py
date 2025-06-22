@@ -36,6 +36,8 @@ class HistoryS3Downloader:
                                                  key=self._dst_s3_access_key,
                                                  secret=self._dst_s3_secret_key)
         self._file_download_attempts = os.environ.get("FILE_DOWNLOAD_ATTEMPTS", 3)
+        self._file_download_attempts_delay_seconds = os.environ.get("FILE_DOWNLOAD_ATTEMPTS_DELAY_SECONDS", 60)
+
 
     async def _transfer_file(self, external_s3_dir: str, internal_s3_dir: str, file_name: str):
         """ Download a single file from external S3 to internal S3 """
@@ -53,6 +55,8 @@ class HistoryS3Downloader:
             except Exception as e:
                 # Log error and retry
                 logging.error(f"Attempt {attempt}/{self._file_download_attempts} failed to download {src_path} to {dst_path}. {e}")
+                logging.info(f"Waiting {self._file_download_attempts_delay_seconds} seconds before retry to download {src_path}")
+                await asyncio.sleep(self._file_download_attempts_delay_seconds)
 
         if not is_downloaded:
             raise IOError(f"Failed to download {src_path} to {dst_path} in {self._file_download_attempts} attempts")
