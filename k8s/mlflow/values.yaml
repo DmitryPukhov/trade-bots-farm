@@ -30,7 +30,7 @@ artifactRoot: s3://trade-bots-farm/mlartifacts
 ## S3 Configuration
 extraEnvVars:
   - name: MLFLOW_S3_ENDPOINT_URL
-    value: "http://192.168.49.2:31901"  # Your MinIO endpoint
+    value: "http://192.168.49.2:31900"  # Your MinIO endpoint
   - name: AWS_S3_IGNORE_TLS
     value: "true"  # Only needed if using self-signed certs
 
