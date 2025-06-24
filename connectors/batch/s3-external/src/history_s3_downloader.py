@@ -56,7 +56,9 @@ class HistoryS3Downloader:
                 # Log error and retry
                 logging.error(f"Attempt {attempt}/{self._file_download_attempts} failed to download {src_path} to {dst_path}. {e}")
                 logging.info(f"Waiting {self._file_download_attempts_delay_seconds} seconds before retry to download {src_path}")
-                await asyncio.sleep(self._file_download_attempts_delay_seconds)
+                self._s3_external_fs.invalidate_cache()
+                self._s3_internal_fs.invalidate_cache()
+                await asyncio.sleep(self._file_download_attempts_delay_seconds*attempt)
 
         if not is_downloaded:
             raise IOError(f"Failed to download {src_path} to {dst_path} in {self._file_download_attempts} attempts")
