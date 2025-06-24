@@ -5,20 +5,40 @@ from airflow.models import Variable
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.sensors.time_delta import TimeDeltaSensor
 
-with DAG(
+with (((DAG(
         'run_all',
         schedule_interval=None,
         start_date=datetime(2023, 1, 1),
         catchup=False,
         tags=['trade-bots-farm'],
         max_active_runs=1
-) as dag:
+) as dag))):
     """ Main start DAG, triggers all batch loading and processing DAGs"""
 
-    process_stream_full = TriggerDagRunOperator(
-        task_id='trigger_process_stream_full_dag',
-        trigger_dag_id='process_stream_full',
+    # process_stream_full = TriggerDagRunOperator(
+    #     task_id='trigger_process_stream_full_dag',
+    #     trigger_dag_id='process_stream_full',
+    #     execution_date='{{ ts }}',
+    # )
+
+    # Stream child dags
+    connector_stream_htx = TriggerDagRunOperator(
+        task_id='trigger_connector_stream_htx_dag',
+        trigger_dag_id='connector_stream_htx',
         execution_date='{{ ts }}',
+        wait_for_completion=False,  # Will wait here
+    )
+    process_stream_raw_to_preproc = TriggerDagRunOperator(
+        task_id='trigger_process_stream_raw_to_preproc_dag',
+        trigger_dag_id='process_stream_raw_to_preproc',
+        execution_date='{{ ts }}',
+        wait_for_completion=False,  # Will wait here
+    )
+    process_stream_features_multi_indi = TriggerDagRunOperator(
+        task_id='trigger_process_stream_features_multi_indi_dag',
+        trigger_dag_id='process_stream_features_multi_indi',
+        execution_date='{{ ts }}',
+        wait_for_completion=False,  # Will wait here
     )
 
     # Add a sleep before a batch to be sure that external s3 data are ready
@@ -36,5 +56,5 @@ with DAG(
         wait_for_completion=True,  # Will wait batch here
     )
 
-    # Trigger streams forever, wait for external s3 data ready then do full batch load and process, wait for batch completion
-    process_stream_full >> sleep_task >> process_batch_full
+    # Streams - sleep (let's streams start in peace) - batch - features
+    connector_stream_htx >> process_stream_raw_to_preproc >> sleep_task >> process_batch_full >> process_stream_features_multi_indi
