@@ -16,7 +16,7 @@ class TestMultiIndiFeaturesCalc:
                          }
         return {
                 "5min": period_params,
-                "10min": period_params}
+                "3min": period_params}
 
     @pytest.mark.asyncio
     async def test_calc(self):
