@@ -67,7 +67,7 @@ class MultiIndiFeaturesCalc:
             self._logger.debug(f"Last processed dt: {previous_datetime}. Input last index:{input_df.index[-1]}, features last index:{features.index[-1]}, Input max index:{input_df.index.max()}, features max index:{features.index.max()}")
         else:
             self._logger.debug(f"Features are empty")
-        features_new = features[features.index > previous_datetime] if previous_datetime and not features.empty else features
+        features_new = features[features.index >= previous_datetime] if previous_datetime and not features.empty else features
         self._logger.debug(f"New features new len: {len(features_new)}, from {features_new.index[0] if not features_new.empty else 'None'} to {features_new.index[-1] if not features_new.empty else 'None'}")
         FeaturesMetrics.features_new_rows.labels(self._metrics_labels).inc(len(features_new))
         await asyncio.sleep(0)
