@@ -15,7 +15,7 @@ from pytrade2.features.level2.Level2MultiIndiFeatures import Level2MultiIndiFeat
 class MultiIndiFeaturesCalc:
     """ Calculate level2 and candles multiple indicators in the same dataframe. Ichimoku, RSI, MACD, BB, Stochastic, etc..."""
 
-    def __init__(self, metrics_labels: dict[str, str]):
+    def __init__(self, metrics_labels: dict[str, str], indicators_params = CandlesMultiIndiFeatures.default_params):
         self._logger = logging.getLogger(self.__class__.__name__)
         self._input_level2_cols = [
             "datetime", "l2_bid_max", "l2_bid_expect", "l2_bid_vol", "l2_ask_min", "l2_ask_expect", "l2_ask_vol"
@@ -26,6 +26,7 @@ class MultiIndiFeaturesCalc:
         self.features_candles_periods = os.getenv("FEATURES_CANDLES_PERIODS", "1min").replace(" ", "").split(",")
         self.features_level2_periods = os.getenv("FEATURES_LEVEL2_PERIODS", "1min").replace(" ", "").split(",")
         self._metrics_labels = metrics_labels
+        self._indicators_params = indicators_params
 
     async def calc(self, input_df: pd.DataFrame, previous_datetime: pd.Timestamp = pd.Timestamp.min):
         """ Features calculation"""
@@ -43,7 +44,7 @@ class MultiIndiFeaturesCalc:
 
         # Level2 features
         level2_df = input_df[self._input_level2_cols].sort_index()
-        level2_features = Level2MultiIndiFeatures.level2_features_of(level2_df, self.features_level2_periods)
+        level2_features = Level2MultiIndiFeatures.level2_features_of(level2_df, self.features_level2_periods, self._indicators_params)
         await asyncio.sleep(0)
 
         # Candles features
@@ -51,7 +52,7 @@ class MultiIndiFeaturesCalc:
         candles_1min_df["close_time"] = candles_1min_df.index
         candles_1min_df["open_time"] = candles_1min_df["close_time"] - pd.Timedelta("1min")
         candles_by_periods = CandlesFeatures.rolling_candles_by_periods(candles_1min_df, self.features_candles_periods)
-        candles_features = CandlesMultiIndiFeatures.multi_indi_features(candles_by_periods)
+        candles_features = CandlesMultiIndiFeatures.multi_indi_features(candles_by_periods, self._indicators_params)
         await asyncio.sleep(0)
 
         # Inner merge level2 and candles features, clean and drop NaN
@@ -62,7 +63,10 @@ class MultiIndiFeaturesCalc:
         FeaturesMetrics.features_cleaned_rows.labels(self._metrics_labels).inc(len(features))
 
         # Drop previously produced. If features topic does not exist or don't contain records, no filter
-        self._logger.debug(f"Last processed dt: {previous_datetime}. Input last index:{input_df.index[-1]}, features last index:{features.index[-1]}, Input max index:{input_df.index.max()}, features max index:{features.index.max()}")
+        if not features.empty:
+            self._logger.debug(f"Last processed dt: {previous_datetime}. Input last index:{input_df.index[-1]}, features last index:{features.index[-1]}, Input max index:{input_df.index.max()}, features max index:{features.index.max()}")
+        else:
+            self._logger.debug(f"Features are empty")
         features_new = features[features.index > previous_datetime] if previous_datetime and not features.empty else features
         self._logger.debug(f"New features new len: {len(features_new)}, from {features_new.index[0] if not features_new.empty else 'None'} to {features_new.index[-1] if not features_new.empty else 'None'}")
         FeaturesMetrics.features_new_rows.labels(self._metrics_labels).inc(len(features_new))
