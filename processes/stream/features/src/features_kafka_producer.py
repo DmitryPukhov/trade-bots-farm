@@ -106,3 +106,5 @@ class FeaturesKafkaProducer:
             self._last_produced_datetime = features_df.index.max()
         except Exception as e:
             self._logger.error(f"Error producing messages: {str(e)}")
+            self._producer.stop()
+            self._producer = None
