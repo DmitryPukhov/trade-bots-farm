@@ -5,14 +5,14 @@ from airflow.models import Variable
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.sensors.time_delta import TimeDeltaSensor
 
-with (((DAG(
+with DAG(
         'run_all',
         schedule_interval=None,
         start_date=datetime(2023, 1, 1),
         catchup=False,
         tags=['trade-bots-farm'],
         max_active_runs=1
-) as dag))):
+) as dag:
     """ Main start DAG, triggers all batch loading and processing DAGs"""
 
     # process_stream_full = TriggerDagRunOperator(
