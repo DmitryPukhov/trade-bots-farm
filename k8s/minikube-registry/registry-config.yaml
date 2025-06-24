@@ -1,0 +1,6 @@
+persistence:
+  enabled: true
+  existingClaim: registry-pvc
+  storageClass: manual
+  accessMode: ReadWriteOnce
+  size: 100Gi
