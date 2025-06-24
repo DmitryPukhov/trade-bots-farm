@@ -52,6 +52,7 @@ class HistoryS3Downloader:
                     with self._s3_internal_fs.open(dst_path, 'wb') as dest_file:
                         dest_file.write(src_file.read())
                 is_downloaded = True
+                break
             except Exception as e:
                 # Log error and retry
                 logging.error(f"Attempt {attempt}/{self._file_download_attempts} failed to download {src_path} to {dst_path}. {e}")
