@@ -5,6 +5,7 @@ import os
 
 from confluent_kafka import Producer, Consumer, KafkaException
 
+from bid_ask_preproc import BidAskPreproc
 from candles_preproc import CandlesPreproc
 from common_tools import CommonTools
 from level2_preproc import Level2Preproc
@@ -37,6 +38,8 @@ class ProcessStreamRawToPreprocApp:
                 return Level2Preproc()
             case "candles":
                 return CandlesPreproc()
+            case "bid_ask":
+                return BidAskPreproc()
             case _:
                 return None
 

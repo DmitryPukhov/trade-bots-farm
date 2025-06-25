@@ -23,7 +23,12 @@ with DAG(
         # Process candles
         {"KAFKA_TOPIC_SRC": "raw.htx.market.btc-usdt.kline.1min",
          "KAFKA_TOPIC_DST": "preproc.btc-usdt.candles.1min",
-         "KIND": "candles", "TICKER": "btc-usdt"}
+         "KIND": "candles", "TICKER": "btc-usdt"},
+        # Process bid_ask
+        {"KAFKA_TOPIC_SRC": "raw.htx.market.btc-usdt.bbo",
+         "KAFKA_TOPIC_DST": "preproc.btc-usdt.bid_ask",
+         "KIND": "bid_ask", "TICKER": "btc-usdt"}
+
     ]
 
     # Create tasks list for each source,  dest, kind
