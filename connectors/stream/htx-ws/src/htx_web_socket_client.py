@@ -43,7 +43,10 @@ class HtxWebSocketClient:
         self._reconnect_delay = self.heartbeat_timeout
         self.last_heartbeat = datetime.utcnow()  # record last heartbeat time
         self.receiver = receiver
-        self._websocket:Optional[ClientConnection] = None
+        self._websocket: Optional[ClientConnection] = None
+        self._websocket_ping_interval = os.environ.get("HTX_WEBSOCKET_PING_INTERVAL", 30)
+        self._websocket_ping_timeout = os.environ.get("HTX_WEBSOCKET_PING_TIMEOUT", 60)
+        self._websocket_close_timeout = os.environ.get("HTX_WEBSOCKET_CLOSE_TIMEOUT", 30)
         self.msg_queue = asyncio.Queue()
         logging.info(f"Initialized, key: ***{access_key[-3:]}, secret: ***{secret_key[-3:]}")
 
@@ -61,13 +64,19 @@ class HtxWebSocketClient:
                 await self._websocket.close()
                 await asyncio.sleep(0.001)
 
-
     async def read_messages_loop(self):
         """ Read messages from websocket, put to the queue """
         while self._running:
             try:
-                logging.info(f"Connecting to {self.url}...")
-                async with connect(self.url, max_queue=64) as websocket:
+                logging.info(
+                    f"Connecting to {self.url}. Connection parameters:\nping_interval: {self._websocket_ping_interval},\n"
+                    f"ping_timeout: {self._websocket_ping_timeout},\n"
+                    f"close_timeout: {self._websocket_close_timeout}")
+                async with connect(self.url,
+                                   ping_interval=self._websocket_ping_interval,
+                                   ping_timeout=self._websocket_ping_timeout,
+                                   close_timeout=self._websocket_close_timeout,
+                                   max_queue=64) as websocket:
                     self._websocket = websocket
                     self._reconnect_delay = self.heartbeat_timeout  # Reset delay after successful connection
                     await self._on_open()
@@ -75,7 +84,8 @@ class HtxWebSocketClient:
                         async for message in websocket:
                             await self.msg_queue.put(message)
                             await asyncio.sleep(0)
-                            ConnectorStreamHtxMetrics.messages_in_queue.labels(websocket=self.url).set(self.msg_queue.qsize())
+                            ConnectorStreamHtxMetrics.messages_in_queue.labels(websocket=self.url).set(
+                                self.msg_queue.qsize())
 
                     except exceptions.ConnectionClosed as e:
                         await self._on_close(e.code, e.reason)
@@ -174,7 +184,8 @@ class HtxWebSocketClient:
             await self._websocket.send(message)
         except Exception as e:
             # Wait a bit and retry
-            logging.warning(f"Sending message to websocket failed, waiting {delay} seconds before next retry. Error is {e}")
+            logging.warning(
+                f"Sending message to websocket failed, waiting {delay} seconds before next retry. Error is {e}")
             await asyncio.sleep(delay)
             delay *= 2
             await self._websocket.send(message)
