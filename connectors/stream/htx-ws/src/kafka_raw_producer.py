@@ -23,6 +23,10 @@ class KafkaRawProducer:
     async def on_message(self, topic, raw_message):
         try:
             now = datetime.datetime.now(timezone.utc)
+            message_ts = raw_message["tick"]["ts"] if "ts" in raw_message[
+                "tick"] else raw_message["ts"]
+            message_dt = datetime.datetime.fromtimestamp(message_ts / 1000, tz=timezone.utc)
+            raw_message["datetime"]  = str(message_dt)
 
             # Produce message to kafka
             prefix = "raw.htx."
@@ -35,9 +39,6 @@ class KafkaRawProducer:
             ConnectorStreamHtxMetrics.message_processed.labels(topic=topic).inc(1)
 
             # Time lag metric
-            message_ts = raw_message["tick"]["ts"] if "ts" in raw_message[
-                "tick"] else raw_message["ts"]
-            message_dt = datetime.datetime.fromtimestamp(message_ts / 1000, tz=timezone.utc)
             lag_sec = (now - message_dt).total_seconds()
             ConnectorStreamHtxMetrics.time_lag_sec.labels(topic=topic).set(lag_sec)
         except Exception as e:
