@@ -44,9 +44,9 @@ class HtxWebSocketClient:
         self.last_heartbeat = datetime.utcnow()  # record last heartbeat time
         self.receiver = receiver
         self._websocket: Optional[ClientConnection] = None
-        self._websocket_ping_interval = os.environ.get("HTX_WEBSOCKET_PING_INTERVAL", 30)
-        self._websocket_ping_timeout = os.environ.get("HTX_WEBSOCKET_PING_TIMEOUT", 60)
-        self._websocket_close_timeout = os.environ.get("HTX_WEBSOCKET_CLOSE_TIMEOUT", 30)
+        self._websocket_ping_interval = os.environ.get("HTX_WEBSOCKET_PING_INTERVAL", 20)
+        self._websocket_ping_timeout = os.environ.get("HTX_WEBSOCKET_PING_TIMEOUT", 20)
+        self._websocket_close_timeout = os.environ.get("HTX_WEBSOCKET_CLOSE_TIMEOUT", 10)
         self.msg_queue = asyncio.Queue()
         logging.info(f"Initialized, key: ***{access_key[-3:]}, secret: ***{secret_key[-3:]}")
 
