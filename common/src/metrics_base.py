@@ -17,24 +17,26 @@ class MetricsBase:
 
     @classmethod
     async def push_to_gateway_(cls):
-        try:
-            if logging.getLogger().isEnabledFor(logging.DEBUG):
-                collected_metrics = cls._registry.collect()
-                logging.debug(f"Pushing {len(list(collected_metrics))} metrics to gateway {cls.gateway}")
-            push_to_gateway(cls.gateway, job='trade_bots_farm', registry=cls._registry)
-        except Exception as e:
-            logging.error(f"Error while pushing metrics to {cls.gateway}: {e}")
+
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            collected_metrics = cls._registry.collect()
+            logging.debug(f"Pushing {len(list(collected_metrics))} metrics to gateway {cls.gateway}")
+        push_to_gateway(cls.gateway, job='trade_bots_farm', registry=cls._registry)
 
     @classmethod
     async def push_to_gateway_periodical(cls):
         try:
             logging.info(f"Starting metrics pusher with a period of {cls._push_to_gateway_interval_sec} seconds. Gateway: {cls.gateway}")
             while cls.run_flag:
-                # Push metrics to the Prometheus pushgateway.
-                await cls.push_to_gateway_()
-
-                # Delay before the next push.
-                await asyncio.sleep(cls._push_to_gateway_interval_sec)
+                try:
+                    # Push metrics to the Prometheus pushgateway.
+                    await cls.push_to_gateway_()
+                except Exception as e:
+                    logging.error(f"Error while pushing metrics to {cls.gateway}: {e}")
+                    raise e
+                finally:
+                    # Delay before the next push.
+                    await asyncio.sleep(cls._push_to_gateway_interval_sec)
         except asyncio.CancelledError:
             # When cancelled, we want to push one last time.
             logging.info("Pushing metrics to gateway before exiting.")
