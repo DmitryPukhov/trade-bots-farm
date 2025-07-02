@@ -4,6 +4,8 @@ import os
 from alor_ws_client import AlorWsClient
 from common_tools import CommonTools
 from alor_kafka_raw_producer import AlorKafkaRawProducer
+from connector_stream_alor_metrics import ConnectorStreamAlorMetrics
+
 
 class ConnectorStreamAlorApp:
     """ Main class"""
@@ -32,7 +34,7 @@ class ConnectorStreamAlorApp:
         # Connect to exchange and listen to the messages
         try:
             await asyncio.gather(client.run_async(),  # web socket event loop
-                                 #ConnectorStreamAlorMetrics().push_to_gateway_periodical()  # push metrics to gateway periodically
+                                 ConnectorStreamAlorMetrics().push_to_gateway_periodical()  # push metrics to gateway periodically
                                  )
 
         except asyncio.CancelledError:

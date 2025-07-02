@@ -33,7 +33,7 @@ class MetricsBase:
                     await cls.push_to_gateway_()
                 except Exception as e:
                     logging.error(f"Error while pushing metrics to {cls.gateway}: {e}")
-                    raise e
+                    #raise e
                 finally:
                     # Delay before the next push.
                     await asyncio.sleep(cls._push_to_gateway_interval_sec)
