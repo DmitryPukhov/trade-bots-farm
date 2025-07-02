@@ -117,6 +117,12 @@ do
       build_copy_module "$PROJECT_ROOT/common"
       copy_common_tools
   fi
+  if [[ "$module" == "connector_stream_alor" || "$module" == "all" ]]; then
+        matched=true
+        module_dir=$PROJECT_ROOT/connectors/stream/alor-ws
+        module_name="connector_stream_alor"
+        deploy_module "$module_dir" "$module_name"
+  fi
   if [[ "$module" == "connector_stream_htx" || "$module" == "all" ]]; then
         matched=true
         module_dir=$PROJECT_ROOT/connectors/stream/htx-ws
