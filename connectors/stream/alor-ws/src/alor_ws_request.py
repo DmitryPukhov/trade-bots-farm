@@ -32,7 +32,7 @@ class AlorWsRequest:
             "splitAdjust": True,
             "exchange": exchange,
             "instrumentGroup": instrument_group,
-            "format": "Simple",
+            "format": "Slim",
             "frequency": 100,
             "guid": guid,
             "token": token
@@ -47,7 +47,7 @@ class AlorWsRequest:
             "depth": 10,
             "exchange": exchange,
             "instrumentGroup": instrument_group,
-            "format": "Simple",
+            "format": "Slim",
             "frequency": 100,
             "guid": guid,
             "token": token
@@ -61,7 +61,7 @@ class AlorWsRequest:
             "code": code,
             "exchange": exchange,
             "instrumentGroup": instrument_group,
-            "format": "Simple",
+            "format": "Slim",
             "frequency": 100,
             "guid": guid,
             "token": token
