@@ -10,7 +10,7 @@ class ConnectorStreamAlorMetrics(MetricsBase):
     messages_in_queue = Gauge(
         '_messages_in_queue',
         'Total number of messages in asyncio message queue',
-        ['websocket'],
+        ['topic'],
         namespace=namespace,
         registry=MetricsBase._registry
 

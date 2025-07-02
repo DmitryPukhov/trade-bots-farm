@@ -41,6 +41,8 @@ class AlorKafkaRawProducer:
             message = await queue.get()
             self._logger.debug(f"Received {kind} message: {message}")
             await self._on_message(message, kind)
+            ConnectorStreamAlorMetrics.messages_in_queue.labels(topic=topic).set(queue.qsize())
+
 
     async def _get_time_field(self, raw_message: dict) -> datetime:
         """
@@ -49,14 +51,17 @@ class AlorKafkaRawProducer:
             datetime: The parsed datetime or datetime.min if no timestamp is found.
         """
         data = raw_message.get("data", {})
-
+        #ms: 1703862267800
+        #s:    1537529040
         # Check timestamp fields in priority order
-        for field in ["ob_ms_timestamp", "ms_timestamp"]:
+        for field in ["tso", "tst", "t"]:
             if field in data:
-                millis = float(data[field])
-                return datetime.fromtimestamp(millis / 1000.0)
-        if "time" in data:
-            return datetime.fromtimestamp(int(data["time"]))
+                # If millis, convert to float seconds
+                time_val = float(data[field])
+                1751442430
+                if time_val > 9999999999:
+                    time_val /= 1000.0
+                return datetime.fromtimestamp(time_val)
 
         return datetime.min
 
@@ -72,12 +77,14 @@ class AlorKafkaRawProducer:
             raw_message["datetime"] = str(message_dt)
             topic = self.topic_of(kind)
             self._producer.produce(topic, json.dumps(raw_message))
+
             # Set metrics
             ConnectorStreamAlorMetrics.message_processed.labels(topic=topic).inc(1)
 
             # Time lag metric
             lag_sec = (now - message_dt).total_seconds()
             ConnectorStreamAlorMetrics.time_lag_sec.labels(topic=topic).set(lag_sec)
+
             await asyncio.sleep(0)
 
         except Exception as e:
