@@ -1,0 +1,34 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: kafka-connect-s3
+  namespace: trade-bots-farm
+  annotations:
+    strimzi.io/use-connector-resources: "true"  # Enable KafkaConnector CRDs
+spec:
+  version: 4.0.0  # Must match your Kafka cluster version
+  image: debezium/connect:2.3  # Pre-loaded with S3 connector
+  replicas: 1
+  bootstrapServers: "trade-bots-farm-kafka-bootstrap.trade-bots-farm.svc.cluster.local:9092"
+  config:
+    group.id: "kafka-connect-s3"
+    config.storage.replication.factor: 1
+    offset.storage.replication.factor: 1
+    status.storage.replication.factor: 1
+    key.converter: "org.apache.kafka.connect.storage.StringConverter"
+    value.converter: "org.apache.kafka.connect.json.JsonConverter"
+    # MinIO specific settings (if using MinIO instead of S3)
+    s3.endpoint: "http://192.168.49.2:31900"  # Omit if using AWS S3
+    s3.path.style.access: "true"              # Required for MinIO
+  externalConfiguration:
+    env:
+      - name: AWS_ACCESS_KEY_ID      # For MinIO access key
+        valueFrom:
+          secretKeyRef:
+            name: minio
+            key: access-key
+      - name: AWS_SECRET_ACCESS_KEY  # For MinIO secret key
+        valueFrom:
+          secretKeyRef:
+            name: minio
+            key: secret-key

@@ -116,8 +116,18 @@ function redeploy_kafka(){
 
  function redeploy_kafka-connect(){
    echo "Redeploying kafka-connect"
+# Add Strimzi Helm repo if not already added
+  if ! helm repo list | grep -q "strimzi"; then
+      echo "Adding Strimzi Helm repository..."
+      helm repo add strimzi https://strimzi.io/charts/
+      #helm repo update
+      helm install  strimzi-kafka-operator strimzi/strimzi-kafka-operator
+      # helm repo update  # Uncomment if you want to force update
+  fi
+
    #kubectl apply -f kafka-connect/s3-sink-raw.alor.MOEX.TQBR.SBER.level2.json
-   kubectl apply -f kafka-connect/kafka-connect.yaml
+   kubectl apply -f kafka-connect/kafka-connect-s3.yaml
+
    #kubectl apply -f kafka-connect/s3-sinks.yaml
 
  }
