@@ -114,6 +114,14 @@ function redeploy_kafka(){
    helm install kafka-ui kafka-ui/kafka-ui  -f kafka-ui/values.yaml
  }
 
+ function redeploy_kafka-connect(){
+   echo "Redeploying kafka-connect"
+   #kubectl apply -f kafka-connect/s3-sink-raw.alor.MOEX.TQBR.SBER.level2.json
+   kubectl apply -f kafka-connect/kafka-connect.yaml
+   #kubectl apply -f kafka-connect/s3-sinks.yaml
+
+ }
+
 function redeploy_minikube_registry(){
   # Disable existing registry
   minikube addons disable registry

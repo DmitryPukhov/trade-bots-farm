@@ -1,0 +1,60 @@
+# values.yaml
+replicaCount: 3
+
+configurationOverrides:
+  # Kafka cluster connection
+  bootstrap.servers: "trade-bots-farm-kafka-bootstrap:9092"
+
+  # Connect worker settings
+  group.id: "connect-cluster"
+  offset.storage.topic: "kafka-connect-offsets"
+  config.storage.topic: "kafka-connect-configs"
+  status.storage.topic: "kafka-connect-statuses"
+
+  # REST API security
+  rest.extension.classes: "org.apache.kafka.connect.rest.basic.auth.extension.BasicAuthSecurityRestExtension"
+  connect.rest.advertised.host.name: "kafka-connect-service"
+
+# Plugins to install
+plugins:
+  - "confluentinc/kafka-connect-s3:10.6.3"
+
+# Security Context
+securityContext:
+  fsGroup: 1001
+  runAsUser: 1001
+
+# Secrets Mounting
+existingSecret: "kafka-connect-secrets"
+existingSecretMountPath: "/vault/secrets"
+
+# Network Policies
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: kafka
+    - ports:
+        - port: 8083
+          protocol: TCP
+
+# Resource limits
+resources:
+  requests:
+    cpu: "500m"
+    memory: "1Gi"
+  limits:
+    cpu: "2000m"
+    memory: "2Gi"
+
+# Prometheus Monitoring
+metrics:
+  enabled: true
+  jmx:
+    config:
+      - name: "com.sun.management.jmxremote"
+        value: "true"
+      - name: "com.sun.management.jmxremote.authenticate"
+        value: "false"
