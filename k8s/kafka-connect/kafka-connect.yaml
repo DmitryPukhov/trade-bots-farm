@@ -1,55 +1,11 @@
-apiVersion: kafka.strimzi.io/v1beta2
-kind: KafkaConnect
-metadata:
-  name: kafka-connect-s3
-spec:
-  version: 4.0.0  # Must match your Kafka cluster version
-  replicas: 1
-  bootstrapServers: "trade-bots-farm-kafka-bootstrap.trade-bots-farm.svc.cluster.local:9092"  # Your Kafka bootstrap address
-  config:
-  tlsSidecar:
-    enabled: false
-  group.id: my-connect-group
-  offset.storage.topic: connect-offsets
-  config.storage.topic: connect-configs
-  status.storage.topic: connect-status
-  plugins:
-    - name: confluent-platform
-      artifacts:
-        - type: tgz
-          url: https://packages.confluent.io/storage/confluent-7.3.2/kafka_2.13-7.3.2.tgz
-#  config:
-#    s3.endpoint: "http://192.168.49.2:31900" # MinIO server URL (DNS name or IP)
-#    s3.path.style.access: "true"
-#    group.id: "kafka-connect-s3"
-#    config.storage.replication.factor: 1
-#    offset.storage.replication.factor: 1
-#    status.storage.replication.factor: 1
-#    key.converter: "org.apache.kafka.connect.storage.StringConverter"
-#    value.converter: "org.apache.kafka.connect.json.JsonConverter"
-externalConfiguration:
-  env:
-    - name: AWS_ACCESS_KEY_ID
-      valueFrom:
-        secretKeyRef:
-          name: minio
-          key: access_key
-    - name: AWS_SECRET_ACCESS_KEY
-      valueFrom:
-        secretKeyRef:
-          name: minio
-          key: secret_key
+# values.yaml
+image: strimzi/kafka:0.35.1-kafka-4.0.0  # Adjust version as needed
+installPlugins:
+  - confluentinc-kafka-connect-s3:latest  # Auto-downloads from Confluent Hub
+configuration:
+  config.storage.replication.factor: 1
+  offset.storage.replication.factor: 1
+  status.storage.replication.factor: 1
+  key.converter: org.apache.kafka.connect.storage.StringConverter
+  value.converter: org.apache.kafka.connect.json.JsonConverter
 
-#  build:
-#    output:  # No registry needed! Uses local image stream
-#      type: docker
-#      image: "kafka-connect-s3:latest"
-#    plugins:
-#      - name: s3-sink
-#        artifacts:
-#          - type: jar
-#            url: "https://repo1.maven.org/maven2/io/confluent/kafka-connect-s3/10.6.3/kafka-connect-s3-10.6.3.jar"
-#          - type: jar
-#            url: "https://repo1.maven.org/maven2/io/confluent/kafka-connect-storage-common/10.6.3/kafka-connect-storage-common-10.6.3.jar"
-#          - type: jar
-#            url: "https://repo1.maven.org/maven2/io/confluent/kafka-connect-storage-api/10.6.3/kafka-connect-storage-api-10.6.3.jar"
