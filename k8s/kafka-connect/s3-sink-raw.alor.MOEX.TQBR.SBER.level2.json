@@ -1,0 +1,16 @@
+{
+  "name": "s3-sink",
+  "config": {
+    "connector.class": "io.confluent.connect.s3.S3SinkConnector",
+    "tasks.max": "1",
+    "topics": "raw.alor.MOEX.TQBR.SBER.level2",
+    "format.class": "io.confluent.connect.s3.format.avro.AvroFormat",
+    "flush.size": "100",
+    "storage.class": "io.confluent.connect.s3.storage.S3Storage",
+    "s3.region": "us-east-1",
+    "s3.bucket.name": "trade-bots-farm",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "confluent.topic.bootstrap.servers": "PLAINTEXT://kafka-cluster-kafka-bootstrap:9092"
+  }
+}
