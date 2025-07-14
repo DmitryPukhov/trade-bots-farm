@@ -92,9 +92,11 @@ function redeploy_kafka(){
   echo "Redeploying kafka"
   # Delete previous ignoring errors if not exist
   set +e
+
       kubectl -n $NAMESPACE delete $(kubectl get strimzi -o name -n $NAMESPACE)
       kubectl delete pvc -l strimzi.io/name=trade-bots-farm -n $NAMESPACE
       kubectl -n $NAMESPACE delete -f "https://strimzi.io/install/latest?namespace=$NAMESPACE"
+      kubectl delete kafka trade-bots-farm -n trade-bots-farm
   set -e
 
   # Install kafka operator
@@ -116,20 +118,13 @@ function redeploy_kafka(){
 
  function redeploy_kafka-connect(){
    echo "Redeploying kafka-connect"
-# Add Strimzi Helm repo if not already added
-  if ! helm repo list | grep -q "strimzi"; then
-      echo "Adding Strimzi Helm repository..."
-      helm repo add strimzi https://strimzi.io/charts/
-      #helm repo update
-      helm install  strimzi-kafka-operator strimzi/strimzi-kafka-operator
-      # helm repo update  # Uncomment if you want to force update
-  fi
+   set +e
+   echo "Try to delete old kafka connect "
+   kubectl delete kafkaconnect kafka-connect-s3
+   set -e
 
-   #kubectl apply -f kafka-connect/s3-sink-raw.alor.MOEX.TQBR.SBER.level2.json
+   echo "Deploy kafka connect"
    kubectl apply -f kafka-connect/kafka-connect-s3.yaml
-
-   #kubectl apply -f kafka-connect/s3-sinks.yaml
-
  }
 
 function redeploy_minikube_registry(){
