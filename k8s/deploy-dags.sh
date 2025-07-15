@@ -93,11 +93,10 @@ deploy_module() {
 
 }
 
-deploy_s3_sink(){
-  module_dir=$1
-  s3_sinks_dir=$module_dir/s3-sinks
+deploy_s3_sinks(){
+  s3_sinks_dir=$1
   echo "Deploy s3 sinks from $s3_sinks_dir"
-  for s3_sink_yaml in $module_dir/s3-sinks/*.yaml
+  for s3_sink_yaml in $s3_sinks_dir/*.yaml
   do
     echo "Deploy s3 sink $s3_sink_yaml"
     kubectl apply -f "$s3_sink_yaml"
@@ -134,7 +133,6 @@ do
         module_dir=$PROJECT_ROOT/connectors/stream/alor-ws
         module_name="connector_stream_alor"
         deploy_module "$module_dir" "$module_name"
-        deploy_s3_sink "$module_dir"
   fi
   if [[ "$module" == "connector_stream_htx" || "$module" == "all" ]]; then
         matched=true
@@ -183,6 +181,10 @@ do
         module_dir=$PROJECT_ROOT/processes/common
         module_name="process_common"
         deploy_module "$module_dir" "$module_name"
+  fi
+  if [[ "$module" == "s3_sinks" || "$module" == "all" ]]; then
+        matched=true
+        deploy_s3_sink "$PROJECT_ROOT/connectors/stream/alor-ws/s3-sinks"
   fi
 
 done
