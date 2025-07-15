@@ -127,37 +127,13 @@ function redeploy_kafka(){
    kubectl apply -f kafka-connect/kafka-connect-s3.yaml
  }
 
-function redeploy_minikube_registry(){
-  # Disable existing registry
-  minikube addons disable registry
-
-  # Create PV and PVC
-  kubectl apply -f minikube-registry/registry-pv.yaml -n kube-system
-  kubectl apply -f minikube-registry/registry-pvc.yaml -n kube-system
-
-  # Configure registry to use registry-pvc
-cat <<EOF | minikube addons configure registry -f -
-persistence:
-  enabled: true
-  existingClaim: registry-pvc
-  storageClass: manual
-  accessMode: ReadWriteOnce
-  size: 10Gi
-EOF
-  #minikube addons configure registry -f minikube-registry/registry-config.yaml
-
-  # Enable registry
-  minikube addons enable registry
-
-}
-
 ###############
 # main
 ###############
 # Exit on error
 set -e
 
-#modules=${*:-"secrets prometheus mlflow grafana kafka kafka-ui airflow"}
+#modules=${*:-"secrets minio prometheus mlflow grafana kafka kafka-ui kafka-connect airflow"}
 modules=$*
 echo "Modules to redeploy: $modules"
 for module in $modules
