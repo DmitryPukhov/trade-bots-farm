@@ -89,8 +89,20 @@ deploy_module() {
 
   # Build module itself and copy it to airflow
   build_copy_module "$module_dir"
+
+
 }
 
+deploy_s3_sink(){
+  module_dir=$1
+  s3_sinks_dir=$module_dir/s3-sinks
+  echo "Deploy s3 sinks from $s3_sinks_dir"
+  for s3_sink_yaml in $module_dir/s3-sinks/*.yaml
+  do
+    echo "Deploy s3 sink $s3_sink_yaml"
+    kubectl apply -f "$s3_sink_yaml"
+  done
+}
 
 ###############
 # main
@@ -122,6 +134,7 @@ do
         module_dir=$PROJECT_ROOT/connectors/stream/alor-ws
         module_name="connector_stream_alor"
         deploy_module "$module_dir" "$module_name"
+        deploy_s3_sink "$module_dir"
   fi
   if [[ "$module" == "connector_stream_htx" || "$module" == "all" ]]; then
         matched=true
