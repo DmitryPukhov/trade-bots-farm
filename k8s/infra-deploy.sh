@@ -89,16 +89,15 @@ function redeploy_grafana(){
  }
 
 function redeploy_kafka(){
-  echo "Redeploying kafka"
   # Delete previous ignoring errors if not exist
   set +e
-
+      echo "Try to delete old kafka"
       kubectl -n $NAMESPACE delete $(kubectl get strimzi -o name -n $NAMESPACE)
       kubectl delete pvc -l strimzi.io/name=trade-bots-farm -n $NAMESPACE
       kubectl -n $NAMESPACE delete -f "https://strimzi.io/install/latest?namespace=$NAMESPACE"
       kubectl delete kafka trade-bots-farm -n trade-bots-farm
   set -e
-
+  echo "Deploying kafka"
   # Install kafka operator
   kubectl create -f "https://strimzi.io/install/latest?namespace=$NAMESPACE" -n $NAMESPACE
   # Install kafka cluster
