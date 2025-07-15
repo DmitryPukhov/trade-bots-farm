@@ -20,7 +20,7 @@ spec:
     #plugin.path: "/kafka/connect,/kafka/connect/external"  # Debezium-specific path
 
     # MinIO specific settings (if using MinIO instead of S3)
-    s3.endpoint: "http://192.168.49.2:31900"  # Omit if using AWS S3
+    s3.endpoint: "http://minio:900"  # Omit if using AWS S3
     s3.path.style.access: "true"              # Required for MinIO
   externalConfiguration:
     env:
@@ -37,7 +37,9 @@ spec:
   build:
     output:
       type: docker
-      image: 192.168.49.2:5000/kafka-connect-s3:latest
+      image: 192.168.39.187:5000/kafka-connect-s3:latest
+      # todo: find out why reference by name is not working
+      #image: registry.kube-system.svc.cluster.local:5000/kafka-connect-s3:latest
       #pushSecret: minikube-registry-credentials
     plugins:
       - name: s3-sink
