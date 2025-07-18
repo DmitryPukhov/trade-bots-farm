@@ -18,12 +18,30 @@ spec:
       containers:
         - name: registry
           image: registry:2
+          env:
+            - name: REGISTRY_HTTP_ADDR
+              value: "0.0.0.0:5000"
+            - name: REGISTRY_HTTP_TLS
+              value: "false"
           ports:
             - containerPort: 5000
           volumeMounts:
             - name: registry-storage
               mountPath: "/var/lib/registry"
+#            - name: minikube-certs
+#              mountPath: "/certs"
+#              readOnly: true
+#          env:
+#            - name: REGISTRY_HTTP_TLS_CERTIFICATE
+#              value: "/certs/apiserver.crt"  # Minikube's API server cert
+#            - name: REGISTRY_HTTP_TLS_KEY
+#              value: "/certs/apiserver.key"   # Minikube's API server key
+
       volumes:
+#        - name: minikube-certs
+#          hostPath:
+#            path: "/var/lib/minikube/certs"  # Minikube's cert directory
+#            type: Directory
         - name: registry-storage
           persistentVolumeClaim:
             claimName: registry-pvc

@@ -125,6 +125,17 @@ function redeploy_kafka(){
    echo "Deploy kafka connect"
    kubectl apply -f kafka-connect/kafka-connect-s3.yaml
  }
+#
+# function redeploy_nexus(){
+#   set +e
+#   echo "Deleting old nexus"
+#    helm repo add sonatype https://sonatype.github.io/helm3-charts/
+#    helm uninstall nexus
+#   set -e
+#    echo "Deploying nexus"
+#    helm install nexus sonatype/nexus-repository-manager -f nexus/values.yaml
+#    #kubectl apply -f nexus-repo/nexus-nodeport.yaml
+# }
 
  function redeploy_registry(){
     kubectl apply -f minikube-registry/registry-pv.yaml
