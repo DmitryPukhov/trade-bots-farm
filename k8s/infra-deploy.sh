@@ -126,6 +126,12 @@ function redeploy_kafka(){
    kubectl apply -f kafka-connect/kafka-connect-s3.yaml
  }
 
+ function redeploy_registry(){
+    kubectl apply -f minikube-registry/registry-pv.yaml
+    kubectl apply -f minikube-registry/registry-pvc.yaml
+    kubectl apply -f minikube-registry/registry-deployment.yaml
+ }
+
 ###############
 # main
 ###############
