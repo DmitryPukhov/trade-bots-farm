@@ -21,8 +21,8 @@ spec:
           env:
             - name: REGISTRY_HTTP_ADDR
               value: "0.0.0.0:5000"
-            - name: REGISTRY_HTTP_TLS
-              value: "false"
+#            - name: REGISTRY_HTTP_TLS
+#              value: "false"
           ports:
             - containerPort: 5000
           volumeMounts:
