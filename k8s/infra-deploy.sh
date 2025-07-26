@@ -7,6 +7,8 @@ source common-lib.sh
 ensure_namespace
 set +a
 
+DOCKER_REGISTRY=$(minikube ip):30500
+
 # All secrets
 function redeploy_secrets(){
   for yaml_file in secret/*.yaml; do
@@ -119,7 +121,7 @@ function redeploy_kafka(){
     echo "Redeploying kafka-connect"
 
     echo "Build and push docker image"
-    DOCKER_REGISTRY=$(minikube ip):30500
+
     echo "Docker registry: $DOCKER_REGISTRY"
     docker build -t "$DOCKER_REGISTRY"/kafka-connect-s3:latest -f  kafka-connect/Dockerfile .
     docker push "$DOCKER_REGISTRY"/kafka-connect-s3:latest
@@ -137,6 +139,11 @@ function redeploy_kafka(){
     kubectl apply -f minikube-registry/registry-pv.yaml
     kubectl apply -f minikube-registry/registry-pvc.yaml
     kubectl apply -f minikube-registry/registry-deployment.yaml
+
+    echo "Copy docker image registry certs to minikube node"
+    certs_dir="sudo mkdir -p /etc/docker/certs.d/$DOCKER_REGISTRY"
+    minikube ssh "sudo mkdir -p $certs_dir"
+    minikube cp secret/registry/tls.crt "$certs_dir"/ca.crt
  }
 
 ###############
