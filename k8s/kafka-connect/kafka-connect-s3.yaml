@@ -9,8 +9,8 @@ metadata:
 spec:
   version: 4.0.0  # Must match your Kafka cluster version
   #image: quay.io/strimzi/kafka:0.46.1-kafka-4.0.0  # Standard Strimzi image  replicas: 1
-  image: registry.kube-system.svc.cluster.local:5000/kafka-connect-s3:latest
-  #image: 192.168.39.36:30500/kafka-connect-s3:latest
+  #image: registry.kube-system.svc.cluster.local:5000/kafka-connect-s3:latest
+  image: 192.168.39.36:30500/kafka-connect-s3:latest
   bootstrapServers: "trade-bots-farm-kafka-bootstrap:9092"
   config:
     group.id: "kafka-connect-s3"
