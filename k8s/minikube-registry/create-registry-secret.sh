@@ -10,3 +10,6 @@ openssl req -x509 -newkey rsa:4096 -nodes -days 365 \
 # create secret in kube-system namespace
 kubectl create secret tls registry-tls -n kube-system \
   --cert=tls.crt --key=tls.key
+
+kubectl create secret tls registry-tls -n trade-bots-farm \
+  --cert=tls.crt --key=tls.key
