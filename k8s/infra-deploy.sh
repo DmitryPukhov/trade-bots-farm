@@ -116,14 +116,21 @@ function redeploy_kafka(){
  }
 
  function redeploy_kafka-connect(){
-   echo "Redeploying kafka-connect"
-   set +e
-   echo "Try to delete old kafka connect "
-   kubectl delete kafkaconnect kafka-connect-s3
-   set -e
+    echo "Redeploying kafka-connect"
 
-   echo "Deploy kafka connect"
-   kubectl apply -f kafka-connect/kafka-connect-s3.yaml
+    echo "Build and push docker image"
+    DOCKER_REGISTRY=$(minikube ip):30500
+    echo "Docker registry: $DOCKER_REGISTRY"
+    docker build -t "$DOCKER_REGISTRY"/kafka-connect-s3:latest -f  kafka-connect/Dockerfile .
+    docker push "$DOCKER_REGISTRY"/kafka-connect-s3:latest
+
+     set +e
+     echo "Try to delete old kafka connect "
+     kubectl delete kafkaconnect kafka-connect-s3
+     set -e
+
+     echo "Deploy kafka connect"
+     kubectl apply -f kafka-connect/kafka-connect-s3.yaml
  }
 #
 # function redeploy_nexus(){

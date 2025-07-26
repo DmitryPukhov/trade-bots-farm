@@ -5,9 +5,12 @@ metadata:
   namespace: trade-bots-farm
   annotations:
     strimzi.io/use-connector-resources: "true"  # Enable KafkaConnector CRDs
+
 spec:
   version: 4.0.0  # Must match your Kafka cluster version
-  image: quay.io/strimzi/kafka:0.46.1-kafka-4.0.0  # Standard Strimzi image  replicas: 1
+  #image: quay.io/strimzi/kafka:0.46.1-kafka-4.0.0  # Standard Strimzi image  replicas: 1
+  image: registry.kube-system.svc.cluster.local:5000/kafka-connect-s3:latest
+  #image: 192.168.39.36:30500/kafka-connect-s3:latest
   bootstrapServers: "trade-bots-farm-kafka-bootstrap:9092"
   config:
     group.id: "kafka-connect-s3"
@@ -17,7 +20,6 @@ spec:
     key.converter: "org.apache.kafka.connect.storage.StringConverter"
     value.converter: "org.apache.kafka.connect.json.JsonConverter"
 
-    #plugin.path: "/kafka/connect,/kafka/connect/external"  # Debezium-specific path
 
     # MinIO specific settings (if using MinIO instead of S3)
     s3.endpoint: "http://minio:900"  # Omit if using AWS S3
@@ -34,23 +36,3 @@ spec:
           secretKeyRef:
             name: minio
             key: secret-key
-  build:
-    output:
-      type: docker
-      #image: 192.168.39.187:30500/kafka-connect-s3:latest
-      pushSecret: insecure-registry-secret
-      # todo: find out why reference by name is not working
-      image: registry.kube-system.svc.cluster.local:5000/kafka-connect-s3:latest
-      #pushSecret: minikube-registry-credentials
-    plugins:
-      - name: s3-sink
-        artifacts:
-          - type: zip
-            url: https://hub-downloads.confluent.io/api/plugins/confluentinc/kafka-connect-s3/versions/10.6.7/confluentinc-kafka-connect-s3-10.6.7.zip
-  template:
-    pod:
-      imagePullSecrets:
-        - name: insecure-registry-secret
-      metadata:
-        annotations:
-          image.openshift.io/force-http-based-auth: "true"
