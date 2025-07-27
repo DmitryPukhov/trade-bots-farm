@@ -90,19 +90,50 @@ function redeploy_grafana(){
   helm upgrade --install airflow apache-airflow/airflow -f airflow/values.yaml
  }
 
+function remove_strimzi() {
+    echo "🚀 Starting Strimzi/Kafka uninstall..."
+
+    # Delete all Kafka custom resources
+    kubectl delete $(kubectl get kafka,kafkatopics,kafkausers,kafkaconnects,kafkabridges,kafkamirrormaker2 -o name -n $NAMESPACE 2>/dev/null) --ignore-not-found
+
+    # Delete Cluster Operator and other deployments
+    kubectl delete deployment -l app=strimzi -n $NAMESPACE --ignore-not-found
+
+    # Delete all Strimzi CRDs
+    kubectl delete crd -l app=strimzi --ignore-not-found
+
+    # Delete cluster-wide RBAC resources
+    kubectl delete clusterrolebinding,clusterrole,clusterroles,rolebindings,configmaps -l app=strimzi --ignore-not-found
+
+    # Delete webhook configurations
+    kubectl delete validatingwebhookconfigurations,mutatingwebhookconfigurations -l app=strimzi --ignore-not-found
+
+    # Delete service accounts
+    kubectl delete serviceaccount -l app=strimzi -n $NAMESPACE --ignore-not-found
+
+    # Delete persistent volumes (optional)
+    kubectl delete pvc -n $NAMESPACE -l app.kubernetes.io/name=kafka --ignore-not-found
+    kubectl delete pvc -n $NAMESPACE -l app.kubernetes.io/name=zookeeper --ignore-not-found
+
+    # Remove finalizers from all Kafka resources
+    kubectl get kafka -n $NAMESPACE -o name | xargs -I {} kubectl patch {} -n $NAMESPACE -p '{"metadata":{"finalizers":[]}}' --type=merge
+
+    # Force delete CRDs
+    kubectl get crd -l app=strimzi -o name | xargs -I {} kubectl patch {} -p '{"metadata":{"finalizers":[]}}' --type=merge
+    echo "✅ Strimzi/Kafka uninstallation complete!"
+}
+
 function redeploy_kafka(){
   # Delete previous ignoring errors if not exist
   set +e
-      echo "Try to delete old kafka"
-      kubectl -n $NAMESPACE delete $(kubectl get strimzi -o name -n $NAMESPACE)
-      kubectl delete pvc -l strimzi.io/name=trade-bots-farm -n $NAMESPACE
-      kubectl -n $NAMESPACE delete -f "https://strimzi.io/install/latest?namespace=$NAMESPACE"
-      kubectl delete kafka trade-bots-farm -n trade-bots-farm
+      echo "Try to delete old kafka from $NAMESPACE"
+      remove_strimzi
+
   set -e
   echo "Deploying kafka"
-  # Install kafka operator
-  kubectl create -f "https://strimzi.io/install/latest?namespace=$NAMESPACE" -n $NAMESPACE
-  # Install kafka cluster
+#  # Install kafka operator
+  kubectl create -v=6 -f "https://strimzi.io/install/latest?namespace=$NAMESPACE" -n $NAMESPACE
+#  # Install kafka cluster
   kubectl apply -f kafka/values.yaml -n $NAMESPACE
  }
 
