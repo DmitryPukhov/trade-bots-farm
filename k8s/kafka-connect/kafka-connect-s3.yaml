@@ -7,6 +7,7 @@ metadata:
     strimzi.io/use-connector-resources: "true"  # Enable KafkaConnector CRDs
 
 spec:
+  replicas: 1 # Single pod
   version: 4.0.0  # Must match your Kafka cluster version
   #image: quay.io/strimzi/kafka:0.46.1-kafka-4.0.0  # Standard Strimzi image  replicas: 1
   #image: registry.kube-system.svc.cluster.local:5000/kafka-connect-s3:latest
