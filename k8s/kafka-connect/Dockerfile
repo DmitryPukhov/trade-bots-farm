@@ -10,4 +10,9 @@ RUN microdnf install -y unzip && \
     rm /tmp/s3-sink.zip && \
     microdnf remove -y unzip && \
     microdnf clean all -y
+
+# Force AWS SDK to use MinIO
+RUN echo "aws.s3.endpoint=http://minio:9000" >> /opt/kafka/config/connect-distributed.properties && \
+    echo "aws.s3.path.style.access=true" >> /opt/kafka/config/connect-distributed.properties
+
 USER 1001
