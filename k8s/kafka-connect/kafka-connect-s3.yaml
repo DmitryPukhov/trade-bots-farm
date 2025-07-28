@@ -13,6 +13,7 @@ spec:
   #image: registry.kube-system.svc.cluster.local:5000/kafka-connect-s3:latest
   image: 192.168.39.36:30500/kafka-connect-s3:latest
   bootstrapServers: "trade-bots-farm-kafka-bootstrap:9092"
+
   config:
     group.id: "kafka-connect-s3"
     aws.credentials.provider.class: "com.amazonaws.auth.EnvironmentVariableCredentialsProvider"
@@ -29,27 +30,18 @@ spec:
     s3.endpoint: "http://minio:9000"  # Omit if using AWS S3
     s3.path.style.access: "true"              # Required for MinIO
   externalConfiguration:
-    volumes:
-      - name: minio-credentials
-        secret:
-          secretName: minio
-          items:
-            - key: access-key
-              path: access-key
-            - key: secret-key
-              path: secret-key
     env:
       - name: AWS_ENDPOINT_URL
         valueFrom:
           secretKeyRef:
             name: minio
             key: endpoint-url
-      - name: AWS_ACCESS_KEY_ID      # For MinIO access key
+      - name: AWS_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
             name: minio
             key: access-key
-      - name: AWS_SECRET_ACCESS_KEY  # For MinIO secret key
+      - name: AWS_SECRET_ACCESS_KEY
         valueFrom:
           secretKeyRef:
             name: minio
