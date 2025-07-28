@@ -15,18 +15,35 @@ spec:
   bootstrapServers: "trade-bots-farm-kafka-bootstrap:9092"
   config:
     group.id: "kafka-connect-s3"
+    aws.credentials.provider.class: "com.amazonaws.auth.EnvironmentVariableCredentialsProvider"
     config.storage.replication.factor: 1
     offset.storage.replication.factor: 1
     status.storage.replication.factor: 1
+    format.class: io.confluent.connect.s3.format.json.JsonFormat
+    storage.class: io.confluent.connect.s3.storage.S3Storage
     key.converter: "org.apache.kafka.connect.storage.StringConverter"
     value.converter: "org.apache.kafka.connect.json.JsonConverter"
 
 
     # MinIO specific settings (if using MinIO instead of S3)
-    s3.endpoint: "http://minio:900"  # Omit if using AWS S3
+    s3.endpoint: "http://minio:9000"  # Omit if using AWS S3
     s3.path.style.access: "true"              # Required for MinIO
   externalConfiguration:
+    volumes:
+      - name: minio-credentials
+        secret:
+          secretName: minio
+          items:
+            - key: access-key
+              path: access-key
+            - key: secret-key
+              path: secret-key
     env:
+      - name: AWS_ENDPOINT_URL
+        valueFrom:
+          secretKeyRef:
+            name: minio
+            key: endpoint-url
       - name: AWS_ACCESS_KEY_ID      # For MinIO access key
         valueFrom:
           secretKeyRef:

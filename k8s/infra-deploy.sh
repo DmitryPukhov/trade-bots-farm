@@ -148,6 +148,14 @@ function redeploy_kafka(){
    helm install kafka-ui kafka-ui/kafka-ui  -f kafka-ui/values.yaml
  }
 
+ function redeploy_kafka-connectors(){
+   set +e
+   echo "Try to delete old kafka connectors"
+   kubectl delete kafkaconnector alor-s3-sink
+   set -e
+   echo "Deploying kafka connectors"
+   kubectl apply -f kafka-connect/alor-s3-sink.yaml
+ }
  function redeploy_kafka-connect(){
     echo "Redeploying kafka-connect"
 

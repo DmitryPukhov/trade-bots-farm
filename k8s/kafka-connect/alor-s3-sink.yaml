@@ -1,0 +1,36 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: alor-s3-sink
+  labels:
+    strimzi.io/cluster: kafka-connect-s3
+spec:
+  class: io.confluent.connect.s3.S3SinkConnector
+  config:
+
+      # REQUIRED in connector (not inherited)
+    s3.bucket.name: trade-bots-farm
+    topics: raw.alor.MOEX.TQBR.SBER.candles.1min
+    format.class: io.confluent.connect.s3.format.json.JsonFormat
+    storage.class: io.confluent.connect.s3.storage.S3Storage
+    flush.size: 100
+
+    # MUST include ALL these MinIO-specific settings:
+#    s3.endpoint: "http://minio:9000"
+#    store.url: "http://minio:9000"
+    s3.endpoint: "http://192.168.39.36:31900"
+    store.url: "http://192.168.39.36:31900"
+    s3.path.style.access: "true"
+    s3.region: "us-east-1"  # MinIO ignores this but connector requires it
+
+    aws.credentials.provider.class: "com.amazonaws.auth.StaticCredentialsProvider"
+
+    # Critical AWS SDK overrides
+    aws.s3.vhost.bucket: "false"
+    aws.s3.force.path.style: "true"
+    aws.s3.disable.chunked.encoding: "true"
+
+
+    key.converter: org.apache.kafka.connect.storage.StringConverter
+    value.converter: org.apache.kafka.connect.storage.StringConverter
+
