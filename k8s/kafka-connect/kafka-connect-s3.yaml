@@ -21,12 +21,16 @@ spec:
     offset.storage.replication.factor: 1
     status.storage.replication.factor: 1
 
-    format.class: io.confluent.connect.s3.format.json.JsonFormat
+    #format.class: io.confluent.connect.s3.format.json.JsonFormat
     storage.class: io.confluent.connect.s3.storage.S3Storage
     store.url: "http://minio:9000"
 
-    key.converter: org.apache.kafka.connect.storage.StringConverter
-    value.converter: org.apache.kafka.connect.storage.StringConverter
+    # JSON processing configuration
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter.schemas.enable: false  # Disable schema metadata
+    format.bytearray.extension: .json  # Ensures .json extension
+    format.class: io.confluent.connect.s3.format.bytearray.ByteArrayFormat
+
     s3.path.style.access: "true"              # Required for MinIO
   externalConfiguration:
     env:
