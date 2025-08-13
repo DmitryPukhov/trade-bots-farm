@@ -73,11 +73,48 @@ function redeploy_grafana(){
   helm install grafana oci://registry-1.docker.io/bitnamicharts/grafana --values grafana/values.yaml
 }
 
+function remove_airflow(){
+  echo "Deleting old airflow"
+  set +e
+  helm delete --cascade=foreground airflow
+
+  set -euo pipefail
+
+  # Force delete Terminating PVCs
+  echo "Deleting old PVCs"
+  for pvc in $(kubectl get pvc --no-headers | grep -E 'airflow|environment|wheels' | awk '{print $1}');
+  do
+      echo "Force deleting PVC: $pvc"
+      kubectl patch pvc "$pvc" -p '{"metadata":{"finalizers":null}}'
+      kubectl delete --force pvc "$pvc"
+  done
+
+  # Wait a few seconds
+  #sleep 5
+
+  # Force delete Terminating PVs
+  echo "Deleting old PVs"
+  for pv in $(kubectl get pv --no-headers | grep -E 'airflow|environment|wheels' | awk '{print $1}');
+  do
+      echo "Force deleting PV: $pv"
+      kubectl patch pv "$pv" -p '{"metadata":{"finalizers":null}}'
+      kubectl delete --force pv "$pv"
+  done
+
+  echo "Deleting old statefulsets"
+  for name in $(kubectl get statefulset | grep airflow | awk '{print $1}')
+  do
+    echo "Deleting statefulset $name"
+    kubectl delete statefulset $name
+  done
+
+  set -e
+  echo "Cleaned up"
+}
  function redeploy_airflow(){
   echo "Deleting old airflow"
   set +e
-  helm delete airflow
-  kubectl delete pvc airflow-dags
+  helm delete --cascade=foreground airflow
   set -e
 
   echo "Deploying airflow"
@@ -87,7 +124,7 @@ function redeploy_grafana(){
   kubectl apply -f pvc/wheels.yaml
 
   helm repo add apache-airflow https://airflow.apache.org
-  helm upgrade --install airflow apache-airflow/airflow -f airflow/values.yaml
+  helm install airflow apache-airflow/airflow -f airflow/values.yaml --debug
  }
 
 function remove_strimzi() {
