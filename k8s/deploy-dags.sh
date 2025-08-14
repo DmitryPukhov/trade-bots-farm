@@ -8,7 +8,8 @@ init_env
 set +a
 echo "Project root: $PROJECT_ROOT"
 
-AIRFLOW_WEBSERVER=$(kubectl get pods | grep airflow-webserver | awk '{print $1}')
+#AIRFLOW_WEBSERVER=$(kubectl get pods | grep airflow-webserver | awk '{print $1}')
+AIRFLOW_WEBSERVER=$(kubectl get pods | grep airflow-api-server | awk '{print $1}')
 AIRFLOW_DAGS_DIR=/opt/airflow/dags
 AIRFLOW_ENV_DIR="/opt/trade-bots-farm/environment"
 AIRFLOW_WHEELS_DIR="/opt/trade-bots-farm/wheels"
@@ -17,8 +18,14 @@ echo "Airflow webserver: $AIRFLOW_WEBSERVER"
 copy_common_tools(){
   # Copy common module tool
     common_tools_file="$PROJECT_ROOT/common/src/common_tools.py"
+
     echo "Copying $common_tools_file to $AIRFLOW_WEBSERVER:$AIRFLOW_DAGS_DIR"
     kubectl cp "$common_tools_file" "$AIRFLOW_WEBSERVER":"$AIRFLOW_DAGS_DIR"
+
+    dag_tools_file="$PROJECT_ROOT/common/src/dag_tools.py"
+
+    echo "Copying dag_tools_file to $AIRFLOW_WEBSERVER:$AIRFLOW_DAGS_DIR"
+    kubectl cp "$dag_tools_file" "$AIRFLOW_WEBSERVER":"$AIRFLOW_DAGS_DIR"
 
 }
 
