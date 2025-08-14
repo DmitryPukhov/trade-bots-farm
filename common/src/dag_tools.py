@@ -29,7 +29,8 @@ def tbf_task_operator(task_id, wheel_file_name, module_name, class_name, **kwarg
             load_dotenv(env_path)
             #  env_vars came from dag and override those from .env file
             os.environ.update(kwargs.get("env_vars"))
-            print(f"Loaded environment variables from {env_path} file and passed env_vars: {kwargs.get('env_vars') or {}}")
+            print(
+                f"Loaded environment variables from {env_path} file and passed env_vars: {kwargs.get('env_vars') or {} }")
 
         def init_log():
             print("Configuring logging")
@@ -67,9 +68,16 @@ def tbf_task_operator(task_id, wheel_file_name, module_name, class_name, **kwarg
     return PythonVirtualenvOperator(
         task_id=task_id,
         python_callable=tbf_task_callable,
+        pip_install_options=[f"--find-links={airflow_wheels_dir}",
+                             f"file://{os.path.join(airflow_wheels_dir, wheel_file_name)}"
+                             ], # for airflow >= 2.4.0
+
         requirements=[
-            f"--find-links={airflow_wheels_dir}",
-            os.path.join(airflow_wheels_dir, wheel_file_name),
+            #f"file://{os.path.join(airflow_wheels_dir, wheel_file_name)}",
+
+            #wheel_file_name,
+            #f"{os.path.join(airflow_wheels_dir, wheel_file_name)}",
+            #os.path.join(airflow_wheels_dir, wheel_file_name),
             "python-dotenv"
         ],  # or from PyPI
         op_kwargs={
