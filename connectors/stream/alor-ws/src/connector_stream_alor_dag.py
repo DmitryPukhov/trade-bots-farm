@@ -7,7 +7,6 @@ from dag_tools import tbf_task_operator
 # Define the DAG
 with (DAG(
         'connector_stream_alor',
-        #schedule_interval=None,  # Run daily
         start_date=datetime(2023, 1, 1),
         catchup=False,
         tags=['trade-bots-farm'],

@@ -1,7 +1,7 @@
 [project]
-name = "trade-bots-farm-process-stream-raw-to-preproc"
+name = "trade-bots-farm-process-stream-htx-raw-to-preproc"
 version = "0.1.0"
-description = "Aggregate raw level2 by 1min"
+description = "Aggregate raw htx level2, bid ask, candles and convert to common format"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
