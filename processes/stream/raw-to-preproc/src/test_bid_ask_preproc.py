@@ -22,7 +22,7 @@ class TestBidAskPreproc:
                 "ts": 1750851712041,
             }
         }
-        processed_msg = await BidAskPreproc().process(json.dumps(raw_msg))[0]
+        processed_msg = (await BidAskPreproc().process(json.dumps(raw_msg)))[0]
         assert processed_msg["bid"] == 1
         assert processed_msg["bid_vol"] == 2
         assert processed_msg["ask"] == 3
@@ -31,19 +31,19 @@ class TestBidAskPreproc:
 
     @pytest.mark.asyncio
     async def test_bid_ask_preproc_empty(self):
-        raw_msg ={ "ch": "market.BTC-USDT.bbo",
-                   "ts": 1750851712043,
-                   "tick": {
-                       "bid": [
-                           1,
-                           2
-                       ],
-                       "ask": [
-                           3,
-                           4
-                       ],
-                       "ts": 1750851712041,
-                   }
-                   }
-        processed_msg = await BidAskPreproc().process("{}")
+        # raw_msg ={ "ch": "market.BTC-USDT.bbo",
+        #            "ts": 1750851712043,
+        #            "tick": {
+        #                "bid": [
+        #                    1,
+        #                    2
+        #                ],
+        #                "ask": [
+        #                    3,
+        #                    4
+        #                ],
+        #                "ts": 1750851712041,
+        #            }
+        #            }
+        processed_msg = (await BidAskPreproc().process(json.dumps({})))
         assert processed_msg == []

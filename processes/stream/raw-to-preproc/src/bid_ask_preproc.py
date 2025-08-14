@@ -29,6 +29,8 @@ class BidAskPreproc:
         #     "datetime": "2025-06-25 11:41:52.041000+00:00"
         # }
         msg = json.loads(raw_message)
+        if not msg:
+            return []
         bid, bid_vol = msg['tick']['bid']
         ask, ask_vol = msg['tick']['ask']
         dt = pd.Timestamp(msg["tick"]["ts"], unit='ms')
