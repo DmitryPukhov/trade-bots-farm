@@ -20,7 +20,7 @@ class AlorWsRequest:
         }
 
     @staticmethod
-    async def subscribe_candles_1min_msg(token: str, guid:str, ticket: str, ):
+    async def subscribe_candles_1min_msg(token: str, guid: str, ticket: str, ):
         exchange, instrument_group, code = ticket.split(AlorWsRequest._TOPIC_SEPARATOR)
 
         return json.dumps({
@@ -39,16 +39,21 @@ class AlorWsRequest:
         })
 
     @staticmethod
-    async def subscribe_level2_msg(token: str, guid: str, ticket: str, ):
+    async def subscribe_level2_msg(token: str, guid: str, ticket: str, depth: int = 50, frequency: int = 100):
+        """
+        Order book subscription.
+        https://alor.dev/docs/api/websocket/data-subscriptions/OrderBookGetAndSubscribe
+        """
+
         exchange, instrument_group, code = ticket.split(AlorWsRequest._TOPIC_SEPARATOR)
         return json.dumps({
             "opcode": "OrderBookGetAndSubscribe",
             "code": code,
-            "depth": 10,
+            "depth": depth,
             "exchange": exchange,
             "instrumentGroup": instrument_group,
             "format": "Slim",
-            "frequency": 100,
+            "frequency": frequency,
             "guid": guid,
             "token": token
         })
