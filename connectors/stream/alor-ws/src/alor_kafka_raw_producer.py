@@ -58,7 +58,6 @@ class AlorKafkaRawProducer:
             if field in data:
                 # If millis, convert to float seconds
                 time_val = float(data[field])
-                1751442430
                 if time_val > 9999999999:
                     time_val /= 1000.0
                 return datetime.fromtimestamp(time_val)
@@ -76,6 +75,12 @@ class AlorKafkaRawProducer:
             message_dt = await self._get_time_field(raw_message)
             raw_message["datetime"] = str(message_dt)
             topic = self.topic_of(kind)
+
+            # Call poll as required  for confluent and asyncio integration:
+            # https://www.confluent.io/blog/kafka-python-asyncio-integration/
+            self._producer.poll(0)
+
+            # Produce to kafka
             self._producer.produce(topic, json.dumps(raw_message))
 
             # Set metrics
