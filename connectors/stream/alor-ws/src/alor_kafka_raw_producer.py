@@ -55,7 +55,7 @@ class AlorKafkaRawProducer:
         #s:    1537529040
         # Check timestamp fields in priority order
         for field in ["tso", "tst", "t"]:
-            if field in data:
+            if field in data and data[field] is not None:
                 # If millis, convert to float seconds
                 time_val = float(data[field])
                 if time_val > 9999999999:
