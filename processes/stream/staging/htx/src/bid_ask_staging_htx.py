@@ -3,7 +3,7 @@ import json
 import pandas as pd
 
 
-class BidAskPreproc:
+class BidAskStagingHtx:
     """ Process bbo message, don't accumulate"""
 
     async def process(self, raw_message: str) -> []:

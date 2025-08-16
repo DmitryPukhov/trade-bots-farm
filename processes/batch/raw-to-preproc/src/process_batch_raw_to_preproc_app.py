@@ -9,7 +9,7 @@ from candles_preproc import CandlesPreproc
 from common_tools import CommonTools
 from level2_pytrade2_preproc import Level2PyTrade2Preproc
 from s3_tools import S3Tools
-from process_batch_raw_to_preproc_metrics import ProcessBatchRawToPreprocMetrics
+from process_batch_staging_metrics import ProcessBatchRawToPreprocMetrics
 
 class ProcessBatchRawToPreprocApp:
 

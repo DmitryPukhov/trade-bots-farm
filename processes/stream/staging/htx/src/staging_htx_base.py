@@ -6,10 +6,10 @@ from collections import defaultdict
 import pandas as pd
 import sortedcontainers
 
-from process_stream_raw_to_preproc_metrics import ProcessStreamRawToPreprocMetrics
+from process_stream_staging_htx_metrics import ProcessStreamStagingHtxMetrics
 
 
-class PreprocBase:
+class StagingHtxBase:
     """ Accumulate raw messages and aggregate them"""
 
     def __init__(self):
@@ -60,7 +60,7 @@ class PreprocBase:
                 del self._buffer[buf_start_minute_ts]
 
         # Set metrics
-        ProcessStreamRawToPreprocMetrics.time_lag_sec.labels(raw_message["ch"]).set((pd.Timestamp.utcnow() - message_ts.tz_localize("utc")).total_seconds())
+        ProcessStreamStagingHtxMetrics.time_lag_sec.labels(raw_message["ch"]).set((pd.Timestamp.utcnow() - message_ts.tz_localize("utc")).total_seconds())
         return out
 
     async def _aggregate(self, messages: []):

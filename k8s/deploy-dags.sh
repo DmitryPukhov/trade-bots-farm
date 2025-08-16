@@ -153,16 +153,16 @@ do
         module_name="connector_batch_s3_external"
         deploy_module "$module_dir" "$module_name"
   fi
-  if [[ "$module" == "process_stream_raw_to_preproc_htx" || "$module" == "all" ]]; then
+  if [[ "$module" == "process_stream_staging_htx" || "$module" == "all" ]]; then
         matched=true
-        module_dir=$PROJECT_ROOT/processes/stream/raw-to-preproc/htx
-        module_name="process_stream_raw_to_preproc_htx"
+        module_dir=$PROJECT_ROOT/processes/stream/staging/htx
+        module_name="process_stream_staging_htx"
         deploy_module "$module_dir" "$module_name"
   fi
-  if [[ "$module" == "process_stream_raw_to_preproc_alor" || "$module" == "all" ]]; then
+  if [[ "$module" == "process_stream_staging_alor" || "$module" == "all" ]]; then
         matched=true
-        module_dir=$PROJECT_ROOT/processes/stream/raw-to-preproc/alor
-        module_name="process_stream_raw_to_preproc_alor"
+        module_dir=$PROJECT_ROOT/processes/stream/staging/alor
+        module_name="process_stream_staging_alor"
         deploy_module "$module_dir" "$module_name"
   fi
   if [[ "$module" == "process_stream_features" || "$module" == "all" ]]; then
@@ -171,10 +171,10 @@ do
         module_name="process_stream_features_multi_indi"
         deploy_module "$module_dir" "$module_name"
   fi
-  if [[ "$module" == "process_batch_raw_to_preproc" || "$module" == "all" ]]; then
+  if [[ "$module" == "process_batch_staging" || "$module" == "all" ]]; then
         matched=true
-        module_dir=$PROJECT_ROOT/processes/batch/raw-to-preproc
-        module_name="process_batch_raw_to_preproc"
+        module_dir=$PROJECT_ROOT/processes/batch/staging
+        module_name="process_batch_staging"
         deploy_module "$module_dir" "$module_name"
   fi
   if [[ "$module" == "process_batch_full" || "$module" == "all" ]]; then

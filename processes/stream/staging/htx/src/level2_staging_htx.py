@@ -2,11 +2,11 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from preproc_base import PreprocBase
+from staging_htx_base import StagingHtxBase
 from pytrade2.features.level2.Level2Features import Level2Features
 
 
-class Level2Preproc(PreprocBase):
+class Level2StagingHtx(StagingHtxBase):
     """ Accumulate Level 2 messages and aggregate them"""
 
     @staticmethod

@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from bid_ask_preproc import BidAskPreproc
+from bid_ask_staging_htx import BidAskStagingHtx
 
 
 class TestBidAskPreproc:
@@ -22,7 +22,7 @@ class TestBidAskPreproc:
                 "ts": 1750851712041,
             }
         }
-        processed_msg = (await BidAskPreproc().process(json.dumps(raw_msg)))[0]
+        processed_msg = (await BidAskStagingHtx().process(json.dumps(raw_msg)))[0]
         assert processed_msg["bid"] == 1
         assert processed_msg["bid_vol"] == 2
         assert processed_msg["ask"] == 3
@@ -45,5 +45,5 @@ class TestBidAskPreproc:
         #                "ts": 1750851712041,
         #            }
         #            }
-        processed_msg = (await BidAskPreproc().process(json.dumps({})))
+        processed_msg = (await BidAskStagingHtx().process(json.dumps({})))
         assert processed_msg == []
