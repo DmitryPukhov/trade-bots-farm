@@ -1,5 +1,5 @@
 [project]
-name = "trade-bots-farm-process-batch-raw-to-preproc"
+name = "trade-bots-farm-process-batch-staging"
 version = "0.1.0"
 description = "Aggregate raw data from external s3 system by 1min"
 readme = "README.md"

@@ -1,5 +1,5 @@
 [project]
-name = "trade-bots-farm-process-stream-htx-raw-to-preproc"
+name = "trade-bots-farm-process-stream-htx-staging"
 version = "0.1.0"
 description = "Aggregate raw htx level2, bid ask, candles and convert to common format"
 readme = "README.md"

@@ -19,11 +19,11 @@ with DAG(
         execution_date='{{ ts }}',
         wait_for_completion=True,  # Will wait here
     )
-    trigger_process_batch_raw_to_preproc_dag = TriggerDagRunOperator(
-        task_id='trigger_process_batch_raw_to_preproc_dag',
-        trigger_dag_id='process_batch_raw_to_preproc',
+    trigger_process_batch_staging_dag = TriggerDagRunOperator(
+        task_id='trigger_process_batch_staging_dag',
+        trigger_dag_id='process_batch_staging',
         execution_date='{{ ts }}',
         wait_for_completion=True,  # Will wait here
     )
 
-    trigger_connector_batch_s3_external_dag >> trigger_process_batch_raw_to_preproc_dag
+    trigger_connector_batch_s3_external_dag >> trigger_process_batch_staging_dag

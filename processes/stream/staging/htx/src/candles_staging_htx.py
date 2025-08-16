@@ -1,9 +1,9 @@
 import pandas as pd
 
-from preproc_base import PreprocBase
+from staging_htx_base import StagingHtxBase
 
 
-class CandlesPreproc(PreprocBase):
+class CandlesStagingHtx(StagingHtxBase):
     """ Accumulate Level 2 messages and aggregate them"""
 
     async def _aggregate(self, raw_messages: []) -> dict:

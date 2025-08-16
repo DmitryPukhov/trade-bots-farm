@@ -8,8 +8,8 @@ from confluent_kafka import Producer, Consumer, KafkaException
 from bid_ask_preproc import BidAskPreproc
 from candles_preproc import CandlesPreproc
 from common_tools import CommonTools
-from level2_preproc import Level2Preproc
-from process_stream_raw_to_preproc_metrics import ProcessStreamRawToPreprocMetrics
+from level2_staging import Level2Staging
+from process_stream_staging_metrics import ProcessStreamRawToPreprocMetrics
 
 class ProcessStreamRawToPreprocApp:
     """ Main class"""
@@ -35,7 +35,7 @@ class ProcessStreamRawToPreprocApp:
         """ Return preprocessor instance for specified kind of data"""
         match kind:
             case "level2":
-                return Level2Preproc()
+                return Level2Staging()
             case "candles":
                 return CandlesPreproc()
             case "bid_ask":

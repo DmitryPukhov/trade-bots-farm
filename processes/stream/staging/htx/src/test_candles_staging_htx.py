@@ -3,10 +3,10 @@ import json
 import pandas as pd
 import pytest
 
-from candles_preproc import CandlesPreproc
+from candles_staging_htx import CandlesStagingHtx
 
 
-class TestCandlesPreproc:
+class TestCandlesStagingHtx:
 
     @pytest.mark.asyncio
     async def test_process(self):
@@ -27,33 +27,33 @@ class TestCandlesPreproc:
             }
         }
 
-        candles_preproc = CandlesPreproc()
+        candles_staging = CandlesStagingHtx()
 
         # Accumulate minute 1, don't process
         msg["ts"] = ts1.value // 1_000_000
-        res = await candles_preproc.process(json.dumps(msg))
+        res = await candles_staging.process(json.dumps(msg))
         preprocessed = pd.DataFrame(res)
         assert preprocessed.empty
         # self.assertTrue(preprocessed.empty)
-        # self.assertListEqual([pd.Timestamp("2025-06-03 14:11:00")], list(candles_preproc._buffer.keys()))
-        assert list(candles_preproc._buffer.keys()) == [pd.Timestamp("2025-06-03 14:11:00")]
+        # self.assertListEqual([pd.Timestamp("2025-06-03 14:11:00")], list(candles_staging._buffer.keys()))
+        assert list(candles_staging._buffer.keys()) == [pd.Timestamp("2025-06-03 14:11:00")]
 
         # Accumulate minute 2, don't process minute 1 because of timeout not elapsed
         msg["ts"] = ts2.value // 1_000_000
-        preprocessed = pd.DataFrame(await candles_preproc.process(json.dumps(msg)))
+        preprocessed = pd.DataFrame(await candles_staging.process(json.dumps(msg)))
         assert preprocessed.empty
         assert [pd.Timestamp("2025-06-03 14:11:00"), pd.Timestamp("2025-06-03 14:12:00")] == \
-               list(candles_preproc._buffer.keys())
+               list(candles_staging._buffer.keys())
 
         # Accumulate minute 2, process minute 1 and delete from buffer
         msg["ts"] = ts3.value // 1_000_000
-        preprocessed = pd.DataFrame(await candles_preproc.process(json.dumps(msg)))
+        preprocessed = pd.DataFrame(await candles_staging.process(json.dumps(msg)))
         assert len(preprocessed) == 1
-        assert list(candles_preproc._buffer.keys()) == [pd.Timestamp("2025-06-03 14:12:00")]
+        assert list(candles_staging._buffer.keys()) == [pd.Timestamp("2025-06-03 14:12:00")]
 
     @pytest.mark.asyncio
     async def test_aggregate_empty(self):
-        aggregated = await CandlesPreproc()._aggregate([])
+        aggregated = await CandlesStagingHtx()._aggregate([])
         assert len(aggregated) == 0
 
     @pytest.mark.asyncio
@@ -95,7 +95,7 @@ class TestCandlesPreproc:
                     "amount": 500
                 }}
         ]
-        aggregated = await CandlesPreproc()._aggregate(raw_msgs)
+        aggregated = await CandlesStagingHtx()._aggregate(raw_msgs)
 
         # Just ensure something is calculated, no need to test pandas mean function
         assert len(aggregated) == 2

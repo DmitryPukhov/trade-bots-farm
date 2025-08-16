@@ -4,7 +4,7 @@ from metrics_base import MetricsBase
 
 
 class ProcessBatchRawToPreprocMetrics(MetricsBase):
-    namespace = "process_batch_raw_to_preproc"
+    namespace = "process_batch_staging"
 
     files_transferred = Counter(
         '_files_transferred',

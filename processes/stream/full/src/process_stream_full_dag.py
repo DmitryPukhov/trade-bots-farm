@@ -20,9 +20,9 @@ with DAG(
         execution_date='{{ ts }}',
         wait_for_completion=False,  # Will wait here
     )
-    process_stream_raw_to_preproc = TriggerDagRunOperator(
-        task_id='trigger_process_stream_raw_to_preproc_dag',
-        trigger_dag_id='process_stream_raw_to_preproc',
+    process_stream_staging = TriggerDagRunOperator(
+        task_id='trigger_process_stream_staging_dag',
+        trigger_dag_id='process_stream_staging',
         execution_date='{{ ts }}',
         wait_for_completion=False,  # Will wait here
     )
@@ -34,4 +34,4 @@ with DAG(
     )
 
     # Start stream processing, then run batch processing
-    [connector_stream_htx, process_stream_raw_to_preproc, process_stream_features_multi_indi]
+    [connector_stream_htx, process_stream_staging, process_stream_features_multi_indi]

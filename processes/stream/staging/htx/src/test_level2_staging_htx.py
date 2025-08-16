@@ -5,10 +5,10 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
 
-from level2_preproc import Level2Preproc
+from level2_staging_htx import Level2StagingHtx
 
 
-class TestLevel2Preproc:
+class TestLevel2Staging:
     @pytest.mark.asyncio
     async def test_process(self):
         ts1 = pd.Timestamp("2025-06-03 14:11:00")
@@ -24,26 +24,26 @@ class TestLevel2Preproc:
             }
         }
 
-        level2_preproc = Level2Preproc()
+        level2_staging = Level2StagingHtx()
 
         # Accumulate minute 1, don't process
         msg["tick"]["ts"] = ts1.value // 1_000_000
-        preprocessed = pd.DataFrame(await level2_preproc.process(json.dumps(msg)))
+        preprocessed = pd.DataFrame(await level2_staging.process(json.dumps(msg)))
         assert preprocessed.empty
-        assert list(level2_preproc._buffer.keys()) == [pd.Timestamp("2025-06-03 14:11:00")]
+        assert list(level2_staging._buffer.keys()) == [pd.Timestamp("2025-06-03 14:11:00")]
 
         # Accumulate minute 2, don't process minute 1 because of timeout not elapsed
         msg["tick"]["ts"] = ts2.value // 1_000_000
-        preprocessed = pd.DataFrame(await level2_preproc.process(json.dumps(msg)))
+        preprocessed = pd.DataFrame(await level2_staging.process(json.dumps(msg)))
         assert preprocessed.empty
-        assert list(level2_preproc._buffer.keys()) == [pd.Timestamp("2025-06-03 14:11:00"),
+        assert list(level2_staging._buffer.keys()) == [pd.Timestamp("2025-06-03 14:11:00"),
                                                        pd.Timestamp("2025-06-03 14:12:00")]
 
         # Accumulate minute 2, process minute 1 and delete from buffer
         msg["tick"]["ts"] = ts3.value // 1_000_000
-        preprocessed = pd.DataFrame(await level2_preproc.process(json.dumps(msg)))
+        preprocessed = pd.DataFrame(await level2_staging.process(json.dumps(msg)))
         assert len(preprocessed) == 1
-        assert list(level2_preproc._buffer.keys()) == [pd.Timestamp("2025-06-03 14:12:00")]
+        assert list(level2_staging._buffer.keys()) == [pd.Timestamp("2025-06-03 14:12:00")]
 
     @pytest.mark.asyncio
     async def test_aggregate(self):
@@ -55,7 +55,7 @@ class TestLevel2Preproc:
                 "asks": [[103, 3], [104, 4]]
             }
         }
-        aggregated = await Level2Preproc()._aggregate([raw_msg])
+        aggregated = await Level2StagingHtx()._aggregate([raw_msg])
 
         # Just ensure something is calculated, don't test level2 features logic here
         assert len(aggregated) == 1
@@ -63,7 +63,7 @@ class TestLevel2Preproc:
 
     @pytest.mark.asyncio
     async def test_htx_raw_to_pytrade2_raw_df_should_convert_empty_list(self):
-        converted = await Level2Preproc()._htx_raw_to_pytrade2_raw_df([])
+        converted = await Level2StagingHtx()._htx_raw_to_pytrade2_raw_df([])
         assert converted is not None
         assert converted.empty
 
@@ -90,7 +90,7 @@ class TestLevel2Preproc:
         ]
 
         # Call conversion
-        converted = await Level2Preproc()._htx_raw_to_pytrade2_raw_df(raw_msgs)
+        converted = await Level2StagingHtx()._htx_raw_to_pytrade2_raw_df(raw_msgs)
 
         # Assert that htx raw input converted to pytrade2 raw input, with a row per bid or ask
         assert converted.index.to_list() == [pd.Timestamp("2025-06-03 14:11:00")] * 4 + [

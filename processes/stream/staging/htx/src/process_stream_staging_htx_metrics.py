@@ -3,8 +3,8 @@ from prometheus_client import Counter, Gauge
 from metrics_base import MetricsBase
 
 
-class ProcessStreamRawToPreprocMetrics(MetricsBase):
-    namespace = "process_stream_raw_to_preproc"
+class ProcessStreamStagingHtxMetrics(MetricsBase):
+    namespace = "process_stream_staging"
     messages_input = Counter(
         '_messages_input',
         'Total number of input raw messages',
