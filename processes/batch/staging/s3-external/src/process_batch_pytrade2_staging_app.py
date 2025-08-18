@@ -5,13 +5,13 @@ import os
 import pandas as pd
 import s3fs
 
-from candles_preproc import CandlesPreproc
+from candles_pytrade2_staging import CandlesPyTrade2Staging
 from common_tools import CommonTools
-from level2_pytrade2_preproc import Level2PyTrade2Preproc
+from level2_pytrade2_staging import Level2PyTrade2Staging
 from s3_tools import S3Tools
-from process_batch_staging_metrics import ProcessBatchRawToPreprocMetrics
+from process_batch_pytrade2_staging_metrics import ProcessBatchRawToPreprocMetrics
 
-class ProcessBatchRawToPreprocApp:
+class ProcessBatchPyTrade2StagingApp:
 
     def __init__(self):
 
@@ -50,9 +50,9 @@ class ProcessBatchRawToPreprocApp:
         """ Return preprocessor instance for specified kind of data"""
         match kind:
             case "level2":
-                return Level2PyTrade2Preproc()
+                return Level2PyTrade2Staging()
             case "candles":
-                return CandlesPreproc()
+                return CandlesPyTrade2Staging()
 
     async def _process_file(self, src_path: str, dst_path: str):
         """ Process single file from source folder, write result to destination folder """
@@ -122,4 +122,4 @@ class ProcessBatchRawToPreprocApp:
         asyncio.run(self.run_async())
 
 if __name__ == '__main__':
-    ProcessBatchRawToPreprocApp().run()
+    ProcessBatchPyTrade2StagingApp().run()
