@@ -8,13 +8,13 @@ spec:
   class: io.confluent.connect.s3.S3SinkConnector
   config:
     # Kafka topics
-    topics: raw.alor.MOEX.TQBR.SBER.candles.1min,raw.alor.MOEX.TQBR.SBER.bid_ask,
+    topics: raw.alor.MOEX.TQBR.SBER.candles.1min,raw.alor.MOEX.TQBR.SBER.bid_ask,raw.alor.MOEX.TQBR.SBER.level2
 
     # s3 base folder
     topics.dir: data/raw/alor
 
     # File rotation
-    rotate.interval.ms: 60000  # Rotate every minute
+    rotate.interval.ms: 3600000  # Rotate every hour
     flush.size: 100000  # Large number to prioritize time-based rotation
 
     # Required configurations
