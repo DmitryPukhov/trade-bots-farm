@@ -19,10 +19,14 @@ spec:
 
     # Required configurations
     s3.bucket.name: trade-bots-farm
-    format.class: io.confluent.connect.s3.format.json.JsonFormat
     storage.class: io.confluent.connect.s3.storage.S3Storage
     store.url: "http://minio:9000"
 
+    # Store in s3 as compressed json.gz
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter.schemas.enable: false
+    format.class: io.confluent.connect.s3.format.json.JsonFormat
+    s3.compression.type: gzip
 
     # path format pattern convention:
     # yyyy - year
@@ -35,7 +39,6 @@ spec:
     partitioner.class: io.confluent.connect.storage.partitioner.TimeBasedPartitioner
     partition.duration.ms: 3600000  # 1 hour partition duration (must be positive)
     timestamp.extractor: Wallclock  # Use system time
-    compression.type: gzip
 
 
     # Timezone settings
