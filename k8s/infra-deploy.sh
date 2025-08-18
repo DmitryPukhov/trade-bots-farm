@@ -90,7 +90,7 @@ function remove_airflow(){
   done
 
   # Wait a few seconds
-  #sleep 5
+  sleep 5
 
   # Force delete Terminating PVs
   echo "Deleting old PVs"
@@ -115,7 +115,8 @@ function remove_airflow(){
   echo "Deleting old airflow"
   set +e
   #remove_airflow
-  helm delete --cascade=foreground airflow -n $NAMESPACE
+  #helm delete --cascade=foreground airflow -n $NAMESPACE
+  helm delete airflow -n $NAMESPACE
   set -e
 
   echo "Deploying airflow"
