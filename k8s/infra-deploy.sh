@@ -114,17 +114,18 @@ function remove_airflow(){
  function redeploy_airflow(){
   echo "Deleting old airflow"
   set +e
-  helm delete --cascade=foreground airflow
+  #remove_airflow
+  helm delete --cascade=foreground airflow -n $NAMESPACE
   set -e
 
   echo "Deploying airflow"
   # pvcs
-  kubectl apply -f pvc/airflow-dags.yaml
-  kubectl apply -f pvc/environment.yaml
-  kubectl apply -f pvc/wheels.yaml
+  kubectl apply -f pvc/airflow-dags.yaml -n $NAMESPACE
+  kubectl apply -f pvc/environment.yaml -n $NAMESPACE
+  kubectl apply -f pvc/wheels.yaml -n $NAMESPACE
 
   helm repo add apache-airflow https://airflow.apache.org
-  helm install airflow apache-airflow/airflow -f airflow/values.yaml --debug
+  helm install airflow apache-airflow/airflow -f airflow/values.yaml --debug -n $NAMESPACE
  }
 
 function remove_strimzi() {
