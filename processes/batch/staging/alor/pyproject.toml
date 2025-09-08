@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "trade-bots-farm-process-batch-staging"
+version = "0.1.0"
+description = "Transform raw to staging"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pytrade2",
+    "pyspark==3.5.5",
+    "trade-bots-farm-common",
+    "python-dotenv",
+    "sortedcontainers",
+    "pandas",
+    "numpy",
+    "prometheus-client",
+    ]
+
