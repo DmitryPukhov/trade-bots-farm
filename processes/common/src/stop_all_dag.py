@@ -1,10 +1,11 @@
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.models import DagRun, TaskInstance
-from airflow.utils.state import State
-from airflow.utils.session import create_session
-from datetime import datetime, timezone
 import logging
+from datetime import datetime, timezone
+
+from airflow import DAG
+from airflow.models import DagRun, TaskInstance
+from airflow.operators.python import PythonOperator
+from airflow.utils.session import create_session
+from airflow.utils.state import State
 
 
 def stop_all_running_dags(**context):
@@ -40,14 +41,14 @@ def stop_all_running_dags(**context):
 
             session.commit()
             logging.info(f"Successfully stopped DAG: {dag_run.dag_id}")
+
+
 with DAG(
         'stop_all_running_dags',
         start_date=datetime(2023, 1, 1, tzinfo=timezone.utc),
-        schedule_interval=None,
         catchup=False,
         tags=['admin'],
 ) as dag:
-
     stop_dags_task = PythonOperator(
         task_id='stop_all_running_dags_task',
         python_callable=stop_all_running_dags,
