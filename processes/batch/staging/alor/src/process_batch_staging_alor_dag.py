@@ -26,8 +26,8 @@ with DAG(
     for ticker in tickets:
         for kind in kinds:
             # Prepare environment for task like MOEX.TQBR.SBER level2
-            task_env = {key: value for key, value in config.items() if key not in ["TICKERS"]}
-            task_env["TICKER"] = ticker
+            task_env = {key: value for key, value in config.items() if key not in ["TICKETS"]}
+            task_env["TICKET"] = ticker
             task_env["KIND"] = kind
 
             task_id = f"process_batch_staging_{ticker}_{kind}"
