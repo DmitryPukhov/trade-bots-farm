@@ -7,7 +7,6 @@ from airflow.sensors.time_delta import TimeDeltaSensor
 
 with DAG(
         'run_all',
-        schedule_interval=None,
         start_date=datetime(2023, 1, 1),
         catchup=False,
         tags=['trade-bots-farm'],

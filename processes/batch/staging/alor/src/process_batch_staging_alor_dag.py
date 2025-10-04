@@ -11,7 +11,6 @@ config = {"S3_SRC_DIR": "trade-bots-farm/data/raw/alor",
 
 with DAG(
         'process_batch_staging_alor',
-        schedule_interval=None,
         start_date=datetime(2023, 1, 1),
         catchup=False,
         tags=['trade-bots-farm'],

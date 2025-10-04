@@ -9,7 +9,6 @@ from dag_tools import tbf_task_operator
 # Define the DAG
 with DAG(
         'connector_batch_s3_external',
-        schedule_interval=None,
         start_date=datetime(2023, 1, 1),
         catchup=False,
         tags=['trade-bots-farm'],
