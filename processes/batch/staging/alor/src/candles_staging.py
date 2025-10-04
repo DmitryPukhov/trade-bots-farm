@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-class CandlesPyTrade2Staging:
+class CandlesStaging:
     """ Accumulate Level 2 messages and aggregate them"""
 
     def process(self, raw_candles: pd.DataFrame) -> pd.DataFrame:

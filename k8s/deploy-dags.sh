@@ -174,7 +174,7 @@ do
   if [[ "$module" == "process_batch_staging_alor" || "$module" == "all" ]]; then
         matched=true
         module_dir=$PROJECT_ROOT/processes/batch/staging/alor
-        module_name="processes_batch_staging_alor"
+        module_name="process_batch_staging_alor"
         deploy_module "$module_dir" "$module_name"
   fi
   if [[ "$module" == "process_batch_staging_s3_external" || "$module" == "all" ]]; then

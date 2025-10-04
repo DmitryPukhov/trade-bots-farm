@@ -3,8 +3,8 @@ from prometheus_client import Counter
 from metrics_base import MetricsBase
 
 
-class ProcessBatchRawToPreprocMetrics(MetricsBase):
-    namespace = "process_batch_staging"
+class ProcessBatchStagingAlorMetrics(MetricsBase):
+    namespace = "process_batch_staging_alor"
 
     files_transferred = Counter(
         '_files_transferred',

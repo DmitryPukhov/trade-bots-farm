@@ -2,10 +2,10 @@ from unittest import TestCase
 
 import pandas as pd
 
-from candles_pytrade2_staging import CandlesPyTrade2Staging
+from candles_staging import CandlesStaging
 
 
-class TestCandlesPreproc(TestCase):
+class TestCandlesStagingAlor(TestCase):
     def test_process_should_skip_duplicate_close_time_col(self):
         raw_candles_df = pd.DataFrame(
             [{
@@ -13,13 +13,13 @@ class TestCandlesPreproc(TestCase):
                 "open": 100, "high": 105, "low": 95, "close": 101, "vol": 1
             }]
         )
-        processed_candles_df = CandlesPyTrade2Staging().process(raw_candles_df)
+        processed_candles_df = CandlesStaging().process(raw_candles_df)
         self.assertEqual(1, len(processed_candles_df))
 
     def test_process_should_be_empty_when_empty_df_passed(self):
         raw_candles_df = pd.DataFrame()
 
-        processed_candles_df = CandlesPyTrade2Staging().process(pd.DataFrame())
+        processed_candles_df = CandlesStaging().process(pd.DataFrame())
         self.assertEqual(True, processed_candles_df.empty)
 
     def test_process(self):
@@ -38,7 +38,7 @@ class TestCandlesPreproc(TestCase):
                 },
             ]
         )
-        processed_candles_df = CandlesPyTrade2Staging().process(raw_candles_df)
+        processed_candles_df = CandlesStaging().process(raw_candles_df)
         self.assertEqual(1, len(processed_candles_df))
         self.assertEqual(["2025-08-25 11:41:00", "2025-08-25 11:42:00", 102, 107, 97, 103, 3], processed_candles_df.values[0].tolist())
 
