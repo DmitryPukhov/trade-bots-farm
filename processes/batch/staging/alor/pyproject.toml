@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "trade-bots-farm-process-batch-staging"
+name = "trade-bots-farm-process-batch-staging-alor"
 version = "0.1.0"
 description = "Transform raw to staging"
 readme = "README.md"

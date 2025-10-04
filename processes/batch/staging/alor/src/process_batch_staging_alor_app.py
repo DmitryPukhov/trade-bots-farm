@@ -8,7 +8,7 @@ from pyspark.sql import SparkSession
 from common_tools import CommonTools
 
 
-class ProcessBatchPyTrade2StagingApp:
+class ProcessBatchStagingAlorApp:
 
     def __init__(self):
         CommonTools.init_logging()
@@ -61,4 +61,4 @@ class ProcessBatchPyTrade2StagingApp:
 
 
 if __name__ == '__main__':
-    ProcessBatchPyTrade2StagingApp().run()
+    ProcessBatchStagingAlorApp().run()
