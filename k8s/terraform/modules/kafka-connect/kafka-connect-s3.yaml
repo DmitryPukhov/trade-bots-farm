@@ -1,0 +1,45 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: kafka-connect-s3
+  namespace: trade-bots-farm
+  annotations:
+    strimzi.io/use-connector-resources: "true"  # Enable KafkaConnector CRDs
+
+spec:
+  replicas: 1 # Single pod
+  version: 4.0.0  # Must match your Kafka cluster version
+  #image: quay.io/strimzi/kafka:0.46.1-kafka-4.0.0  # Standard Strimzi image  replicas: 1
+  #image: registry.kube-system.svc.cluster.local:5000/kafka-connect-s3:latest
+  image: 192.168.39.36:30500/kafka-connect-s3:latest
+  bootstrapServers: "trade-bots-farm-kafka-bootstrap:9092"
+
+  config:
+    group.id: "kafka-connect-s3"
+    aws.credentials.provider.class: "com.amazonaws.auth.EnvironmentVariableCredentialsProvider"
+    config.storage.replication.factor: 1
+    offset.storage.replication.factor: 1
+    status.storage.replication.factor: 1
+
+    #format.class: io.confluent.connect.s3.format.json.JsonFormat
+    storage.class: io.confluent.connect.s3.storage.S3Storage
+    store.url: "http://minio:9000"
+
+    s3.path.style.access: "true"              # Required for MinIO
+  externalConfiguration:
+    env:
+      - name: AWS_ENDPOINT_URL
+        valueFrom:
+          secretKeyRef:
+            name: minio
+            key: endpoint-url
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: minio
+            key: access-key
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: minio
+            key: secret-key

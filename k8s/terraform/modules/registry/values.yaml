@@ -1,0 +1,42 @@
+# registry-values.yaml - Optimized for Minikube
+global:
+  storageClass: "standard"  # Minikube's default storage class
+
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 10Gi  # Adjust based on your needs
+
+# Disable TLS for local development (insecure registry)
+tls:
+  enabled: false
+
+# Use NodePort for easy access from Minikube
+service:
+  type: NodePort
+  nodePorts:
+    registry: 30500  # Choose any port 30000-32767
+
+# Configure as insecure registry (required for Minikube)
+registry:
+  disableTokenAuth: true
+  configData:
+    version: 0.1
+    storage:
+      filesystem:
+        rootdirectory: /var/lib/registry
+    http:
+      addr: :5000
+      headers:
+        X-Content-Type-Options: [nosniff]
+    log:
+      fields:
+        service: registry
+    auth:
+      htpasswd:
+        realm: basic-realm
+        path: /auth/htpasswd
+
+# Disable ingress since we're using NodePort
+ingress:
+  enabled: false

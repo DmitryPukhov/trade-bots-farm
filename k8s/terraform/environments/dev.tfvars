@@ -1,0 +1,11 @@
+namespace = "default"
+enable_minio = true
+enable_mlflow = true
+enable_prometheus = true
+enable_grafana = true
+enable_kafka = true
+enable_kafka_ui = true
+enable_kafka_connect = true
+enable_airflow = true
+enable_registry = true
+enable_secrets = true

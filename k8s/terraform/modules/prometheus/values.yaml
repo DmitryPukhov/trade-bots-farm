@@ -1,0 +1,19 @@
+server:
+  service:
+    nodePorts:
+      http: "31280"
+      https: "31280"
+
+  extraScrapeConfigs:
+#    - job_name: trade-bots-farm
+#      static_configs:
+#        - targets: [ 'trade-bots-farm:8000' ]
+    - job_name: 'pushgateway'
+      honor_labels: true  # Important to preserve original job labels
+      honor_timestamps: true
+      scrape_interval: 5s
+      scrape_timeout: 5s
+      metrics_path: '/metrics'
+      scheme: 'http'
+      static_configs:
+        - targets: ['prometheus-pushgateway:9091']
