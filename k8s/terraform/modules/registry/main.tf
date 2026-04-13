@@ -1,4 +1,6 @@
 resource "kubernetes_persistent_volume" "registry" {
+  count = var.enabled ? 1 : 0
+
   metadata {
     name = "registry-pv"
   }
@@ -9,15 +11,18 @@ resource "kubernetes_persistent_volume" "registry" {
     }
     access_modes       = ["ReadWriteOnce"]
     storage_class_name = "standard"
-
-    host_path {
-      path = "/data/registry"
-      type = "DirectoryOrCreate"
+    persistent_volume_source {
+      host_path {
+        path = "/data/registry"
+        type = "DirectoryOrCreate"
+      }
     }
   }
 }
 
 resource "kubernetes_persistent_volume_claim" "registry" {
+  count = var.enabled ? 1 : 0
+
   metadata {
     name = "registry-pvc"
     namespace = var.namespace
@@ -35,6 +40,8 @@ resource "kubernetes_persistent_volume_claim" "registry" {
 }
 
 resource "kubernetes_deployment" "registry" {
+  count = var.enabled ? 1 : 0
+
   metadata {
     name = "registry"
     namespace = var.namespace
@@ -74,10 +81,7 @@ resource "kubernetes_deployment" "registry" {
         volume {
           name = "registry-storage"
           persistent_volume_claim {
-            claim_ref {
-              name = "registry-pvc"
-              namespace = var.namespace
-            }
+            claim_name = "registry-pvc"
           }
         }
       }
@@ -86,6 +90,8 @@ resource "kubernetes_deployment" "registry" {
 }
 
 resource "kubernetes_service" "registry" {
+  count = var.enabled ? 1 : 0
+
   metadata {
     name = "registry"
     namespace = var.namespace
@@ -104,14 +110,18 @@ resource "kubernetes_service" "registry" {
 }
 
 resource "null_resource" "copy_certs" {
+  count = var.enabled ? 1 : 0
+
   provisioner "local-exec" {
-    command = "echo 'Copying Docker registry certs to Minikube...'; \
-              DOCKER_REGISTRY=$(minikube ip):30500; \
-              mkdir -p /tmp/certs; \
-              cp ../../secret/registry/tls.crt /tmp/certs/ca.crt; \
-              minikube ssh \"sudo mkdir -p /etc/docker/certs.d/${DOCKER_REGISTRY}\"; \
-              minikube cp /tmp/certs/ca.crt ${DOCKER_REGISTRY}/ca.crt; \
-              rm -rf /tmp/certs"
+    command = <<EOT
+echo 'Copying Docker registry certs to Minikube...'
+DOCKER_REGISTRY=$(minikube ip):30500
+mkdir -p /tmp/certs
+cp ../../secret/registry/tls.crt /tmp/certs/ca.crt
+minikube ssh "sudo mkdir -p /etc/docker/certs.d/$${DOCKER_REGISTRY}"
+minikube cp /tmp/certs/ca.crt $${DOCKER_REGISTRY}/ca.crt
+rm -rf /tmp/certs
+EOT
   }
 
   depends_on = [

@@ -2,6 +2,7 @@ apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaConnector
 metadata:
   name: alor-s3-sink
+  namespace: ${var.namespace}
   labels:
     strimzi.io/cluster: kafka-connect-s3
 spec:

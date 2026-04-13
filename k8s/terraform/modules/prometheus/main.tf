@@ -5,7 +5,7 @@ resource "helm_release" "prometheus" {
   version    = "27.1.0"
   namespace  = var.namespace
   values = [
-    file("../../prometheus/values.yaml")
+    file("${path.module}/values.yaml")
   ]
   set {
     name  = "serviceMonitor.enabled"
@@ -20,6 +20,6 @@ resource "helm_release" "prometheus_pushgateway" {
   version    = "2.9.1"
   namespace  = var.namespace
   values = [
-    file("../../prometheus/prometheus-pushgateway.values.yaml")
+    file("${path.module}/prometheus-pushgateway.values.yaml")
   ]
 }

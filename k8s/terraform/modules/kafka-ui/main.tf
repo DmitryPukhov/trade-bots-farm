@@ -5,6 +5,6 @@ resource "helm_release" "kafka_ui" {
   version    = "1.1.2"
   namespace  = var.namespace
   values = [
-    file("../../kafka-ui/values.yaml")
+    file("${path.module}/values.yaml")
   ]
 }

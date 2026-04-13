@@ -3,3 +3,9 @@ variable "namespace" {
   type        = string
   default     = "default"
 }
+
+variable "enabled" {
+  description = "Whether to enable Prometheus deployment"
+  type        = bool
+  default     = true
+}

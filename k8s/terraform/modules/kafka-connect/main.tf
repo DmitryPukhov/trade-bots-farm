@@ -1,4 +1,6 @@
 resource "kubernetes_pod" "kafka_connect_build" {
+  count = var.enabled ? 1 : 0
+
   metadata {
     name = "kafka-connect-build"
   }
@@ -10,8 +12,7 @@ resource "kubernetes_pod" "kafka_connect_build" {
 
       command = ["/bin/sh", "-c"]
       args = [
-        "docker build -t ${var.docker_registry}/kafka-connect-s3:latest -f /workspace/kafka-connect/Dockerfile . && \
-         docker push ${var.docker_registry}/kafka-connect-s3:latest"
+        "sh", "-c", "docker build -t ${var.docker_registry}/kafka-connect-s3:latest -f /workspace/kafka-connect/Dockerfile . && docker push ${var.docker_registry}/kafka-connect-s3:latest"
       ]
 
       volume_mount {
@@ -48,7 +49,9 @@ resource "kubernetes_pod" "kafka_connect_build" {
 }
 
 resource "kubernetes_manifest" "kafka_connect" {
-  manifest = yamldecode(file("../../kafka-connect/kafka-connect-s3.yaml"))
+  count = var.enabled ? 1 : 0
+
+  manifest = yamldecode(file("${path.module}/kafka-connect-s3.yaml"))
 
   depends_on = [
     resource.kubernetes_pod.kafka_connect_build
@@ -56,7 +59,9 @@ resource "kubernetes_manifest" "kafka_connect" {
 }
 
 resource "kubernetes_manifest" "kafka_connectors" {
-  manifest = yamldecode(file("../../kafka-connect/alor-s3-sink.yaml"))
+  count = var.enabled ? 1 : 0
+
+  manifest = yamldecode(file("${path.module}/alor-s3-sink.yaml"))
 
   depends_on = [
     resource.kubernetes_manifest.kafka_connect

@@ -1,9 +1,9 @@
 output "service_host" {
-  value       = helm_release.prometheus.values["server.service.host"]
+  value       = var.enabled ? "prometheus-server.${var.namespace}.svc.cluster.local" : ""
   description = "Prometheus service host"
 }
 
 output "service_port" {
-  value       = helm_release.prometheus.values["server.service.port"]
+  value       = var.enabled ? 80 : 0
   description = "Prometheus service port"
 }

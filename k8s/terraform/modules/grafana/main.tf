@@ -5,7 +5,7 @@ resource "helm_release" "grafana" {
   version    = "10.1.1"
   namespace  = var.namespace
   values = [
-    file("../../grafana/values.yaml")
+    file("${path.module}/values.yaml")
   ]
 
   depends_on = [

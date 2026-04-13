@@ -6,5 +6,8 @@ resource "kubernetes_secret" "secrets" {
     namespace = var.namespace
   }
 
+  # Read the YAML file and extract data
   data = {
-    for k, v in yamldecode(file("../../secret/\
+    for k, v in yamldecode(file("../../secret/${each.value}"))[0].data : k => base64decode(v)
+  }
+}
