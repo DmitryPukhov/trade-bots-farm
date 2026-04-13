@@ -34,7 +34,7 @@ terraform {
   required_version = ">= 1.0"
 }
 
-data "kubernetes_namespace" "current" {
+resource "kubernetes_namespace" "current" {
   metadata {
     name = var.namespace
   }
@@ -48,9 +48,10 @@ terraform {
 module "secrets" {
   source    = "./modules/secrets"
   namespace = var.namespace
+  count     = var.enable_secrets ? 1 : 0
 
   depends_on = [
-    data.kubernetes_namespace.current
+    kubernetes_namespace.current
   ]
 }
 
@@ -62,6 +63,7 @@ terraform {
 module "minio" {
   source    = "./modules/minio"
   namespace = var.namespace
+  count     = var.enable_minio ? 1 : 0
 
   depends_on = [
     module.secrets
@@ -76,7 +78,7 @@ terraform {
 module "mlflow" {
   source    = "./modules/mlflow"
   namespace = var.namespace
-  enabled   = var.enable_mlflow
+  count     = var.enable_mlflow ? 1 : 0
 
   depends_on = [
     module.minio
@@ -91,6 +93,7 @@ terraform {
 module "prometheus" {
   source    = "./modules/prometheus"
   namespace = var.namespace
+  count     = var.enable_prometheus ? 1 : 0
 
   depends_on = [
     module.mlflow
@@ -105,6 +108,7 @@ terraform {
 module "grafana" {
   source    = "./modules/grafana"
   namespace = var.namespace
+  count     = var.enable_grafana ? 1 : 0
 
   depends_on = [
     module.prometheus
@@ -119,6 +123,7 @@ terraform {
 module "kafka" {
   source    = "./modules/kafka"
   namespace = var.namespace
+  count     = var.enable_kafka ? 1 : 0
 
   depends_on = [
     module.grafana
@@ -133,6 +138,7 @@ terraform {
 module "kafka_ui" {
   source    = "./modules/kafka-ui"
   namespace = var.namespace
+  count     = var.enable_kafka_ui ? 1 : 0
 
   depends_on = [
     module.kafka
@@ -145,10 +151,10 @@ terraform {
 }
 
 module "kafka_connect" {
-  source        = "./modules/kafka-connect"
-  namespace     = var.namespace
+  source          = "./modules/kafka-connect"
+  namespace       = var.namespace
   docker_registry = var.docker_registry
-  enabled       = var.enable_kafka_connect
+  count           = var.enable_kafka_connect ? 1 : 0
 
   depends_on = [
     module.kafka_ui
@@ -163,6 +169,7 @@ terraform {
 module "airflow" {
   source    = "./modules/airflow"
   namespace = var.namespace
+  count     = var.enable_airflow ? 1 : 0
 
   depends_on = [
     module.kafka_connect
@@ -177,6 +184,7 @@ terraform {
 module "registry" {
   source    = "./modules/registry"
   namespace = var.namespace
+  count     = var.enable_registry ? 1 : 0
 
   depends_on = [
     module.airflow

@@ -1,7 +1,7 @@
 variable "namespace" {
   description = "Kubernetes namespace for all resources"
   type        = string
-  default     = "default"
+  default     = "trade-bots-farm"
 }
 
 variable "docker_registry" {

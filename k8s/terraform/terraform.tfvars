@@ -1,0 +1,11 @@
+namespace            = "trade-bots-farm"
+enable_minio         = false
+enable_mlflow        = false
+enable_prometheus    = false
+enable_grafana       = false
+enable_kafka         = false
+enable_kafka_ui      = false
+enable_kafka_connect = false
+enable_airflow       = false
+enable_registry      = false
+enable_secrets       = true
