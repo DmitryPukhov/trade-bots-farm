@@ -10,8 +10,9 @@ variable "docker_registry" {
   default     = "$(minikube ip):30500"
 }
 
-variable "enable_minio" {
-  description = "Enable MinIO deployment"
+
+variable "enable_seaweedfs" {
+  description = "Enable SeaweedFS deployment"
   type        = bool
   default     = true
 }

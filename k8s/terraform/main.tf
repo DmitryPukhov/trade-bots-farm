@@ -16,6 +16,10 @@ terraform {
       source  = "hashicorp/null"
       version = "~> 3.2"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.9"
+    }
   }
 }
 
@@ -55,15 +59,15 @@ module "secrets" {
   ]
 }
 
-# Module for MinIO
+# Module for SeaweedFS
 terraform {
   required_version = ">= 1.0"
 }
 
-module "minio" {
-  source    = "./modules/minio"
+module "seaweedfs" {
+  source    = "./modules/seaweedfs"
   namespace = var.namespace
-  count     = var.enable_minio ? 1 : 0
+  count     = var.enable_seaweedfs ? 1 : 0
 
   depends_on = [
     module.secrets
@@ -81,7 +85,7 @@ module "mlflow" {
   count     = var.enable_mlflow ? 1 : 0
 
   depends_on = [
-    module.minio
+    module.seaweedfs
   ]
 }
 

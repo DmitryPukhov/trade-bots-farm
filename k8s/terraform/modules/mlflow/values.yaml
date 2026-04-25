@@ -20,11 +20,6 @@ postgresql:
     database: bitnami_mlflow
     existingSecret: mlflow-postgresql
 
-minio:
-  enabled: false
-#  auth:
-#    existingSecret: mlflow-minio
-
 ## Disable built-in artifact storage (we'll use external S3)
 artifactRoot: s3://trade-bots-farm/mlartifacts
 ## S3 Configuration

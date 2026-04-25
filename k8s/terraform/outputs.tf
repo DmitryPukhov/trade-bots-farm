@@ -5,8 +5,8 @@ output "namespace" {
 
 output "secrets" {
   value       = length(module.secrets) > 0 ? "Secrets created: ${join(", ", module.secrets[0].secret_names)}" : ""
-  description = "MinIO service endpoint"
-  depends_on  = [module.minio]
+  description = "Secrets"
+  depends_on  = [module.seaweedfs]
 }
 
 output "docker_registry" {
@@ -14,11 +14,6 @@ output "docker_registry" {
   description = "Docker registry URL"
 }
 
-output "minio_endpoint" {
-  value       = length(module.minio) > 0 ? "http://${module.minio[0].service_host}:${module.minio[0].service_port}" : ""
-  description = "MinIO service endpoint"
-  depends_on  = [module.minio]
-}
 
 output "mlflow_tracking_uri" {
   value       = length(module.mlflow) > 0 ? "http://${module.mlflow[0].service_host}:${module.mlflow[0].service_port}" : ""

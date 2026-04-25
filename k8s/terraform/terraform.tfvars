@@ -1,5 +1,5 @@
 namespace            = "trade-bots-farm"
-enable_minio         = false
+enable_seaweedfs     = true
 enable_mlflow        = false
 enable_prometheus    = false
 enable_grafana       = false

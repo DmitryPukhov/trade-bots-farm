@@ -1,6 +1,7 @@
 out/**
 **/.terraform/**
 **/.terraform.*
+**/terraform.tfstate
 .wheels/
 .gigaide/
 .idea/
