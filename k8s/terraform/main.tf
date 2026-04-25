@@ -69,6 +69,9 @@ module "seaweedfs" {
   namespace = var.namespace
   count     = var.enable_seaweedfs ? 1 : 0
 
+  ingress_enabled = var.seaweedfs_ingress_enabled
+  ingress_host    = var.seaweedfs_ingress_host
+
   depends_on = [
     module.secrets
   ]

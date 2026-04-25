@@ -125,3 +125,201 @@ resource "kubernetes_service_account" "bucket_creator" {
 
   depends_on = [null_resource.install_seaweedfs]
 }
+
+# Ingress for SeaweedFS S3 API
+resource "kubernetes_ingress_v1" "seaweedfs_s3" {
+  count = var.enabled && var.ingress_enabled && var.ingress_host != "" ? 1 : 0
+
+  metadata {
+    name      = "seaweedfs-s3"
+    namespace = var.namespace
+    annotations = {
+      "kubernetes.io/ingress.class" = var.ingress_class
+    }
+  }
+
+  spec {
+    rule {
+      host = var.ingress_host
+      http {
+        path {
+          path = "/"
+          backend {
+            service {
+              name = "seaweedfs-s3"
+              port {
+                number = var.s3_port
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [
+    null_resource.install_seaweedfs,
+    time_sleep.wait_for_seaweedfs
+  ]
+}
+
+# Ingress for SeaweedFS internal services (full DNS names)
+resource "kubernetes_ingress_v1" "seaweedfs_internal" {
+  count = var.enabled && var.ingress_enabled ? 1 : 0
+
+  metadata {
+    name      = "seaweedfs-internal"
+    namespace = var.namespace
+    annotations = {
+      "kubernetes.io/ingress.class" = var.ingress_class
+    }
+  }
+
+  spec {
+    rule {
+      host = "seaweedfs-master.${var.namespace}.svc.cluster.local"
+      http {
+        path {
+          path = "/"
+          backend {
+            service {
+              name = "seaweedfs-master"
+              port {
+                number = 9333
+              }
+            }
+          }
+        }
+      }
+    }
+    rule {
+      host = "seaweedfs-filer.${var.namespace}.svc.cluster.local"
+      http {
+        path {
+          path = "/"
+          backend {
+            service {
+              name = "seaweedfs-filer"
+              port {
+                number = 8888
+              }
+            }
+          }
+        }
+      }
+    }
+    rule {
+      host = "seaweedfs-volume.${var.namespace}.svc.cluster.local"
+      http {
+        path {
+          path = "/"
+          backend {
+            service {
+              name = "seaweedfs-volume"
+              port {
+                number = 8080
+              }
+            }
+          }
+        }
+      }
+    }
+    rule {
+      host = "seaweedfs-s3.${var.namespace}.svc.cluster.local"
+      http {
+        path {
+          path = "/"
+          backend {
+            service {
+              name = "seaweedfs-s3"
+              port {
+                number = var.s3_port
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [
+    null_resource.install_seaweedfs,
+    time_sleep.wait_for_seaweedfs
+  ]
+}
+
+# Ingress for SeaweedFS Filer Web UI
+resource "kubernetes_ingress_v1" "seaweedfs_filer" {
+  count = var.enabled && var.ingress_enabled && var.ingress_host != "" && var.filer_ingress_path != "" ? 1 : 0
+
+  metadata {
+    name      = "seaweedfs-filer"
+    namespace = var.namespace
+    annotations = {
+      "kubernetes.io/ingress.class" = var.ingress_class
+      "nginx.ingress.kubernetes.io/rewrite-target" = "/"
+    }
+  }
+
+  spec {
+    rule {
+      host = var.ingress_host
+      http {
+        path {
+          path = var.filer_ingress_path
+          backend {
+            service {
+              name = "seaweedfs-filer"
+              port {
+                number = 8888
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [
+    null_resource.install_seaweedfs,
+    time_sleep.wait_for_seaweedfs
+  ]
+}
+
+# Ingress for SeaweedFS Master Web UI
+resource "kubernetes_ingress_v1" "seaweedfs_master" {
+  count = var.enabled && var.ingress_enabled && var.ingress_host != "" && var.master_ingress_path != "" ? 1 : 0
+
+  metadata {
+    name      = "seaweedfs-master"
+    namespace = var.namespace
+    annotations = {
+      "kubernetes.io/ingress.class" = var.ingress_class
+      "nginx.ingress.kubernetes.io/rewrite-target" = "/"
+    }
+  }
+
+  spec {
+    rule {
+      host = var.ingress_host
+      http {
+        path {
+          path = var.master_ingress_path
+          backend {
+            service {
+              name = "seaweedfs-master"
+              port {
+                number = 9333
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [
+    null_resource.install_seaweedfs,
+    time_sleep.wait_for_seaweedfs
+  ]
+}

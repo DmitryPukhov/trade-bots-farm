@@ -9,3 +9,6 @@ enable_kafka_connect = false
 enable_airflow       = false
 enable_registry      = false
 enable_secrets       = true
+
+seaweedfs_ingress_enabled = true
+seaweedfs_ingress_host    = "seaweedfs.minikube.cluster"

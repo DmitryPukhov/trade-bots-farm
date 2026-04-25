@@ -38,6 +38,41 @@ output "s3_endpoint_external" {
   description = "SeaweedFS S3 API external endpoint"
 }
 
+output "ingress_url" {
+  value       = var.enabled && var.ingress_enabled && var.ingress_host != "" ? "http://${var.ingress_host}" : ""
+  description = "SeaweedFS S3 API external URL via Ingress"
+}
+
+output "master_ingress_url" {
+  value       = var.enabled && var.ingress_enabled && var.ingress_host != "" && var.master_ingress_path != "" ? "http://${var.ingress_host}${var.master_ingress_path}" : ""
+  description = "SeaweedFS Master Web UI external URL via Ingress"
+}
+
+output "filer_ingress_url" {
+  value       = var.enabled && var.ingress_enabled && var.ingress_host != "" && var.filer_ingress_path != "" ? "http://${var.ingress_host}${var.filer_ingress_path}" : ""
+  description = "SeaweedFS Filer Web UI external URL via Ingress"
+}
+
+output "internal_master_url" {
+  value       = var.enabled && var.ingress_enabled ? "http://seaweedfs-master.${var.namespace}.svc.cluster.local" : ""
+  description = "SeaweedFS Master Web UI internal DNS URL via Ingress"
+}
+
+output "internal_filer_url" {
+  value       = var.enabled && var.ingress_enabled ? "http://seaweedfs-filer.${var.namespace}.svc.cluster.local" : ""
+  description = "SeaweedFS Filer Web UI internal DNS URL via Ingress"
+}
+
+output "internal_volume_url" {
+  value       = var.enabled && var.ingress_enabled ? "http://seaweedfs-volume.${var.namespace}.svc.cluster.local" : ""
+  description = "SeaweedFS Volume internal DNS URL via Ingress"
+}
+
+output "internal_s3_url" {
+  value       = var.enabled && var.ingress_enabled ? "http://seaweedfs-s3.${var.namespace}.svc.cluster.local" : ""
+  description = "SeaweedFS S3 API internal DNS URL via Ingress"
+}
+
 output "access_key" {
   value       = var.enabled ? var.s3_access_key : ""
   description = "SeaweedFS S3 access key"

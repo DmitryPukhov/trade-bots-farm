@@ -70,3 +70,15 @@ variable "enable_secrets" {
   type        = bool
   default     = true
 }
+
+variable "seaweedfs_ingress_enabled" {
+  description = "Enable Ingress for SeaweedFS S3 API"
+  type        = bool
+  default     = false
+}
+
+variable "seaweedfs_ingress_host" {
+  description = "Hostname for SeaweedFS Ingress (e.g., seaweedfs.tradebotsfarm.cluster.local)"
+  type        = string
+  default     = ""
+}

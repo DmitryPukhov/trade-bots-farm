@@ -65,3 +65,33 @@ variable "default_bucket_name" {
   type        = string
   default     = "trade-bots-farm"
 }
+
+variable "ingress_enabled" {
+  description = "Whether to create an Ingress resource for SeaweedFS"
+  type        = bool
+  default     = false
+}
+
+variable "ingress_host" {
+  description = "Hostname for the Ingress (e.g., seaweedfs.tradebotsfarm.minikube.cluster)"
+  type        = string
+  default     = ""
+}
+
+variable "ingress_class" {
+  description = "Ingress class (e.g., nginx)"
+  type        = string
+  default     = "nginx"
+}
+
+variable "master_ingress_path" {
+  description = "Path for master web UI ingress (e.g., /master). If empty, master ingress will not be added."
+  type        = string
+  default     = "/master"
+}
+
+variable "filer_ingress_path" {
+  description = "Path for filer web UI ingress (e.g., /filer). If empty, filer ingress will not be added."
+  type        = string
+  default     = "/filer"
+}
