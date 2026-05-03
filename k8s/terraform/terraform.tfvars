@@ -11,4 +11,7 @@ enable_registry      = false
 enable_secrets       = true
 
 seaweedfs_ingress_enabled = true
-seaweedfs_ingress_host    = "seaweedfs.minikube.cluster"
+seaweedfs_ingress_host    = "seaweedfs.tradebotsfarm.minikube.cluster"
+seaweedfs_s3_ingress_host = "s3.tradebotsfarm.minikube.cluster"
+seaweedfs_filer_ingress_host = "filer.tradebotsfarm.minikube.cluster"
+seaweedfs_master_ingress_host = "master.tradebotsfarm.minikube.cluster"

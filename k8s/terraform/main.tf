@@ -71,6 +71,10 @@ module "seaweedfs" {
 
   ingress_enabled = var.seaweedfs_ingress_enabled
   ingress_host    = var.seaweedfs_ingress_host
+  
+  s3_ingress_host     = var.seaweedfs_s3_ingress_host
+  filer_ingress_host  = var.seaweedfs_filer_ingress_host
+  master_ingress_host = var.seaweedfs_master_ingress_host
 
   depends_on = [
     module.secrets
