@@ -4,28 +4,28 @@
 Your SeaweedFS Terraform deployment has correctly configured ingress resources, but you cannot access them from your host machine browser. The issue is DNS resolution, not the ingress configuration itself.
 
 ## Current Configuration
-- **S3 Ingress Host**: `s3.tradebotsfarm.minikube.cluster`
-- **Filer Ingress Host**: `filer.tradebotsfarm.minikube.cluster`
-- **Master Ingress Host**: `master.tradebotsfarm.minikube.cluster`
+- **S3 Ingress Host**: `s3.tradebotsfarm.svc.cluster.local`
+- **Filer Ingress Host**: `filer.tradebotsfarm.svc.cluster.local`
+- **Master Ingress Host**: `master.tradebotsfarm.svc.cluster.local`
 - **Minikube IP**: `192.168.49.2`
 - **Ingress Controller**: nginx (running)
 - **SeaweedFS Services**: All pods are running
 - **Ingress Resources**: 3 separate ingresses with host-based routing (s3, filer, master)
 
 ## Root Cause
-The hostnames `s3.tradebotsfarm.minikube.cluster`, `filer.tradebotsfarm.minikube.cluster`, and `master.tradebotsfarm.minikube.cluster` resolve correctly via Minikube's DNS server (`192.168.49.2:53`) but not via your system's default DNS resolver.
+The hostnames `s3.tradebotsfarm.svc.cluster.local`, `filer.tradebotsfarm.svc.cluster.local`, and `master.tradebotsfarm.svc.cluster.local` resolve correctly via Minikube's DNS server (`192.168.49.2:53`) but not via your system's default DNS resolver.
 
 ## Solutions
 
 ### Solution 1: Configure System DNS (Recommended)
-Configure your system to use Minikube's DNS server for `.minikube.cluster` domains:
+Configure your system to use Minikube's DNS server for `.svc.cluster.local` domains:
 
 ```bash
 # Create systemd-resolved configuration
 sudo tee /etc/systemd/resolved.conf.d/minikube.conf << 'EOF'
 [Resolve]
 DNS=192.168.49.2
-Domains=~minikube.cluster
+Domains=~svc.cluster.local
 EOF
 
 # Restart systemd-resolved
@@ -37,8 +37,8 @@ sudo resolvectl flush-caches
 
 **Verification**:
 ```bash
-nslookup seaweedfs.minikube.cluster
-ping -c 2 seaweedfs.minikube.cluster
+nslookup seaweedfs.tradebotsfarm.svc.cluster.local
+ping -c 2 seaweedfs.tradebotsfarm.svc.cluster.local
 ```
 
 ### Solution 2: Use Minikube Tunnel (Easiest)
@@ -49,9 +49,9 @@ minikube tunnel
 ```
 
 Then access in your browser:
-- S3 API: http://s3.tradebotsfarm.minikube.cluster/
-- Filer UI: http://filer.tradebotsfarm.minikube.cluster/
-- Master UI: http://master.tradebotsfarm.minikube.cluster/
+- S3 API: http://s3.tradebotsfarm.svc.cluster.local/
+- Filer UI: http://filer.tradebotsfarm.svc.cluster.local/
+- Master UI: http://master.tradebotsfarm.svc.cluster.local/
 
 ### Solution 3: Browser Workaround
 Use a browser extension like "ModHeader" (Chrome/Firefox):
@@ -60,15 +60,15 @@ For S3 API:
 1. Install ModHeader extension
 2. Add a request header:
    - Name: `Host`
-   - Value: `s3.tradebotsfarm.minikube.cluster`
+   - Value: `s3.tradebotsfarm.svc.cluster.local`
 3. Access: http://192.168.49.2/
 
 For Filer UI:
-1. Change the Host header value to: `filer.tradebotsfarm.minikube.cluster`
+1. Change the Host header value to: `filer.tradebotsfarm.svc.cluster.local`
 2. Access: http://192.168.49.2/
 
 For Master UI:
-1. Change the Host header value to: `master.tradebotsfarm.minikube.cluster`
+1. Change the Host header value to: `master.tradebotsfarm.svc.cluster.local`
 2. Access: http://192.168.49.2/
 
 ### Solution 4: Command Line Access
@@ -76,13 +76,13 @@ For testing or scripting, use curl with Host header:
 
 ```bash
 # S3 API
-curl -H "Host: s3.tradebotsfarm.minikube.cluster" http://192.168.49.2/
+curl -H "Host: s3.tradebotsfarm.svc.cluster.local" http://192.168.49.2/
 
 # Filer UI
-curl -H "Host: filer.tradebotsfarm.minikube.cluster" http://192.168.49.2/
+curl -H "Host: filer.tradebotsfarm.svc.cluster.local" http://192.168.49.2/
 
 # Master UI
-curl -H "Host: master.tradebotsfarm.minikube.cluster" http://192.168.49.2/
+curl -H "Host: master.tradebotsfarm.svc.cluster.local" http://192.168.49.2/
 ```
 
 **Note**: With the new host-based routing, each service is accessed at the root path `/` on its own subdomain.
@@ -93,12 +93,12 @@ The Terraform configuration now supports separate hostnames for each SeaweedFS s
 1. Edit `k8s/terraform/terraform.tfvars`:
    ```hcl
    # Base hostname (used as fallback if specific hostnames are not set)
-   seaweedfs_ingress_host = "seaweedfs.tradebotsfarm.minikube.cluster"
-   
+   seaweedfs_ingress_host = "seaweedfs.tradebotsfarm.svc.cluster.local"
+    
    # Individual service hostnames (optional - if empty, uses the base hostname)
-   seaweedfs_s3_ingress_host = "s3.tradebotsfarm.minikube.cluster"
-   seaweedfs_filer_ingress_host = "filer.tradebotsfarm.minikube.cluster"
-   seaweedfs_master_ingress_host = "master.tradebotsfarm.minikube.cluster"
+   seaweedfs_s3_ingress_host = "s3.tradebotsfarm.svc.cluster.local"
+   seaweedfs_filer_ingress_host = "filer.tradebotsfarm.svc.cluster.local"
+   seaweedfs_master_ingress_host = "master.tradebotsfarm.svc.cluster.local"
    ```
 
 2. Apply changes:
@@ -119,9 +119,9 @@ Once DNS is resolved, access these URLs:
 
 | Service | URL | Port | Purpose |
 |---------|-----|------|---------|
-| S3 API | http://s3.tradebotsfarm.minikube.cluster/ | 8333 | S3-compatible API |
-| Filer UI | http://filer.tradebotsfarm.minikube.cluster/ | 8888 | Web file manager |
-| Master UI | http://master.tradebotsfarm.minikube.cluster/ | 9333 | Cluster management |
+| S3 API | http://s3.tradebotsfarm.svc.cluster.local/ | 8333 | S3-compatible API |
+| Filer UI | http://filer.tradebotsfarm.svc.cluster.local/ | 8888 | Web file manager |
+| Master UI | http://master.tradebotsfarm.svc.cluster.local/ | 9333 | Cluster management |
 
 **Note**: The configuration now uses separate hostnames for each service instead of path-based routing. This allows accessing each service directly via its own subdomain.
 

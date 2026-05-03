@@ -73,7 +73,7 @@ variable "ingress_enabled" {
 }
 
 variable "ingress_host" {
-  description = "Hostname for the Ingress (e.g., seaweedfs.tradebotsfarm.minikube.cluster)"
+  description = "Hostname for the Ingress (e.g., seaweedfs.tradebotsfarm.svc.cluster.local)"
   type        = string
   default     = ""
 }
@@ -97,19 +97,19 @@ variable "filer_ingress_path" {
 }
 
 variable "s3_ingress_host" {
-  description = "Hostname for S3 API ingress (e.g., s3.tradebotsfarm.minikube.cluster). If empty, will use ingress_host."
+  description = "Hostname for S3 API ingress (e.g., s3.tradebotsfarm.svc.cluster.local). If empty, will use ingress_host."
   type        = string
   default     = ""
 }
 
 variable "filer_ingress_host" {
-  description = "Hostname for filer web UI ingress (e.g., filer.tradebotsfarm.minikube.cluster). If empty, will use ingress_host."
+  description = "Hostname for filer web UI ingress (e.g., filer.tradebotsfarm.svc.cluster.local). If empty, will use ingress_host."
   type        = string
   default     = ""
 }
 
 variable "master_ingress_host" {
-  description = "Hostname for master web UI ingress (e.g., master.tradebotsfarm.minikube.cluster). If empty, will use ingress_host."
+  description = "Hostname for master web UI ingress (e.g., master.tradebotsfarm.svc.cluster.local). If empty, will use ingress_host."
   type        = string
   default     = ""
 }

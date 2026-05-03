@@ -80,23 +80,23 @@ variable "seaweedfs_ingress_enabled" {
 variable "seaweedfs_ingress_host" {
   description = "Hostname for SeaweedFS Ingress (e.g., seaweedfs.tradebotsfarm.cluster.local)"
   type        = string
-  default     = "seaweedfs.tradebotsfarm.minikube.cluster"
+  default     = "seaweedfs.tradebotsfarm.svc.cluster.local"
 }
 
 variable "seaweedfs_s3_ingress_host" {
-  description = "Hostname for SeaweedFS S3 API ingress (e.g., s3.tradebotsfarm.minikube.cluster). If empty, will use seaweedfs_ingress_host."
+  description = "Hostname for SeaweedFS S3 API ingress (e.g., s3.tradebotsfarm.svc.cluster.local). If empty, will use seaweedfs_ingress_host."
   type        = string
   default     = ""
 }
 
 variable "seaweedfs_filer_ingress_host" {
-  description = "Hostname for SeaweedFS Filer UI ingress (e.g., filer.tradebotsfarm.minikube.cluster). If empty, will use seaweedfs_ingress_host."
+  description = "Hostname for SeaweedFS Filer UI ingress (e.g., filer.tradebotsfarm.svc.cluster.local). If empty, will use seaweedfs_ingress_host."
   type        = string
   default     = ""
 }
 
 variable "seaweedfs_master_ingress_host" {
-  description = "Hostname for SeaweedFS Master UI ingress (e.g., master.tradebotsfarm.minikube.cluster). If empty, will use seaweedfs_ingress_host."
+  description = "Hostname for SeaweedFS Master UI ingress (e.g., master.tradebotsfarm.svc.cluster.local). If empty, will use seaweedfs_ingress_host."
   type        = string
   default     = ""
 }
