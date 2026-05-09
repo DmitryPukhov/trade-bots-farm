@@ -7,20 +7,8 @@ master:
   port: 9333
   grpcPort: 19333
   
-  # Resource limits
-  resources:
-    requests:
-      memory: "256Mi"
-      cpu: "100m"
-    limits:
-      memory: "512Mi"
-      cpu: "500m"
-  
-  # Persistence
-  persistence:
+  ingress:
     enabled: true
-    storageClass: "standard"
-    size: "2Gi"
 
 # Volume Server Configuration
 volume:
@@ -29,14 +17,9 @@ volume:
   port: 8080
   grpcPort: 18080
   
-  # Resource limits
-  resources:
-    requests:
-      memory: "512Mi"
-      cpu: "200m"
-    limits:
-      memory: "1Gi"
-      cpu: "1000m"
+  ingress:
+    enabled: false
+
   
   # Persistence
   persistence:
@@ -50,40 +33,21 @@ filer:
   replicas: 1
   port: 8888
   grpcPort: 18888
-  
+  ingress:
+    enabled: true
   # S3 API configuration
   s3:
     enabled: true
-    port: 8333
   
-  # Extra arguments for S3 API
-  extraArgs:
-    - "-s3"
-    - "-s3.port=8333"
-  
-  # Resource limits
-  resources:
-    requests:
-      memory: "256Mi"
-      cpu: "100m"
-    limits:
-      memory: "512Mi"
-      cpu: "500m"
 
 # S3 API Configuration
 s3:
   enabled: true
   replicas: 1
   port: 8333
-  
-  # Resource limits
-  resources:
-    requests:
-      memory: "256Mi"
-      cpu: "100m"
-    limits:
-      memory: "512Mi"
-      cpu: "500m"
+  ingress:
+    enabled: true
+
 
 # Image Configuration
 image:
