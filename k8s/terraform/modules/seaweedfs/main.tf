@@ -23,6 +23,10 @@ provisioner "local-exec" {
       --set master.replicas=${var.master_replicas} \
       --set volume.replicas=${var.volume_replicas} \
       --set filer.enabled=true \
+      --set filer.s3.enabled=true \
+      --set filer.s3.port=${var.s3_port} \
+      --set filer.extraArgs[0]="-s3" \
+      --set filer.extraArgs[1]="-s3.port=${var.s3_port}" \
       --set s3.enabled=true \
       --set s3.port=${var.s3_port} \
       --set volume.size=${var.volume_size} \
@@ -88,7 +92,7 @@ resource "kubernetes_job_v1" "create_bucket" {
           command = [
             "/bin/sh",
             "-c",
-            "curl -X PUT http://seaweedfs-s3.${var.namespace}.svc.cluster.local:${var.s3_port}/${var.default_bucket_name} || true"
+            "curl -X PUT http://s3.${var.namespace}.svc.cluster.local:${var.s3_port}/${var.default_bucket_name} || true"
           ]
 
           env {

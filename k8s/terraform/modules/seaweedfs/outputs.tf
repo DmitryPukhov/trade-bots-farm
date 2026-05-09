@@ -1,5 +1,5 @@
 output "service_host" {
-  value       = var.enabled ? "seaweedfs-s3.${var.namespace}.svc.cluster.local" : ""
+  value       = var.enabled ? "s3.${var.namespace}.svc.cluster.local" : ""
   description = "SeaweedFS S3 API service host"
 }
 
@@ -9,7 +9,7 @@ output "service_port" {
 }
 
 output "filer_host" {
-  value       = var.enabled ? "seaweedfs-filer.${var.namespace}.svc.cluster.local" : ""
+  value       = var.enabled ? "filer.${var.namespace}.svc.cluster.local" : ""
   description = "SeaweedFS Filer service host"
 }
 
@@ -19,7 +19,7 @@ output "filer_port" {
 }
 
 output "master_host" {
-  value       = var.enabled ? "seaweedfs-master.${var.namespace}.svc.cluster.local" : ""
+  value       = var.enabled ? "master.${var.namespace}.svc.cluster.local" : ""
   description = "SeaweedFS Master service host"
 }
 
@@ -29,12 +29,12 @@ output "master_port" {
 }
 
 output "s3_endpoint" {
-  value       = var.enabled ? "http://seaweedfs-s3.${var.namespace}.svc.cluster.local:${var.s3_port}" : ""
+  value       = var.enabled ? "http://s3.${var.namespace}.svc.cluster.local:${var.s3_port}" : ""
   description = "SeaweedFS S3 API endpoint"
 }
 
 output "s3_endpoint_external" {
-  value       = var.enabled ? "http://seaweedfs-s3.${var.namespace}.svc.cluster.local:${var.s3_port}" : ""
+  value       = var.enabled ? "http://s3.${var.namespace}.svc.cluster.local:${var.s3_port}" : ""
   description = "SeaweedFS S3 API external endpoint"
 }
 

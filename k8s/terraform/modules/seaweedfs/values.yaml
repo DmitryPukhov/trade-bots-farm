@@ -51,6 +51,16 @@ filer:
   port: 8888
   grpcPort: 18888
   
+  # S3 API configuration
+  s3:
+    enabled: true
+    port: 8333
+  
+  # Extra arguments for S3 API
+  extraArgs:
+    - "-s3"
+    - "-s3.port=8333"
+  
   # Resource limits
   resources:
     requests:
