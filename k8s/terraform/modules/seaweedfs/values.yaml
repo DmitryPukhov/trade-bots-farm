@@ -9,6 +9,7 @@ master:
   
   ingress:
     enabled: true
+    className: "nginx"
 
 # Volume Server Configuration
 volume:
@@ -18,7 +19,8 @@ volume:
   grpcPort: 18080
   
   ingress:
-    enabled: false
+    enabled: true
+    className: "nginx"
 
   
   # Persistence
@@ -35,6 +37,7 @@ filer:
   grpcPort: 18888
   ingress:
     enabled: true
+    className: "nginx"
   # S3 API configuration
   s3:
     enabled: true
@@ -47,6 +50,7 @@ s3:
   port: 8333
   ingress:
     enabled: true
+    className: "nginx"
 
 
 # Image Configuration

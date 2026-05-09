@@ -75,7 +75,7 @@ variable "ingress_enabled" {
 variable "ingress_host" {
   description = "Hostname for the Ingress (e.g., seaweedfs.tradebotsfarm.svc.cluster.local)"
   type        = string
-  default     = ""
+  default     = "seaweedfs.tradebotsfarm.svc.cluster.local"
 }
 
 variable "ingress_class" {
@@ -99,17 +99,17 @@ variable "filer_ingress_path" {
 variable "s3_ingress_host" {
   description = "Hostname for S3 API ingress (e.g., s3.tradebotsfarm.svc.cluster.local). If empty, will use ingress_host."
   type        = string
-  default     = ""
+  default     = "s3.tradebotsfarm.svc.cluster.local"
 }
 
 variable "filer_ingress_host" {
   description = "Hostname for filer web UI ingress (e.g., filer.tradebotsfarm.svc.cluster.local). If empty, will use ingress_host."
   type        = string
-  default     = ""
+  default     = "filer.seaweedfs.tradebotsfarm.svc.cluster.local"
 }
 
 variable "master_ingress_host" {
   description = "Hostname for master web UI ingress (e.g., master.tradebotsfarm.svc.cluster.local). If empty, will use ingress_host."
   type        = string
-  default     = ""
+  default     = "master.seaweedfs.tradebotsfarm.svc.cluster.local"
 }
