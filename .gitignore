@@ -4,6 +4,8 @@ out/**
 **/*.tfstate*.*
 terraform.tfstate
 *.tfstate
+**/tfplan
+*.tfplan
 .wheels/
 .gigaide/
 .idea/

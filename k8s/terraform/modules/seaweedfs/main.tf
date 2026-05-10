@@ -94,7 +94,6 @@ resource "time_sleep" "wait_for_seaweedfs" {
   depends_on      = [null_resource.install_seaweedfs]
   create_duration = "60s"
 }
-
 # Create SeaweedFS S3 credentials secret
 resource "kubernetes_secret" "seaweedfs_s3_credentials" {
   count = var.enabled && var.create_s3_credentials_secret ? 1 : 0
@@ -113,6 +112,64 @@ resource "kubernetes_secret" "seaweedfs_s3_credentials" {
 
   depends_on = [null_resource.install_seaweedfs]
 }
+
+# Create default bucket using a Kubernetes Job
+resource "kubernetes_job" "create_default_bucket" {
+  count = var.enabled && var.create_default_bucket ? 1 : 0
+
+  metadata {
+    name      = "create-default-bucket"
+    namespace = var.namespace
+  }
+
+  spec {
+    template {
+      metadata {
+        name = "create-default-bucket"
+      }
+      spec {
+        container {
+          name    = "awscli"
+          image   = "bitnami/aws-cli:latest"
+          command = ["/bin/sh", "-c"]
+          args = [
+            <<-EOT
+              # Wait for S3 service to be reachable
+              until curl -f -s http://seaweedfs-s3.${var.namespace}.svc.cluster.local:${var.s3_port}/ > /dev/null 2>&1; do
+                echo "Waiting for SeaweedFS S3 API..."
+                sleep 5
+              done
+              # Create bucket if it doesn't exist
+              aws --endpoint-url http://seaweedfs-s3.${var.namespace}.svc.cluster.local:${var.s3_port} s3api head-bucket --bucket ${var.default_bucket_name} 2>/dev/null || \
+              aws --endpoint-url http://seaweedfs-s3.${var.namespace}.svc.cluster.local:${var.s3_port} s3 mb s3://${var.default_bucket_name}
+              echo "Bucket ${var.default_bucket_name} created or already exists"
+            EOT
+          ]
+          env {
+            name  = "AWS_ACCESS_KEY_ID"
+            value = var.s3_access_key
+          }
+          env {
+            name  = "AWS_SECRET_ACCESS_KEY"
+            value = var.s3_secret_key
+          }
+          env {
+            name  = "AWS_DEFAULT_REGION"
+            value = "us-east-1"
+          }
+        }
+        restart_policy = "Never"
+      }
+    }
+    backoff_limit = 3
+    active_deadline_seconds = 300
+  }
+
+  wait_for_completion = false
+
+  depends_on = [time_sleep.wait_for_seaweedfs]
+}
+
 
 
   
