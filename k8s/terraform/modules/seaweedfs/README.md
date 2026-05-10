@@ -59,6 +59,55 @@ module "seaweedfs" {
 | `s3_secret_key` | S3 secret key for SeaweedFS | `string` | `"minioadmin"` | no |
 | `create_default_bucket` | Whether to create a default bucket | `bool` | `true` | no |
 | `default_bucket_name` | Name of the default bucket to create | `string` | `"trade-bots-farm"` | no |
+| `webui_auth_enabled` | Whether to enable basic authentication for web UI ingresses (master, filer, volume) | `bool` | `false` | no |
+| `webui_auth_username` | Username for basic authentication | `string` | `"admin"` | no |
+| `webui_auth_password` | Password for basic authentication | `string` | `""` | no |
+| `webui_auth_secret_name` | Name of an existing Kubernetes secret containing basic auth credentials (key 'auth' with htpasswd format). If provided, the module will use this secret instead of creating a new one. | `string` | `""` | no |
+| `webui_auth_secret_namespace` | Namespace of the existing basic auth secret. Defaults to var.namespace. | `string` | `""` | no |
+| `create_webui_auth_secret` | Whether to create a Kubernetes secret for basic auth credentials. If false, you must provide an existing secret via webui_auth_secret_name. | `bool` | `false` | no |
+
+## Web UI Authentication
+
+To protect the SeaweedFS web UIs (master, filer, volume, and S3) with basic authentication, set `webui_auth_enabled = true`. The module will add nginx-ingress annotations to require authentication.
+
+### Prerequisites
+
+- NGINX Ingress Controller with basic auth support (the annotation `nginx.ingress.kubernetes.io/auth-type` must be recognized).
+- A Kubernetes secret containing htpasswd formatted credentials in the key `auth`.
+
+### Using an existing secret
+
+If you already have a secret with htpasswd credentials, provide its name via `webui_auth_secret_name` and optionally `webui_auth_secret_namespace` (defaults to the same namespace). The secret must be of type `Opaque` with a key `auth` containing the htpasswd file content (e.g., `admin:$apr1$...`).
+
+Example secret creation using `htpasswd`:
+
+```bash
+htpasswd -c auth admin
+kubectl create secret generic seaweedfs-webui-auth --namespace <namespace> --from-file=auth
+```
+
+### Let the module create a secret
+
+Set `create_webui_auth_secret = true` and provide `webui_auth_username` and `webui_auth_password`. The module will create a secret named `seaweedfs-webui-auth` (or the name you specify) using the provided credentials.
+
+**Note:** The secret creation requires the `htpasswd` command to be available in the Terraform execution environment. If not available, you must create the secret manually.
+
+### Example usage
+
+```hcl
+module "seaweedfs" {
+  source = "./modules/seaweedfs"
+  # ... other variables
+  webui_auth_enabled           = true
+  webui_auth_username          = "admin"
+  webui_auth_password          = "securepassword"
+  create_webui_auth_secret     = true
+}
+```
+
+### Disabling authentication
+
+Set `webui_auth_enabled = false` (default) to disable authentication.
 
 ## Outputs
 

@@ -11,6 +11,7 @@ enable_registry      = false
 enable_secrets       = true
 
 seaweedfs_ingress_enabled = true
+seaweedfs_webui_auth_enabled = true
 seaweedfs_ingress_host    = "seaweedfs.tradebotsfarm.svc.cluster.local"
 seaweedfs_s3_ingress_host = "s3.tradebotsfarm.svc.cluster.local"
 seaweedfs_filer_ingress_host = "filer.tradebotsfarm.svc.cluster.local"

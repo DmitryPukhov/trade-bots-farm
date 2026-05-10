@@ -76,6 +76,13 @@ module "seaweedfs" {
   filer_ingress_host  = var.seaweedfs_filer_ingress_host
   master_ingress_host = var.seaweedfs_master_ingress_host
 
+  webui_auth_enabled           = var.seaweedfs_webui_auth_enabled
+  webui_auth_username          = var.seaweedfs_webui_auth_username
+  webui_auth_password          = var.seaweedfs_webui_auth_password
+  webui_auth_secret_name       = var.seaweedfs_webui_auth_secret_name
+  webui_auth_secret_namespace  = var.seaweedfs_webui_auth_secret_namespace
+  create_webui_auth_secret     = var.seaweedfs_create_webui_auth_secret
+
   depends_on = [
     module.secrets
   ]

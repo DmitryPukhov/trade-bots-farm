@@ -131,3 +131,40 @@ variable "master_ingress_host" {
   type        = string
   default     = "master.seaweedfs.tradebotsfarm.svc.cluster.local"
 }
+
+variable "webui_auth_enabled" {
+  description = "Whether to enable basic authentication for web UI ingresses (master, filer, volume)."
+  type        = bool
+  default     = false
+}
+
+variable "webui_auth_username" {
+  description = "Username for basic authentication."
+  type        = string
+  default     = "admin"
+}
+
+variable "webui_auth_password" {
+  description = "Password for basic authentication."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "webui_auth_secret_name" {
+  description = "Name of an existing Kubernetes secret containing basic auth credentials (key 'auth' with htpasswd format). If provided, the module will use this secret instead of creating a new one."
+  type        = string
+  default     = ""
+}
+
+variable "webui_auth_secret_namespace" {
+  description = "Namespace of the existing basic auth secret. Defaults to var.namespace."
+  type        = string
+  default     = ""
+}
+
+variable "create_webui_auth_secret" {
+  description = "Whether to create a Kubernetes secret for basic auth credentials. If false, you must provide an existing secret via webui_auth_secret_name."
+  type        = bool
+  default     = false
+}
