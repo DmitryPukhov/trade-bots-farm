@@ -16,3 +16,6 @@ seaweedfs_ingress_host    = "seaweedfs.tradebotsfarm.svc.cluster.local"
 seaweedfs_s3_ingress_host = "s3.tradebotsfarm.svc.cluster.local"
 seaweedfs_filer_ingress_host = "filer.tradebotsfarm.svc.cluster.local"
 seaweedfs_master_ingress_host = "master.tradebotsfarm.svc.cluster.local"
+
+seaweedfs_s3_credentials_secret_name = "seaweedfs-s3-credentials"
+seaweedfs_create_s3_credentials_secret = false

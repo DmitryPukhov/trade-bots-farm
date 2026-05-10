@@ -16,6 +16,8 @@ locals {
     ingress_enabled = var.ingress_enabled
     webui_auth_enabled = var.webui_auth_enabled
     webui_auth_secret_name_final = local.webui_auth_secret_name_final
+    s3_access_key   = var.s3_access_key
+    s3_secret_key   = var.s3_secret_key
   }
 
   # Compute ingress hosts
@@ -50,20 +52,19 @@ locals {
   webui_auth_secret_name_final = var.webui_auth_secret_name != "" ? var.webui_auth_secret_name : "seaweedfs-webui-auth"
 
   # Build extra --set flags for ingress annotations if basic auth enabled
+  # Note: S3 ingress should NOT have basic auth as it uses S3 authentication
   webui_auth_annotations_flags = var.webui_auth_enabled && var.ingress_enabled ? join(" ", [
     for flag in [
-      local.webui_auth_secret_name_final != "" ? "--set master.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-type=basic" : "",
-      local.webui_auth_secret_name_final != "" ? "--set master.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-secret=${local.webui_auth_secret_name_final}" : "",
-      local.webui_auth_secret_name_final != "" ? "--set master.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-realm=\"Authentication Required\"" : "",
-      local.webui_auth_secret_name_final != "" ? "--set filer.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-type=basic" : "",
-      local.webui_auth_secret_name_final != "" ? "--set filer.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-secret=${local.webui_auth_secret_name_final}" : "",
-      local.webui_auth_secret_name_final != "" ? "--set filer.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-realm=\"Authentication Required\"" : "",
-      local.webui_auth_secret_name_final != "" ? "--set volume.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-type=basic" : "",
-      local.webui_auth_secret_name_final != "" ? "--set volume.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-secret=${local.webui_auth_secret_name_final}" : "",
-      local.webui_auth_secret_name_final != "" ? "--set volume.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-realm=\"Authentication Required\"" : "",
-      local.webui_auth_secret_name_final != "" ? "--set s3.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-type=basic" : "",
-      local.webui_auth_secret_name_final != "" ? "--set s3.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-secret=${local.webui_auth_secret_name_final}" : "",
-      local.webui_auth_secret_name_final != "" ? "--set s3.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-realm=\"Authentication Required\"" : "",
+      local.webui_auth_secret_name_final != "" ? "--set 'master.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-type=basic'" : "",
+      local.webui_auth_secret_name_final != "" ? "--set 'master.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-secret=${local.webui_auth_secret_name_final}'" : "",
+      local.webui_auth_secret_name_final != "" ? "--set 'master.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-realm=Authentication Required'" : "",
+      local.webui_auth_secret_name_final != "" ? "--set 'filer.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-type=basic'" : "",
+      local.webui_auth_secret_name_final != "" ? "--set 'filer.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-secret=${local.webui_auth_secret_name_final}'" : "",
+      local.webui_auth_secret_name_final != "" ? "--set 'filer.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-realm=Authentication Required'" : "",
+      local.webui_auth_secret_name_final != "" ? "--set 'volume.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-type=basic'" : "",
+      local.webui_auth_secret_name_final != "" ? "--set 'volume.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-secret=${local.webui_auth_secret_name_final}'" : "",
+      local.webui_auth_secret_name_final != "" ? "--set 'volume.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-realm=Authentication Required'" : "",
+      # S3 ingress should NOT have basic auth annotations - removed
     ] : flag if flag != ""
   ]) : ""
 }
@@ -190,10 +191,61 @@ resource "kubernetes_job" "create_default_bucket" {
   }
 
   wait_for_completion = false
-
-  depends_on = [time_sleep.wait_for_seaweedfs]
+depends_on = [time_sleep.wait_for_seaweedfs]
 }
 
+# Configure SeaweedFS IAM credentials
+resource "kubernetes_job" "configure_iam_credentials" {
+  count = var.enabled && var.configure_iam_credentials && var.s3_access_key != "" && var.s3_secret_key != "" ? 1 : 0
+
+metadata {
+  name      = "configure-iam-credentials"
+  namespace = var.namespace
+}
+
+spec {
+  template {
+    metadata {
+      name = "configure-iam-credentials"
+    }
+    spec {
+      container {
+        name    = "seaweedfs-shell"
+        image   = "chrislusf/seaweedfs:latest"
+        command = ["/bin/sh", "-c"]
+        args = [
+          <<-EOT
+            # Wait for filer to be reachable
+            until curl -f -s http://seaweedfs-filer.${var.namespace}.svc.cluster.local:8888/ > /dev/null 2>&1; do
+              echo "Waiting for SeaweedFS filer..."
+              sleep 5
+            done
+            
+            # Configure IAM credentials using weed shell
+            echo "Configuring IAM credentials for access key: ${var.s3_access_key}"
+            # First check if user already exists
+            weed shell -filer=seaweedfs-filer.${var.namespace}.svc.cluster.local:8888 <<'EOF'
+              s3.user.create \
+                -name=admin \
+                -access_key=${var.s3_access_key} \
+                -secret_key=${var.s3_secret_key}
+            EOF
+            
+            echo "IAM credentials configured successfully"
+          EOT
+        ]
+      }
+      restart_policy = "Never"
+    }
+  }
+  backoff_limit = 3
+  active_deadline_seconds = 300
+}
+
+wait_for_completion = false
+
+depends_on = [time_sleep.wait_for_seaweedfs]
+}
 
 
   

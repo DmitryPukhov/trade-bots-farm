@@ -78,6 +78,12 @@ variable "create_default_bucket" {
   default     = true
 }
 
+variable "configure_iam_credentials" {
+  description = "Whether to configure SeaweedFS IAM credentials (required for S3 authentication)"
+  type        = bool
+  default     = true
+}
+
 variable "default_bucket_name" {
   description = "Name of the default bucket to create"
   type        = string

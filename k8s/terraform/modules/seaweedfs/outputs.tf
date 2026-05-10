@@ -54,13 +54,13 @@ output "filer_ingress_url" {
 }
 
 
-output "access_key" {
+output "s3_access_key" {
   value       = var.enabled ? var.s3_access_key : ""
   description = "SeaweedFS S3 access key"
   sensitive   = true
 }
 
-output "secret_key" {
+output "s3_secret_key" {
   value       = var.enabled ? var.s3_secret_key : ""
   description = "SeaweedFS S3 secret key"
   sensitive   = true

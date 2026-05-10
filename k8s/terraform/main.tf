@@ -52,6 +52,7 @@ terraform {
 module "secrets" {
   source    = "./modules/secrets"
   namespace = var.namespace
+  secret_values = var.secret_values
   count     = var.enable_secrets ? 1 : 0
 
   depends_on = [
@@ -62,6 +63,11 @@ module "secrets" {
 # Module for SeaweedFS
 terraform {
   required_version = ">= 1.0"
+}
+
+locals {
+  seaweedfs_s3_access_key = try(var.secret_values["seaweedfs-s3-credentials"]["s3_access_key"], var.seaweedfs_s3_access_key)
+  seaweedfs_s3_secret_key = try(var.secret_values["seaweedfs-s3-credentials"]["s3_secret_key"], var.seaweedfs_s3_secret_key)
 }
 
 module "seaweedfs" {
@@ -82,6 +88,12 @@ module "seaweedfs" {
   webui_auth_secret_name       = var.seaweedfs_webui_auth_secret_name
   webui_auth_secret_namespace  = var.seaweedfs_webui_auth_secret_namespace
   create_webui_auth_secret     = var.seaweedfs_create_webui_auth_secret
+
+  s3_access_key = local.seaweedfs_s3_access_key
+  s3_secret_key = local.seaweedfs_s3_secret_key
+  s3_credentials_secret_name = var.seaweedfs_s3_credentials_secret_name
+  create_s3_credentials_secret = var.seaweedfs_create_s3_credentials_secret
+  configure_iam_credentials = true
 
   depends_on = [
     module.secrets

@@ -71,6 +71,12 @@ variable "enable_secrets" {
   default     = true
 }
 
+variable "secret_values" {
+  description = "Map of secret names to maps of placeholder values for secret definitions."
+  type        = map(map(string))
+  default     = {}
+}
+
 variable "seaweedfs_ingress_enabled" {
   description = "Enable Ingress for SeaweedFS S3 API"
   type        = bool
@@ -136,4 +142,30 @@ variable "seaweedfs_create_webui_auth_secret" {
   description = "Whether to create a Kubernetes secret for basic auth credentials. If false, you must provide an existing secret via seaweedfs_webui_auth_secret_name."
   type        = bool
   default     = false
+}
+
+variable "seaweedfs_s3_access_key" {
+  description = "S3 access key for SeaweedFS authentication. If not set, defaults to 'minioadmin'. Should be set via environment variable TF_VAR_seaweedfs_s3_access_key."
+  type        = string
+  default     = "minioadmin"
+  sensitive   = true
+}
+
+variable "seaweedfs_s3_secret_key" {
+  description = "S3 secret key for SeaweedFS authentication. If not set, defaults to 'minioadmin'. Should be set via environment variable TF_VAR_seaweedfs_s3_secret_key."
+  type        = string
+  default     = "minioadmin"
+  sensitive   = true
+}
+
+variable "seaweedfs_s3_credentials_secret_name" {
+  description = "Name of an existing Kubernetes secret containing S3 credentials (keys: access_key, secret_key). If provided, the module will use this secret instead of creating a new one. If not provided, the module will create a secret using seaweedfs_s3_access_key and seaweedfs_s3_secret_key."
+  type        = string
+  default     = ""
+}
+
+variable "seaweedfs_create_s3_credentials_secret" {
+  description = "Whether to create a Kubernetes secret for S3 credentials. If false, you must provide an existing secret via seaweedfs_s3_credentials_secret_name."
+  type        = bool
+  default     = true
 }
