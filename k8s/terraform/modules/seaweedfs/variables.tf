@@ -54,6 +54,24 @@ variable "s3_secret_key" {
   sensitive   = true
 }
 
+variable "s3_credentials_secret_name" {
+  description = "Name of an existing Kubernetes secret containing S3 credentials (keys: access_key, secret_key). If provided, the module will use this secret instead of creating a new one. If not provided, the module will create a secret using s3_access_key and s3_secret_key."
+  type        = string
+  default     = ""
+}
+
+variable "s3_credentials_secret_namespace" {
+  description = "Namespace of the existing S3 credentials secret. Defaults to var.namespace."
+  type        = string
+  default     = ""
+}
+
+variable "create_s3_credentials_secret" {
+  description = "Whether to create a Kubernetes secret for S3 credentials. If false, you must provide an existing secret via s3_credentials_secret_name."
+  type        = bool
+  default     = true
+}
+
 variable "create_default_bucket" {
   description = "Whether to create a default bucket"
   type        = bool

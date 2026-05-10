@@ -26,11 +26,23 @@ locals {
   ingress_host_flags = var.ingress_enabled ? join(" ", [
     for flag in [
       local.s3_host != "" ? "--set s3.ingress.host=${local.s3_host}" : "",
-     local.filer_host != "" ? "--set filer.ingress.host=${local.filer_host}" : "",
-     local.master_host != "" ? "--set master.ingress.host=${local.master_host}" : "",
-     local.volume_host != "" ? "--set volume.ingress.host=${local.volume_host}" : "",
+      local.filer_host != "" ? "--set filer.ingress.host=${local.filer_host}" : "",
+      local.master_host != "" ? "--set master.ingress.host=${local.master_host}" : "",
+      local.volume_host != "" ? "--set volume.ingress.host=${local.volume_host}" : "",
     ] : flag if flag != ""
   ]) : ""
+
+  # Build extra --set flags for S3 credentials and security
+  s3_credentials_flags = var.enabled ? join(" ", [
+    for flag in [
+      var.s3_access_key != "" ? "--set s3.credentials.admin.accessKey=${var.s3_access_key}" : "",
+      var.s3_secret_key != "" ? "--set s3.credentials.admin.secretKey=${var.s3_secret_key}" : "",
+      "--set s3.enableAuth=true",
+    ] : flag if flag != ""
+  ]) : ""
+
+  # Determine secret name for S3 credentials
+  s3_credentials_secret_name_final = var.s3_credentials_secret_name != "" ? var.s3_credentials_secret_name : "seaweedfs-s3-credentials"
 }
 
 resource "null_resource" "add_helm_repo" {
@@ -67,6 +79,7 @@ resource "null_resource" "install_seaweedfs" {
         --set volume.size=${var.volume_size} \
         --set volume.storageClass=${var.storage_class} \
         ${local.ingress_host_flags} \
+        ${local.s3_credentials_flags} \
         --debug
     EOT
   }
@@ -84,10 +97,10 @@ resource "time_sleep" "wait_for_seaweedfs" {
 
 # Create SeaweedFS S3 credentials secret
 resource "kubernetes_secret" "seaweedfs_s3_credentials" {
-  count = var.enabled ? 1 : 0
+  count = var.enabled && var.create_s3_credentials_secret ? 1 : 0
 
   metadata {
-    name      = "seaweedfs-s3-credentials"
+    name      = local.s3_credentials_secret_name_final
     namespace = var.namespace
   }
 
