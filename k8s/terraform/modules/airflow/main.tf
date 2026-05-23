@@ -8,8 +8,58 @@ resource "helm_release" "airflow" {
     file("${path.module}/values.yaml")
   ]
   timeout = 1200
+  force_update = true
+  cleanup_on_fail = true
+  recreate_pods = true
 
+}
 
+resource "kubernetes_job" "airflow_migrations" {
+  metadata {
+    name      = "airflow-migrations"
+    namespace = var.namespace
+  }
+  spec {
+    template {
+      metadata {}
+      spec {
+        container {
+          name    = "migrate"
+          image   = "apache/airflow:3.2.1"
+          command = ["airflow", "db", "migrate"]
+          env {
+            name  = "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN"
+            value = "postgresql://postgres:postgres@airflow-postgresql:5432/airflow"
+          }
+          env {
+            name  = "AIRFLOW__CORE__FERNET_KEY"
+            value_from {
+              secret_key_ref {
+                name = "airflow-fernet-key"
+                key  = "fernet-key"
+              }
+            }
+          }
+          env {
+            name  = "AIRFLOW__WEBSERVER__SECRET_KEY"
+            value_from {
+              secret_key_ref {
+                name = "airflow"
+                key  = "webserver-secret-key"
+              }
+            }
+          }
+        }
+        restart_policy = "Never"
+      }
+    }
+    backoff_limit = 4
+  }
+  depends_on = [
+    module.pvc_airflow_dags,
+    module.pvc_environment,
+    module.pvc_wheels
+  ]
 }
 
 module "pvc_airflow_dags" {

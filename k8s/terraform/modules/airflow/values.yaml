@@ -31,6 +31,9 @@ airflow:
     AIRFLOW__CORE__DAGS_FOLDER: "/opt/airflow/dags"
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql://postgres:postgres@airflow-postgresql:5432/airflow"
 
+migrateDatabaseJob:
+  enabled: false
+
 webserverSecretKeySecretName: "airflow"
 
 volumes:
