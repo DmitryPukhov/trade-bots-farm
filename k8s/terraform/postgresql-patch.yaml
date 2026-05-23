@@ -1,0 +1,5 @@
+postgresql:
+  image:
+    repository: postgres
+    tag: "11"
+    pullPolicy: IfNotPresent

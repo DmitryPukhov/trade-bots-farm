@@ -6,7 +6,7 @@ enable_grafana       = false
 enable_kafka         = false
 enable_kafka_ui      = false
 enable_kafka_connect = false
-enable_airflow       = false
+enable_airflow       = true
 enable_registry      = false
 enable_secrets       = true
 

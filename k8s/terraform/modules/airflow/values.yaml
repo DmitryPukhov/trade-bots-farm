@@ -10,7 +10,7 @@ apiServer:
 airflow:
   image:
     repository: apache/airflow  # Official image
-    tag: 3.0.0  # Replace with your desired Airflow 3.x version (e.g., 3.0.0 once released)
+    tag: 3.2.1  # Replace with your desired Airflow 3.x version (e.g., 3.0.0 once released)
     pullPolicy: IfNotPresent
 
   # 2. Ensure correct executor setup
@@ -49,3 +49,10 @@ volumeMounts:
 kubernetes:
   envFromSecrets:
     - "airflow"
+
+# PostgreSQL configuration
+postgresql:
+  image:
+    repository: postgres
+    tag: "11"
+    pullPolicy: IfNotPresent
