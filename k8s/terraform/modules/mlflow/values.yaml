@@ -50,16 +50,16 @@ extraEnvVars:
 
 # ---- Service ----
 service:
-  type: LoadBalancer
+  type: ClusterIP
 
-# ---- Ingress (optional, commented out for now) ----
-#ingress:
-#  enabled: true
-#  className: nginx
-#  annotations:
-#    nginx.ingress.kubernetes.io/rewrite-target: /$1
-#  hosts:
-#    - host: "{{ .Values.global.trade-bots-farm_external_ip }}"
-#      paths:
-#        - path: /mlflow(/|$)(.*)
-#          pathType: ImplementationSpecific
+# ---- Ingress ----
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: "mlflow.tradebotsfarm.svc.cluster.local"
+      paths:
+        - path: "/"
+          pathType: "Prefix"
+  tls: []

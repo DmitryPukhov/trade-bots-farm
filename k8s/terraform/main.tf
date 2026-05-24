@@ -114,6 +114,10 @@ module "mlflow" {
   namespace = var.namespace
   count     = var.enable_mlflow ? 1 : 0
 
+  ingress_enabled = var.mlflow_ingress_enabled
+  ingress_host    = var.mlflow_ingress_host
+  ingress_class   = var.mlflow_ingress_class
+
   depends_on = [
     module.seaweedfs
   ]

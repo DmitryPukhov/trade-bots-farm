@@ -19,3 +19,7 @@ seaweedfs_master_ingress_host = "master.seaweedfs.tradebotsfarm.svc.cluster.loca
 
 seaweedfs_s3_credentials_secret_name = "seaweedfs-s3-credentials"
 seaweedfs_create_s3_credentials_secret = false
+
+mlflow_ingress_enabled = true
+mlflow_ingress_host    = "mlflow.tradebotsfarm.svc.cluster.local"
+mlflow_ingress_class   = "nginx"

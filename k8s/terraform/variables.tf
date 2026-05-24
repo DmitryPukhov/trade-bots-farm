@@ -23,6 +23,24 @@ variable "enable_mlflow" {
   default     = true
 }
 
+variable "mlflow_ingress_enabled" {
+  description = "Enable Ingress for MLflow"
+  type        = bool
+  default     = false
+}
+
+variable "mlflow_ingress_host" {
+  description = "Hostname for MLflow Ingress"
+  type        = string
+  default     = "mlflow.tradebotsfarm.svc.cluster.local"
+}
+
+variable "mlflow_ingress_class" {
+  description = "Ingress class for MLflow (e.g., nginx)"
+  type        = string
+  default     = "nginx"
+}
+
 variable "enable_prometheus" {
   description = "Enable Prometheus deployment"
   type        = bool

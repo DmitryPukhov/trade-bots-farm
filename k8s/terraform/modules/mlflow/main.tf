@@ -9,6 +9,38 @@ resource "helm_release" "mlflow" {
     file("${path.module}/values.yaml")
   ]
 
+  # Ingress configuration
+  set {
+    name  = "ingress.enabled"
+    value = var.ingress_enabled
+  }
+
+  set {
+    name  = "ingress.className"
+    value = var.ingress_class
+  }
+
+  set {
+    name  = "ingress.hosts[0].host"
+    value = var.ingress_host
+  }
+
+  set {
+    name  = "ingress.hosts[0].paths[0].path"
+    value = "/"
+  }
+
+  set {
+    name  = "ingress.hosts[0].paths[0].pathType"
+    value = "Prefix"
+  }
+
+  # Switch service to ClusterIP when ingress is enabled
+  set {
+    name  = "service.type"
+    value = var.ingress_enabled ? "ClusterIP" : "LoadBalancer"
+  }
+
   depends_on = [
     module.pvc_mlflow_postgresql
   ]
