@@ -145,16 +145,16 @@ variable "seaweedfs_create_webui_auth_secret" {
 }
 
 variable "seaweedfs_s3_access_key" {
-  description = "S3 access key for SeaweedFS authentication. If not set, defaults to 'minioadmin'. Should be set via environment variable TF_VAR_seaweedfs_s3_access_key."
+  description = "S3 access key for SeaweedFS authentication. Should be set via environment variable TF_VAR_seaweedfs_s3_access_key."
   type        = string
-  default     = "minioadmin"
+  default     = ""
   sensitive   = true
 }
 
 variable "seaweedfs_s3_secret_key" {
-  description = "S3 secret key for SeaweedFS authentication. If not set, defaults to 'minioadmin'. Should be set via environment variable TF_VAR_seaweedfs_s3_secret_key."
+  description = "S3 secret key for SeaweedFS authentication. Should be set via environment variable TF_VAR_seaweedfs_s3_secret_key."
   type        = string
-  default     = "minioadmin"
+  default     = ""
   sensitive   = true
 }
 
