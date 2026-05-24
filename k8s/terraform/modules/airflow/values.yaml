@@ -19,10 +19,10 @@ images:
   airflow:
     tag: 3.2.1
 airflow:
-  image:
-    repository: apache/airflow  # Official image
-    tag: 3.2.1  # Replace with your desired Airflow 3.x version (e.g., 3.0.0 once released)
-    pullPolicy: IfNotPresent
+  # image:
+  #   repository: apache/airflow  # Official image
+  #   tag: 3.2.1  # Replace with your desired Airflow 3.x version (e.g., 3.0.0 once released)
+  #   pullPolicy: IfNotPresent
 
   # 2. Ensure correct executor setup
   executor: "CeleryExecutor"  # Required for webserver

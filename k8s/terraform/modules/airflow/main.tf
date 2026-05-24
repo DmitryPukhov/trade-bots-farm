@@ -12,44 +12,6 @@ resource "helm_release" "airflow" {
   cleanup_on_fail = true
   recreate_pods = true
 
-  # Wait for migrations job to complete before considering release successful
-  wait = true
-}
-
-resource "kubernetes_job" "airflow_migrations" {
-  metadata {
-    name      = "airflow-migrations"
-    namespace = var.namespace
-  }
-  spec {
-    template {
-      metadata {}
-      spec {
-        init_container {
-          name    = "wait-for-postgres"
-          image   = "postgres:11"
-          command = ["sh", "-c", "until pg_isready -h airflow-postgresql -p 5432; do echo 'Waiting for PostgreSQL...'; sleep 2; done"]
-        }
-        container {
-          name    = "migrate"
-          image   = "apache/airflow:3.2.1"
-          command = ["airflow", "db", "migrate"]
-          env {
-            name  = "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN"
-            value = "postgresql://postgres:postgres@airflow-postgresql:5432/airflow"
-          }
-          env {
-            name  = "AIRFLOW__CORE__DONOT_LOG_CLI"
-            value = "True"
-          }
-        }
-        restart_policy = "Never"
-      }
-    }
-    backoff_limit = 4
-  }
-  
-  depends_on = [helm_release.airflow]
 }
 
 
