@@ -52,11 +52,23 @@ extraEnvVars:
 service:
   type: ClusterIP
 
+# ---- Gunicorn options for running behind reverse proxy ----
+# --forwarded-allow-ips=* tells gunicorn to trust X-Forwarded-* headers
+# from any proxy (e.g. nginx-ingress), avoiding Werkzeug's "Invalid Host header"
+# DNS rebinding protection when using internal service DNS names.
+extraArgs:
+  gunicornOpts: "--forwarded-allow-ips=*"
+
 # ---- Ingress ----
+# Uses nginx-ingress upstream-vhost annotation to rewrite the Host header
+# to "localhost" when proxying upstream. This avoids Werkzeug's "Invalid Host
+# header" DNS rebinding protection, which rejects internal Kubernetes DNS
+# names such as "mlflow.tradebotsfarm.svc.cluster.local".
 ingress:
   enabled: false
   className: "nginx"
-  annotations: {}
+  annotations:
+    nginx.ingress.kubernetes.io/upstream-vhost: "localhost"
   hosts:
     - host: "mlflow.tradebotsfarm.svc.cluster.local"
       paths:
