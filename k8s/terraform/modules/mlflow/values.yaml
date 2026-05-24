@@ -1,62 +1,62 @@
-tracking:
+# ---- Auth configuration ----
+# Uses existing secret `mlflow-tracking` created by the secrets module
+auth:
   enabled: true
-  auth:
-    enabled: true
-    existingSecret: mlflow-tracking
-    existingSecretUserKey: admin-user
-    existingSecretPasswordKey: admin-password
-    existingSecretFlaskServerSecretKey: flask-server-secret-key
-  service:
-    type: LoadBalancer
-    nodePorts:
-      http: "30180"
-      https: "30180"
+  existingAdminSecret:
+    name: mlflow-tracking
+    usernameKey: admin-user
+    passwordKey: admin-password
 
-defaultBuckets: "trade-bots-farm"
+# ---- PostgreSQL backend store (bundled Bitnami sub-chart) ----
+# The chart includes a Bitnami PostgreSQL sub-chart for the backend store.
+# Uses existing secret `mlflow-postgresql` created by the secrets module.
+backendStore:
+  databaseMigration: true
+  databaseConnectionCheck: true
 
 postgresql:
   enabled: true
   auth:
     database: bitnami_mlflow
     existingSecret: mlflow-postgresql
+    secretKeys:
+      userPasswordKey: password
+      adminPasswordKey: postgres-password
+  primary:
+    persistence:
+      # Use the pre-created PVC from the Terraform module (data-mlflow-postgresql-0)
+      existingClaim: "data-mlflow-postgresql-0"
 
-## Disable built-in artifact storage (we'll use external S3)
-artifactRoot: s3://trade-bots-farm/mlartifacts
-## S3 Configuration
+# ---- S3 artifact storage (SeaweedFS S3-compatible) ----
+# Uses existing secret `mlflow-s3` created by the secrets module.
+artifactRoot:
+  s3:
+    enabled: true
+    bucket: trade-bots-farm
+    path: mlartifacts
+    existingSecret:
+      name: mlflow-s3
+      keyOfAccessKeyId: access-key-id
+      keyOfSecretAccessKey: access-key-secret
+
+extraFlags:
+  # Enable serving of artifact uploads/downloads via MLflow proxy to S3
+  - serveArtifacts
+
+# S3-compatible endpoint configuration (SeaweedFS)
 extraEnvVars:
-  - name: MLFLOW_S3_ENDPOINT_URL
-    value: "http://seaweedfs-s3.tradebotsfarm.svc.cluster.local:8333"  # Your MinIO endpoint
-  - name: AWS_S3_IGNORE_TLS
-    value: "true"  # Only needed if using self-signed certs
+  MLFLOW_S3_ENDPOINT_URL: "http://seaweedfs-s3.tradebotsfarm.svc.cluster.local:8333"
+  AWS_S3_IGNORE_TLS: "true"
 
-# Local minikube minio
-externalS3:
-  host: "seaweedfs-s3.tradebotsfarm.svc.cluster.local"
-  port: 8333
-  useCredentialsInSecret: true
-  existingSecret: "mlflow-s3"
-  existingSecretAccessKeyIDKey: "s3_access_key"
-  existingSecretKeySecretKey: "s3_secret_key"
-  protocol: "http"
-  bucket: "trade-bots-farm"
-  serveArtifacts: true
+# ---- Service ----
+service:
+  type: LoadBalancer
 
-# Cloud s3
-#externalS3:
-#  host: "storage.yandexcloud.net"
-#  port: 443
-#  useCredentialsInSecret: true
-#  existingSecret: "mlflow-s3"
-#  existingSecretAccessKeyIDKey: "access-key-id"
-#  existingSecretKeySecretKey: "access-key-secret"
-#  protocol: "https"
-#  bucket: "trade-bots-farm"
-#  serveArtifacts: true
-
+# ---- Ingress (optional, commented out for now) ----
 #ingress:
 #  enabled: true
+#  className: nginx
 #  annotations:
-#    kubernetes.io/ingress.class: nginx
 #    nginx.ingress.kubernetes.io/rewrite-target: /$1
 #  hosts:
 #    - host: "{{ .Values.global.trade-bots-farm_external_ip }}"
