@@ -10,6 +10,8 @@ master:
   ingress:
     enabled: true
     className: "nginx"
+    path: "/"
+    pathType: "Prefix"
 
 # Volume Server Configuration
 volume:
@@ -38,6 +40,8 @@ filer:
   ingress:
     enabled: true
     className: "nginx"
+    path: "/"
+    pathType: "Prefix"
   # S3 API configuration
   s3:
     enabled: true

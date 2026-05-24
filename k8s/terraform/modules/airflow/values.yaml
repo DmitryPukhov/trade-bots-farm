@@ -34,9 +34,9 @@ data:
     db: airflow
     sslmode: disable
 
-# Web UI Ingress
+# Web UI Ingress (Airflow 3.x uses apiServer ingress)
 ingress:
-  web:
+  apiServer:
     enabled: true
     ingressClassName: "nginx"
     hosts:
@@ -48,10 +48,6 @@ ingress:
 apiServer:
   service:
     type: ClusterIP
-    ports:
-      - name: airflow-ui
-        port: 8080
-        targetPort: 8080
 
 # Run database migrations via a Kubernetes Job (post-install/upgrade hook)
 migrateDatabaseJob:
