@@ -2,15 +2,16 @@ resource "helm_release" "airflow" {
   name       = "airflow"
   repository = "https://airflow.apache.org"
   chart      = "airflow"
-  version    = "1.7.0"
+  version    = "1.21.0"
   namespace  = var.namespace
   values = [
     file("${path.module}/values.yaml")
   ]
-  timeout = 1200
+  timeout = 600
   force_update = true
   cleanup_on_fail = true
   recreate_pods = true
+  wait = false
 
 }
 

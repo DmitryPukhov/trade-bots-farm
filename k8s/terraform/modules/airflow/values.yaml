@@ -1,11 +1,40 @@
-apiServer:
-  service:
-    type: ClusterIP
-    ports:
-      - name: airflow-ui
-        port: 8080
-        targetPort: 8080
+# Airflow version to deploy
+airflowVersion: "3.2.1"
 
+# Default Airflow tag to use
+defaultAirflowTag: "3.2.1"
+
+images:
+  airflow:
+    repository: apache/airflow
+    tag: "3.2.1"
+    pullPolicy: IfNotPresent
+
+# Airflow executor
+executor: "CeleryExecutor"
+
+# Airflow configuration
+config:
+  core:
+    load_examples: "False"
+    remote_logging: "True"
+    remote_base_log_folder: "s3://trade-bots-farm/airflow/logs/"
+    remote_dags: "s3://trade-bots-farm/airflow/dags/"
+    dags_folder: "/opt/airflow/dags"
+    donot_log_cli: "True"
+
+# Database connection - managed via chart's data section (creates secret automatically)
+data:
+  metadataConnection:
+    user: postgres
+    pass: postgres
+    protocol: postgresql
+    host: airflow-postgresql
+    port: 5432
+    db: airflow
+    sslmode: disable
+
+# Web UI Ingress
 ingress:
   web:
     enabled: true
@@ -15,34 +44,35 @@ ingress:
     path: "/"
     pathType: "ImplementationSpecific"
 
-images:
-  airflow:
-    tag: 3.2.1
-airflow:
-  # image:
-  #   repository: apache/airflow  # Official image
-  #   tag: 3.2.1  # Replace with your desired Airflow 3.x version (e.g., 3.0.0 once released)
-  #   pullPolicy: IfNotPresent
+# API Server configuration
+apiServer:
+  service:
+    type: ClusterIP
+    ports:
+      - name: airflow-ui
+        port: 8080
+        targetPort: 8080
 
-  # 2. Ensure correct executor setup
-  executor: "CeleryExecutor"  # Required for webserver
-
-  config:
-    AIRFLOW__CORE__REMOTE_LOGGING: "True"
-    AIRFLOW__CORE__REMOTE_BASE_LOG_FOLDER: "s3://trade-bots-farm/airflow/logs/"
-    AIRFLOW__CORE__REMOTE_DAGS: "s3://trade-bots-farm/airflow/dags/"
-    AIRFLOW__CORE__DAGS_FOLDER: "/opt/airflow/dags"
-    AIRFLOW__CORE__DONOT_LOG_CLI: "True"
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql://postgres:postgres@airflow-postgresql:5432/airflow"
-
+# Run database migrations via a Kubernetes Job (post-install/upgrade hook)
 migrateDatabaseJob:
   enabled: true
 
+# Wait for the migration job to complete before starting main containers
+# NOTE: Must be false on first install to avoid deadlock where init containers
+# wait for a post-install hook job that hasn't run yet. Set to true after
+# initial migrations are complete.
 waitForMigrations:
   enabled: false
 
+# Web server secret key from existing Kubernetes secret
 webserverSecretKeySecretName: "airflow"
 
+# Extra envFrom to inject secrets into all Airflow containers
+extraEnvFrom: |
+  - secretRef:
+      name: airflow
+
+# Additional volumes
 volumes:
   - name: airflow-dags
     persistentVolumeClaim:
@@ -57,24 +87,20 @@ volumes:
 volumeMounts:
   - mountPath: /opt/airflow/dags
     name: airflow-dags
-
   - mountPath: /opt/trade-bots-farm/environment
     name: environment
-
   - mountPath: /opt/trade-bots-farm/wheels
     name: wheels
 
-# Kubernetes executor secrets
-kubernetes:
-  envFromSecrets:
-    - "airflow"
-
 # PostgreSQL configuration
 postgresql:
+  enabled: true
   image:
     repository: postgres
     tag: "11"
     pullPolicy: IfNotPresent
-  postgresqlDatabase: "airflow"
-  postgresqlUsername: "postgres"
-  postgresqlPassword: "postgres"
+  auth:
+    enablePostgresUser: true
+    postgresPassword: postgres
+    username: postgres
+    password: postgres
