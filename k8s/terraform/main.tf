@@ -50,10 +50,10 @@ terraform {
 }
 
 module "secrets" {
-  source    = "./modules/secrets"
-  namespace = var.namespace
+  source        = "./modules/secrets"
+  namespace     = var.namespace
   secret_values = var.secret_values
-  count     = var.enable_secrets ? 1 : 0
+  count         = var.enable_secrets ? 1 : 0
 
   depends_on = [
     kubernetes_namespace.current
@@ -66,8 +66,12 @@ terraform {
 }
 
 locals {
-  seaweedfs_s3_access_key = try(var.secret_values["seaweedfs-s3-credentials"]["s3_access_key"], var.seaweedfs_s3_access_key)
-  seaweedfs_s3_secret_key = try(var.secret_values["seaweedfs-s3-credentials"]["s3_secret_key"], var.seaweedfs_s3_secret_key)
+  # Read S3 credentials from the seaweedfs-s3-credentials.yaml secret file
+  # This ensures the YAML-stored keys are passed to Helm's --set s3.credentials.admin.*
+  # and to the IAM config job, instead of falling back to the default "minioadmin".
+  seaweedfs_s3_secret_raw = yamldecode(file("${path.module}/secrets/seaweedfs-s3-credentials.yaml"))
+  seaweedfs_s3_access_key = try(local.seaweedfs_s3_secret_raw.stringData.access_key, var.seaweedfs_s3_access_key)
+  seaweedfs_s3_secret_key = try(local.seaweedfs_s3_secret_raw.stringData.secret_key, var.seaweedfs_s3_secret_key)
 }
 
 module "seaweedfs" {
@@ -77,23 +81,23 @@ module "seaweedfs" {
 
   ingress_enabled = var.seaweedfs_ingress_enabled
   ingress_host    = var.seaweedfs_ingress_host
-  
+
   s3_ingress_host     = var.seaweedfs_s3_ingress_host
   filer_ingress_host  = var.seaweedfs_filer_ingress_host
   master_ingress_host = var.seaweedfs_master_ingress_host
 
-  webui_auth_enabled           = var.seaweedfs_webui_auth_enabled
-  webui_auth_username          = var.seaweedfs_webui_auth_username
-  webui_auth_password          = var.seaweedfs_webui_auth_password
-  webui_auth_secret_name       = var.seaweedfs_webui_auth_secret_name
-  webui_auth_secret_namespace  = var.seaweedfs_webui_auth_secret_namespace
-  create_webui_auth_secret     = var.seaweedfs_create_webui_auth_secret
+  webui_auth_enabled          = var.seaweedfs_webui_auth_enabled
+  webui_auth_username         = var.seaweedfs_webui_auth_username
+  webui_auth_password         = var.seaweedfs_webui_auth_password
+  webui_auth_secret_name      = var.seaweedfs_webui_auth_secret_name
+  webui_auth_secret_namespace = var.seaweedfs_webui_auth_secret_namespace
+  create_webui_auth_secret    = var.seaweedfs_create_webui_auth_secret
 
-  s3_access_key = local.seaweedfs_s3_access_key
-  s3_secret_key = local.seaweedfs_s3_secret_key
-  s3_credentials_secret_name = var.seaweedfs_s3_credentials_secret_name
+  s3_access_key                = local.seaweedfs_s3_access_key
+  s3_secret_key                = local.seaweedfs_s3_secret_key
+  s3_credentials_secret_name   = var.seaweedfs_s3_credentials_secret_name
   create_s3_credentials_secret = var.seaweedfs_create_s3_credentials_secret
-  configure_iam_credentials = true
+  configure_iam_credentials    = false
 
   depends_on = [
     module.secrets
