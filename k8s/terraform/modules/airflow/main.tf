@@ -12,6 +12,8 @@ resource "helm_release" "airflow" {
   cleanup_on_fail = true
   recreate_pods = true
 
+  # Wait for migrations job to complete before considering release successful
+  wait = true
 }
 
 resource "kubernetes_job" "airflow_migrations" {
@@ -23,6 +25,11 @@ resource "kubernetes_job" "airflow_migrations" {
     template {
       metadata {}
       spec {
+        init_container {
+          name    = "wait-for-postgres"
+          image   = "postgres:11"
+          command = ["sh", "-c", "until pg_isready -h airflow-postgresql -p 5432; do echo 'Waiting for PostgreSQL...'; sleep 2; done"]
+        }
         container {
           name    = "migrate"
           image   = "apache/airflow:3.2.1"
@@ -32,22 +39,8 @@ resource "kubernetes_job" "airflow_migrations" {
             value = "postgresql://postgres:postgres@airflow-postgresql:5432/airflow"
           }
           env {
-            name  = "AIRFLOW__CORE__FERNET_KEY"
-            value_from {
-              secret_key_ref {
-                name = "airflow-fernet-key"
-                key  = "fernet-key"
-              }
-            }
-          }
-          env {
-            name  = "AIRFLOW__WEBSERVER__SECRET_KEY"
-            value_from {
-              secret_key_ref {
-                name = "airflow"
-                key  = "webserver-secret-key"
-              }
-            }
+            name  = "AIRFLOW__CORE__DONOT_LOG_CLI"
+            value = "True"
           }
         }
         restart_policy = "Never"
@@ -55,12 +48,10 @@ resource "kubernetes_job" "airflow_migrations" {
     }
     backoff_limit = 4
   }
-  depends_on = [
-    module.pvc_airflow_dags,
-    module.pvc_environment,
-    module.pvc_wheels
-  ]
+  
+  depends_on = [helm_release.airflow]
 }
+
 
 module "pvc_airflow_dags" {
   source    = "../pvc"
@@ -114,4 +105,5 @@ EOT
     namespace = var.namespace
   }
 }
+
 

@@ -15,6 +15,9 @@ ingress:
     path: "/"
     pathType: "ImplementationSpecific"
 
+images:
+  airflow:
+    tag: 3.2.1
 airflow:
   image:
     repository: apache/airflow  # Official image
@@ -29,9 +32,13 @@ airflow:
     AIRFLOW__CORE__REMOTE_BASE_LOG_FOLDER: "s3://trade-bots-farm/airflow/logs/"
     AIRFLOW__CORE__REMOTE_DAGS: "s3://trade-bots-farm/airflow/dags/"
     AIRFLOW__CORE__DAGS_FOLDER: "/opt/airflow/dags"
+    AIRFLOW__CORE__DONOT_LOG_CLI: "True"
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql://postgres:postgres@airflow-postgresql:5432/airflow"
 
 migrateDatabaseJob:
+  enabled: true
+
+waitForMigrations:
   enabled: false
 
 webserverSecretKeySecretName: "airflow"
