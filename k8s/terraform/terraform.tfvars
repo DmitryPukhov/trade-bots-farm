@@ -1,6 +1,6 @@
 namespace            = "trade-bots-farm"
 enable_seaweedfs     = true
-enable_mlflow        = false
+enable_mlflow        = true
 enable_prometheus    = false
 enable_grafana       = false
 enable_kafka         = false
