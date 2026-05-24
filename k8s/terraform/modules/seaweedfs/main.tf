@@ -155,13 +155,14 @@ resource "kubernetes_job" "create_default_bucket" {
       spec {
         container {
           name    = "awscli"
-          image   = "bitnami/aws-cli:latest"
+          image   = "amazon/aws-cli:2.34.53"
           command = ["/bin/sh", "-c"]
           args = [
             <<-EOT
               # Wait for S3 service to be reachable
-              until curl -f -s http://seaweedfs-s3.${var.namespace}.svc.cluster.local:${var.s3_port}/ > /dev/null 2>&1; do
-                echo "Waiting for SeaweedFS S3 API..."
+              echo "Waiting for SeaweedFS S3 API at seaweedfs-s3.${var.namespace}.svc.cluster.local:${var.s3_port}..."
+              until aws --endpoint-url http://seaweedfs-s3.${var.namespace}.svc.cluster.local:${var.s3_port} s3 ls 2>/dev/null; do
+                echo "Still waiting for SeaweedFS S3 API..."
                 sleep 5
               done
               # Create bucket if it doesn't exist
