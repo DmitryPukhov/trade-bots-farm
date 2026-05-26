@@ -59,10 +59,46 @@ variable "enable_kafka" {
   default     = true
 }
 
+variable "kafka_ingress_enabled" {
+  description = "Enable Ingress for external Kafka listener instead of NodePort"
+  type        = bool
+  default     = false
+}
+
+variable "kafka_ingress_host" {
+  description = "Hostname for the Kafka external bootstrap Ingress"
+  type        = string
+  default     = "kafka.tradebotsfarm.svc.cluster.local"
+}
+
+variable "kafka_ingress_class" {
+  description = "Ingress class for the Kafka external listener"
+  type        = string
+  default     = "nginx"
+}
+
 variable "enable_kafka_ui" {
   description = "Enable Kafka UI deployment"
   type        = bool
   default     = true
+}
+
+variable "kafka_ui_ingress_enabled" {
+  description = "Enable Ingress for Kafka UI"
+  type        = bool
+  default     = false
+}
+
+variable "kafka_ui_ingress_host" {
+  description = "Hostname for the Kafka UI Ingress"
+  type        = string
+  default     = "kafka-ui.tradebotsfarm.svc.cluster.local"
+}
+
+variable "kafka_ui_ingress_class" {
+  description = "Ingress class for Kafka UI (e.g., nginx)"
+  type        = string
+  default     = "nginx"
 }
 
 variable "enable_kafka_connect" {

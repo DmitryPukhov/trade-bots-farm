@@ -23,3 +23,11 @@ seaweedfs_create_s3_credentials_secret = false
 mlflow_ingress_enabled = true
 mlflow_ingress_host    = "mlflow.tradebotsfarm.svc.cluster.local"
 mlflow_ingress_class   = "nginx"
+
+kafka_ingress_enabled  = true
+kafka_ingress_host     = "kafka.tradebotsfarm.svc.cluster.local"
+kafka_ingress_class    = "nginx"
+
+kafka_ui_ingress_enabled = true
+kafka_ui_ingress_host    = "kafka-ui.tradebotsfarm.svc.cluster.local"
+kafka_ui_ingress_class   = "nginx"

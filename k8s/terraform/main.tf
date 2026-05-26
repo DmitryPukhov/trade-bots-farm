@@ -163,6 +163,10 @@ module "kafka" {
   namespace = var.namespace
   count     = var.enable_kafka ? 1 : 0
 
+  ingress_enabled = var.kafka_ingress_enabled
+  ingress_host    = var.kafka_ingress_host
+  ingress_class   = var.kafka_ingress_class
+
   depends_on = [
     module.grafana
   ]
@@ -177,6 +181,10 @@ module "kafka_ui" {
   source    = "./modules/kafka-ui"
   namespace = var.namespace
   count     = var.enable_kafka_ui ? 1 : 0
+
+  ingress_enabled = var.kafka_ui_ingress_enabled
+  ingress_host    = var.kafka_ui_ingress_host
+  ingress_class   = var.kafka_ui_ingress_class
 
   depends_on = [
     module.kafka

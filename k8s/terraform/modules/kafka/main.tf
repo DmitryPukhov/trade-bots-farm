@@ -159,6 +159,14 @@ EOT
   ]
 }
 
+locals {
+  # Build the external listener YAML snippet based on whether ingress is enabled
+  # Indentation: 6 spaces for the list marker "- ", 8 spaces for properties under it
+  # Note: HCL doesn't support + for string concatenation, so we use \n escapes in single strings
+  # Ingress type listener requires tls: true and per-broker host configuration
+  external_listener = var.ingress_enabled ? "      - name: external\n        port: 9094\n        type: ingress\n        tls: true\n        configuration:\n          bootstrap:\n            host: ${var.ingress_host}\n          brokers:\n            - broker: 0\n              host: broker-0.${var.ingress_host}\n          class: ${var.ingress_class}\n" : "      - name: external\n        port: 9094\n        type: nodeport\n        tls: false\n        configuration:\n          bootstrap:\n            nodePort: 31094\n"
+}
+
 resource "null_resource" "kafka_cluster_config" {
   count = var.enabled ? 1 : 0
 
@@ -174,8 +182,8 @@ metadata:
     strimzi.io/kraft: enabled
 spec:
   kafka:
-    version: 4.0.0
-    metadataVersion: 4.0-IV3
+    version: 4.1.0
+    metadataVersion: 4.1-IV1
     listeners:
       - name: plain
         port: 9092
@@ -185,13 +193,7 @@ spec:
         port: 9093
         type: internal
         tls: true
-      - name: external
-        port: 9094
-        type: nodeport
-        tls: false
-        configuration:
-          bootstrap:
-            nodePort: 31094
+${local.external_listener}
     config:
       offsets.topic.replication.factor: 1
       transaction.state.log.replication.factor: 1
@@ -207,7 +209,8 @@ EOT
 set -e
 echo '⏳ Applying Kafka cluster config...'
 for i in $(seq 1 10); do
-  if echo "
+  # Write YAML to a temp file to avoid shell quoting issues with multi-line strings
+  cat > /tmp/kafka-cluster-config.yaml << 'YAML'
 apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
@@ -218,8 +221,8 @@ metadata:
     strimzi.io/kraft: enabled
 spec:
   kafka:
-    version: 4.0.0
-    metadataVersion: 4.0-IV3
+    version: 4.1.0
+    metadataVersion: 4.1-IV1
     listeners:
       - name: plain
         port: 9092
@@ -229,24 +232,20 @@ spec:
         port: 9093
         type: internal
         tls: true
-      - name: external
-        port: 9094
-        type: nodeport
-        tls: false
-        configuration:
-          bootstrap:
-            nodePort: 31094
+${local.external_listener}
     config:
       offsets.topic.replication.factor: 1
       transaction.state.log.replication.factor: 1
       transaction.state.log.min.isr: 1
       default.replication.factor: 1
       min.insync.replicas: 1
-" | kubectl apply -f - 2>/dev/null; then
+YAML
+  output=$(kubectl apply -f /tmp/kafka-cluster-config.yaml 2>&1) && {
     echo '✅ Kafka cluster config applied!'
+    rm -f /tmp/kafka-cluster-config.yaml
     exit 0
-  fi
-  echo "  attempt $i/10 - API not ready yet, waiting 5s..."
+  }
+  echo "  attempt $i/10 - kubectl error: $output"
   sleep 5
 done
 echo '❌ Failed to apply Kafka cluster config after 10 attempts'
