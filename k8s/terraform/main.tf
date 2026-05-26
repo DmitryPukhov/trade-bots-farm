@@ -187,7 +187,8 @@ module "kafka_ui" {
   ingress_class   = var.kafka_ui_ingress_class
 
   depends_on = [
-    module.kafka
+    module.kafka,
+    module.secrets
   ]
 }
 

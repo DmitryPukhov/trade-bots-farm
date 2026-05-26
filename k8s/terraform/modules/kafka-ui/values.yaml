@@ -4,11 +4,15 @@ yamlApplicationConfig:
       - name: trade-bots-farm
         bootstrapServers:  trade-bots-farm-kafka-bootstrap:9092
   auth:
-    type: disabled
+    type: LOGIN_FORM
   management:
     health:
       ldap:
         enabled: false
+
+# Mount the kafka-ui Kubernetes secret as env vars via envFrom
+existingSecret: kafka-ui
+
 # Add these service configurations
 service:
   type: NodePort
