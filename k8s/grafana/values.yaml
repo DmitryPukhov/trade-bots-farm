@@ -1,8 +1,0 @@
-admin:
-  user: "trade-bots-farm"
-  existingSecret: "grafana"
-  existingSecretPasswordKey: password
-service:
-  type: NodePort
-  nodePorts:
-    grafana: 31300
