@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.6"]
+build-backend = "uv_build"
 
 [project]
 name = "trade-bots-farm-common"
@@ -29,8 +29,5 @@ dev = [
     "prometheus-client",
 ]
 
-[tool.hatch.build.targets.wheel]
-packages = []
-
-[tool.hatch.build.targets.wheel.force-include]
-"src" = "."
+[tool.uv.build-backend]
+module-root = "src"
