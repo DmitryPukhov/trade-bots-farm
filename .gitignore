@@ -16,7 +16,7 @@ data/
 secret/
 k8s/terraform/secrets/
 k8s/terraform/environments/*.secrets.tfvars
-
+*.lock
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
