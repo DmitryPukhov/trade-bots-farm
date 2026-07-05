@@ -1,3 +1,7 @@
+[build-system]
+requires = ["uv_build>=0.6"]
+build-backend = "uv_build"
+
 [project]
 name = "trade-bots-farm-process-stream-htx-staging"
 version = "0.1.0"
@@ -5,7 +9,6 @@ description = "Aggregate raw htx level2, bid ask, candles and convert to common 
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    #"google-re2==0.0.0",  # exclude google providers with their errors
     "pytrade2",
     "trade-bots-farm-common",
     "python-dotenv",
@@ -19,15 +22,29 @@ dependencies = [
     "numpy",
     "sqlalchemy",
     "prometheus-client",
-    "confluent-kafka"
-    ]
+    "confluent-kafka",
+]
+
+[tool.uv.sources]
+pytrade2 = { workspace = true }
+trade-bots-farm-common = { workspace = true }
 
 [project.optional-dependencies]
 test = [
     "pytest",
-    "pytest-asyncio",  # For async test support
-    "pytest-cov",       # Test coverage
-    "pytest-mock",      # Better mocking
-    "httpx",           # For async HTTP tests (if needed)
-    "asynctest"        # Legacy support (if needed)
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-mock",
+    "httpx",
+    "asynctest",
+]
+
+[dependency-groups]
+test = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-mock",
+    "httpx",
+    "asynctest",
 ]

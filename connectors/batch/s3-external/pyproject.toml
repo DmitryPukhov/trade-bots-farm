@@ -1,10 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "trade-bots-farm-connector-batch-s3-external"
 version = "0.1.0"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 description = "Download new data from cloud s3 to on prem minio"
 readme = "README.md"
 requires-python = ">=3.12"
-
 dependencies = [
     "trade-bots-farm-common",
     "pandas",
@@ -14,5 +20,8 @@ dependencies = [
     "numpy",
     "sqlalchemy",
     "prometheus-client",
-    "s3fs"
-    ]
+    "s3fs",
+]
+
+[tool.uv.sources]
+trade-bots-farm-common = { workspace = true }

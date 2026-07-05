@@ -1,7 +1,6 @@
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
+requires = ["uv_build>=0.6"]
+build-backend = "uv_build"
 
 [project]
 name = "trade-bots-farm-process-batch-staging-alor"
@@ -18,5 +17,8 @@ dependencies = [
     "pandas",
     "numpy",
     "prometheus-client",
-    ]
+]
 
+[tool.uv.sources]
+pytrade2 = { workspace = true }
+trade-bots-farm-common = { workspace = true }

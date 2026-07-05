@@ -1,3 +1,7 @@
+[build-system]
+requires = ["uv_build>=0.6"]
+build-backend = "uv_build"
+
 [project]
 name = "trade-bots-farm-process-batch-staging-s3-external"
 version = "0.1.0"
@@ -5,7 +9,6 @@ description = "Aggregate raw data from external s3 system by 1min"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    #"google-re2==0.0.0",  # exclude google providers with their errors
     "pytrade2",
     "trade-bots-farm-common",
     "botocore~=1.37",
@@ -19,6 +22,9 @@ dependencies = [
     "numpy",
     "sqlalchemy",
     "prometheus-client",
-    "confluent-kafka"
-    ]
+    "confluent-kafka",
+]
 
+[tool.uv.sources]
+pytrade2 = { workspace = true }
+trade-bots-farm-common = { workspace = true }

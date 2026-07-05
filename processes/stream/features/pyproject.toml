@@ -1,3 +1,7 @@
+[build-system]
+requires = ["uv_build>=0.6"]
+build-backend = "uv_build"
+
 [project]
 name = "trade-bots-farm-process-stream-features"
 version = "0.1.0"
@@ -18,18 +22,33 @@ dependencies = [
     "numpy",
     "sqlalchemy",
     "prometheus-client",
-    "aiokafka"
-    ]
+    "aiokafka",
+]
+
+[tool.uv.sources]
+pytrade2 = { workspace = true }
+trade-bots-farm-common = { workspace = true }
 
 [project.optional-dependencies]
 test = [
     "pytest",
-    "pytest-asyncio",  # For async test support
-    "pytest-cov",       # Test coverage
-    "pytest-mock",      # Better mocking
-    "httpx",           # For async HTTP tests (if needed)
-    "asynctest"        # Legacy support (if needed)
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-mock",
+    "httpx",
+    "asynctest",
 ]
+
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "DEBUG"
+
+[dependency-groups]
+test = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-mock",
+    "httpx",
+    "asynctest",
+]

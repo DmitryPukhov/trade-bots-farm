@@ -1,10 +1,13 @@
+[build-system]
+requires = ["uv_build>=0.6"]
+build-backend = "uv_build"
+
 [project]
 name = "trade-bots-farm-connector-stream-htx"
 version = "0.1.0"
 description = "Injest streaming data from htx websocket"
 readme = "README.md"
 requires-python = ">=3.12"
-
 dependencies = [
     "trade-bots-farm-common",
     "pandas",
@@ -16,5 +19,7 @@ dependencies = [
     "prometheus-client",
     "websockets",
     "confluent-kafka",
-    "prometheus-client"
-    ]
+]
+
+[tool.uv.sources]
+trade-bots-farm-common = { workspace = true }
