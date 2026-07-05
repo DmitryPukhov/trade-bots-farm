@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 from datetime import datetime
-from alor_kafka_raw_producer import AlorKafkaRawProducer
+from trade_bots_farm_connector_stream_alor.alor_kafka_raw_producer import AlorKafkaRawProducer
 
 
 class TestAlorKafkaRawProducer:

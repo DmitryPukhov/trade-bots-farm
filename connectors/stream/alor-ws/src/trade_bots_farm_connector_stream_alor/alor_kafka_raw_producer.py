@@ -6,7 +6,7 @@ from datetime import timezone, datetime
 
 from confluent_kafka import Producer
 
-from connector_stream_alor_metrics import ConnectorStreamAlorMetrics
+from trade_bots_farm_connector_stream_alor.connector_stream_alor_metrics import ConnectorStreamAlorMetrics
 
 
 class AlorKafkaRawProducer:

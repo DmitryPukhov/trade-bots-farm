@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from alor_ws_client import AlorWsClient
+from trade_bots_farm_connector_stream_alor.alor_ws_client import AlorWsClient
 
 
 class TestAlorWsClient:

@@ -10,7 +10,7 @@ from typing import Optional
 import requests
 from websockets import connect, exceptions, ClientConnection
 
-from alor_ws_request import AlorWsRequest
+from trade_bots_farm_connector_stream_alor.alor_ws_request import AlorWsRequest
 
 
 class AlorWsClient:

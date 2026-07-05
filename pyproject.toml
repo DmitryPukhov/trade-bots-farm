@@ -1,0 +1,32 @@
+[project]
+name = "trade-bots-farm"
+version = "0.1.0"
+description = "Trade bots farm monorepo"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "common",
+    "connectors/batch/s3-external",
+    "connectors/stream/alor-ws",
+    "connectors/stream/htx-ws",
+    "processes/batch/full",
+    "processes/batch/staging/alor",
+    "processes/batch/staging/s3-external",
+    "processes/common",
+    "processes/stream/features",
+    "processes/stream/full",
+    "processes/stream/staging/htx",
+    "libs/pytrade2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+

@@ -2,7 +2,7 @@ import json
 import uuid
 
 import pytest
-from alor_ws_request import AlorWsRequest
+from trade_bots_farm_connector_stream_alor.alor_ws_request import AlorWsRequest
 
 class TestAlorWsRequest:
     @pytest.mark.asyncio

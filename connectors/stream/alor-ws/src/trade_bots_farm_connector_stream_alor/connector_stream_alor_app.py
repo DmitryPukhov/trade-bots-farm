@@ -1,10 +1,10 @@
 import asyncio
 import os
 
-from alor_ws_client import AlorWsClient
-from common_tools import CommonTools
-from alor_kafka_raw_producer import AlorKafkaRawProducer
-from connector_stream_alor_metrics import ConnectorStreamAlorMetrics
+from trade_bots_farm_connector_stream_alor.alor_ws_client import AlorWsClient
+from trade_bots_farm_common.common_tools import CommonTools
+from trade_bots_farm_connector_stream_alor.alor_kafka_raw_producer import AlorKafkaRawProducer
+from trade_bots_farm_connector_stream_alor.connector_stream_alor_metrics import ConnectorStreamAlorMetrics
 
 
 class ConnectorStreamAlorApp:

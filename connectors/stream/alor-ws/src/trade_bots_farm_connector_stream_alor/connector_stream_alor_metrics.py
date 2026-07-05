@@ -1,6 +1,6 @@
 from prometheus_client import Counter, Gauge
 
-from metrics_base import MetricsBase
+from trade_bots_farm_common.metrics_base import MetricsBase
 
 
 class ConnectorStreamAlorMetrics(MetricsBase):

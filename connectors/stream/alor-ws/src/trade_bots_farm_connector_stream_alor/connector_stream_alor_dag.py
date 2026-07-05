@@ -2,7 +2,7 @@ from datetime import datetime
 
 from airflow import DAG
 
-from dag_tools import tbf_task_operator
+from trade_bots_farm_common.dag_tools import tbf_task_operator
 
 # Define the DAG
 with (DAG(
