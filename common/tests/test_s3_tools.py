@@ -1,6 +1,7 @@
 from datetime import date
 
-from s3_tools import S3Tools
+from trade_bots_farm_common.s3_tools import S3Tools
+
 
 class TestS3Tools:
 

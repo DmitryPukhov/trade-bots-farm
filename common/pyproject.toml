@@ -23,6 +23,8 @@ dev = [
 [dependency-groups]
 dev = [
     "apache-airflow",
+    "pytest",
+    "pandas",
     "apache-airflow-providers-standard",
     "s3fs",
     "botocore~=1.37",
