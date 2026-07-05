@@ -1,12 +1,11 @@
 [build-system]
-requires = ["uv_build>=0.6"]
-build-backend = "uv_build"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "trade-bots-farm-common"
 version = "0.1.0"
 description = "Trade bots farm common tools and libraries"
-readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "pyyaml",
@@ -29,3 +28,9 @@ dev = [
     "botocore~=1.37",
     "prometheus-client",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = []
+
+[tool.hatch.build.targets.wheel.force-include]
+"src" = "."

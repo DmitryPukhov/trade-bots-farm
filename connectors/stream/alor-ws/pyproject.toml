@@ -16,5 +16,8 @@ dependencies = [
     "prometheus-client",
 ]
 
+#[tool.uv.build-backend]
+#module-root = ""
+
 [tool.uv.sources]
 trade-bots-farm-common = { workspace = true }
