@@ -160,11 +160,11 @@ EOT
 }
 
 locals {
-  # Build the external listener YAML snippet based on whether ingress is enabled
+  # External listener: plaintext nodeport on fixed port 31094.
+  # Works on any Kubernetes cluster (no cloud/ingress-controller dependencies).
+  # External clients point DNS at any cluster node IP and connect on port 31094.
   # Indentation: 6 spaces for the list marker "- ", 8 spaces for properties under it
-  # Note: HCL doesn't support + for string concatenation, so we use \n escapes in single strings
-  # Ingress type listener requires tls: true and per-broker host configuration
-  external_listener = var.ingress_enabled ? "      - name: external\n        port: 9094\n        type: ingress\n        tls: true\n        configuration:\n          bootstrap:\n            host: ${var.ingress_host}\n          brokers:\n            - broker: 0\n              host: broker-0.${var.ingress_host}\n          class: ${var.ingress_class}\n" : "      - name: external\n        port: 9094\n        type: nodeport\n        tls: false\n        configuration:\n          bootstrap:\n            nodePort: 31094\n"
+  external_listener = "      - name: external\n        port: 9094\n        type: nodeport\n        tls: false\n        configuration:\n          bootstrap:\n            nodePort: 31094\n"
 }
 
 resource "null_resource" "kafka_cluster_config" {

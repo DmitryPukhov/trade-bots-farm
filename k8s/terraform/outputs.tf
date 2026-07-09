@@ -35,7 +35,13 @@ output "grafana_url" {
 
 output "kafka_bootstrap_servers" {
   value       = length(module.kafka) > 0 ? module.kafka[0].bootstrap_servers : ""
-  description = "Kafka bootstrap servers"
+  description = "Kafka bootstrap servers (internal, plaintext)"
+  depends_on  = [module.kafka]
+}
+
+output "kafka_external_bootstrap_servers" {
+  value       = length(module.kafka) > 0 ? module.kafka[0].external_bootstrap_servers : ""
+  description = "Kafka bootstrap servers for external clients (ingress:443 or nodeport:9094)"
   depends_on  = [module.kafka]
 }
 
