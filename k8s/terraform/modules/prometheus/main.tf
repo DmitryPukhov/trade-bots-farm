@@ -1,6 +1,6 @@
 resource "helm_release" "prometheus" {
   name       = "prometheus"
-  repository = "https://charts.bitnami.com/bitnami"
+  repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "prometheus"
   version    = "27.1.0"
   namespace  = var.namespace
@@ -17,7 +17,7 @@ resource "helm_release" "prometheus_pushgateway" {
   name       = "prometheus-pushgateway"
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "prometheus-pushgateway"
-  version    = "2.9.1"
+  version    = "3.6.0"
   namespace  = var.namespace
   values = [
     file("${path.module}/prometheus-pushgateway.values.yaml")
