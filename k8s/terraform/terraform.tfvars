@@ -24,6 +24,10 @@ mlflow_ingress_enabled = true
 mlflow_ingress_host    = "mlflow.tradebotsfarm.svc.cluster.local"
 mlflow_ingress_class   = "nginx"
 
+prometheus_ingress_enabled = true
+prometheus_ingress_host    = "prometheus.tradebotsfarm.svc.cluster.local"
+prometheus_ingress_class   = "nginx"
+
 kafka_ingress_enabled  = true
 kafka_ingress_host     = "kafka.tradebotsfarm.svc.cluster.local"
 kafka_ingress_class    = "nginx"

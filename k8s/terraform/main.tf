@@ -133,6 +133,10 @@ module "prometheus" {
   namespace = var.namespace
   count     = var.enable_prometheus ? 1 : 0
 
+  ingress_enabled = var.prometheus_ingress_enabled
+  ingress_host    = var.prometheus_ingress_host
+  ingress_class   = var.prometheus_ingress_class
+
   depends_on = [
     module.mlflow
   ]

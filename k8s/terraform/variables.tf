@@ -47,6 +47,24 @@ variable "enable_prometheus" {
   default     = true
 }
 
+variable "prometheus_ingress_enabled" {
+  description = "Enable Ingress for Prometheus"
+  type        = bool
+  default     = false
+}
+
+variable "prometheus_ingress_host" {
+  description = "Hostname for Prometheus Ingress"
+  type        = string
+  default     = "prometheus.tradebotsfarm.svc.cluster.local"
+}
+
+variable "prometheus_ingress_class" {
+  description = "Ingress class for Prometheus (e.g., nginx)"
+  type        = string
+  default     = "nginx"
+}
+
 variable "enable_grafana" {
   description = "Enable Grafana deployment"
   type        = bool
