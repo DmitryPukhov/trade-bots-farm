@@ -1,3 +1,4 @@
+print("connector_stream_alor dag is loading")
 from datetime import datetime
 
 from airflow import DAG

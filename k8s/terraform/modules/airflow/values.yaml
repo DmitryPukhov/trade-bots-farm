@@ -17,9 +17,9 @@ executor: "CeleryExecutor"
 config:
   core:
     load_examples: "False"
-    remote_logging: "True"
-    remote_base_log_folder: "s3://trade-bots-farm/airflow/logs/"
-    remote_dags: "s3://trade-bots-farm/airflow/dags/"
+#    remote_logging: "True"
+#    remote_base_log_folder: "s3://trade-bots-farm/airflow/logs/"
+#    remote_dags: "s3://trade-bots-farm/airflow/dags/"
     dags_folder: "/opt/airflow/dags"
     donot_log_cli: "True"
 
