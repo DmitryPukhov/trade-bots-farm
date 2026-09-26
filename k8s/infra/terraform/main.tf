@@ -201,16 +201,6 @@ terraform {
   required_version = ">= 1.0"
 }
 
-module "kafka_connect" {
-  source          = "./modules/kafka-connect"
-  namespace       = var.namespace
-  docker_registry = var.docker_registry
-  count           = var.enable_kafka_connect ? 1 : 0
-
-  depends_on = [
-    module.kafka_ui
-  ]
-}
 
 # Module for Airflow
 terraform {
@@ -222,9 +212,6 @@ module "airflow" {
   namespace = var.namespace
   count     = var.enable_airflow ? 1 : 0
 
-  depends_on = [
-    module.kafka_connect
-  ]
 }
 
 # Module for Registry

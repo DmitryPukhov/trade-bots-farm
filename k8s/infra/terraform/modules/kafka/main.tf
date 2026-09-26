@@ -32,8 +32,8 @@ resource "null_resource" "install_strimzi" {
   triggers = {
     command_sha256 = sha256(<<-EOT
 set -e
-echo '🚀 Installing/updating Strimzi operator...'
-kubectl apply -f https://strimzi.io/install/latest?namespace=${var.namespace} -n ${var.namespace}
+echo '🚀 Installing/updating Strimzi operator 1.2.0...'
+curl -sL https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-cluster-operator-1.2.0.yaml | sed "s/namespace: myproject/namespace: ${var.namespace}/g" | kubectl apply -f - -n ${var.namespace}
 echo '⏳ Waiting for Strimzi CRDs to be established...'
 kubectl wait --for=condition=Established crd -l app=strimzi --timeout=120s
 echo '⏳ Waiting for kafka.strimzi.io API to be available...'
@@ -46,7 +46,7 @@ for i in $(seq 1 30); do
   sleep 2
 done
 kubectl api-resources --api-group=kafka.strimzi.io
-echo '✅ Strimzi installation complete!'
+echo '✅ Strimzi 1.2.0 installation complete!'
 EOT
     )
   }
@@ -54,8 +54,8 @@ EOT
   provisioner "local-exec" {
     command = <<EOT
 set -e
-echo '🚀 Installing/updating Strimzi operator...'
-kubectl apply -f https://strimzi.io/install/latest?namespace=${var.namespace} -n ${var.namespace}
+echo '🚀 Installing/updating Strimzi operator 1.2.0...'
+curl -sL https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-cluster-operator-1.2.0.yaml | sed "s/namespace: myproject/namespace: ${var.namespace}/g" | kubectl apply -f - -n ${var.namespace}
 echo '⏳ Waiting for Strimzi CRDs to be established...'
 kubectl wait --for=condition=Established crd -l app=strimzi --timeout=120s
 echo '⏳ Waiting for kafka.strimzi.io API to be available...'
@@ -68,7 +68,7 @@ for i in $(seq 1 30); do
   sleep 2
 done
 kubectl api-resources --api-group=kafka.strimzi.io
-echo '✅ Strimzi installation complete!'
+echo '✅ Strimzi 1.2.0 installation complete!'
 EOT
   }
 
@@ -182,8 +182,8 @@ metadata:
     strimzi.io/kraft: enabled
 spec:
   kafka:
-    version: 4.1.0
-    metadataVersion: 4.1-IV1
+    version: 4.3.1
+    metadataVersion: 4.3-IV1
     listeners:
       - name: plain
         port: 9092
@@ -221,8 +221,8 @@ metadata:
     strimzi.io/kraft: enabled
 spec:
   kafka:
-    version: 4.1.0
-    metadataVersion: 4.1-IV1
+    version: 4.3.1
+    metadataVersion: 4.3-IV1
     listeners:
       - name: plain
         port: 9092

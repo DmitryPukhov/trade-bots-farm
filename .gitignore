@@ -14,8 +14,9 @@ terraform.tfstate
 .env.**
 data/
 secret/
-k8s/terraform/secrets/
-k8s/terraform/environments/*.secrets.tfvars
+k8s/infra/terraform/secrets/
+k8s/infra/terraform/environments/*.secrets.tfvars
+
 *.lock
 # Byte-compiled / optimized / DLL files
 __pycache__/
