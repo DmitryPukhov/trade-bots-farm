@@ -11,7 +11,7 @@ spec:
 
     topics.dir: data/raw/htx
 
-    rotate.interval.ms: 300000          # Rotate (commit & close) file every 60s
+    rotate.interval.ms: 60000          # Rotate (commit & close) file every 60s
     flush.size: 2147483647              # Max records per file (effectively disabled; rotation is time-based)
 
     s3.bucket.name: trade-bots-farm

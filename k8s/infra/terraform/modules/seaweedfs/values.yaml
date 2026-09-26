@@ -24,12 +24,12 @@ volume:
     enabled: true
     className: "nginx"
 
-  
-  # Persistence
-  persistence:
-    enabled: true
-    storageClass: "standard"
-    size: "10Gi"
+  # Use existing PVC created by terraform
+  dataDirs:
+    - name: data1
+      type: "existingClaim"
+      claimName: "seaweedfs-volume-data"
+      maxVolumes: 0
 
 # Filer Configuration
 filer:

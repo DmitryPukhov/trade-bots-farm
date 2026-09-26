@@ -7,6 +7,7 @@ locals {
     volume_replicas              = var.volume_replicas
     s3_port                      = var.s3_port
     volume_size                  = var.volume_size
+    volume_pvc_name              = var.volume_pvc_name
     storage_class                = var.storage_class
     values_hash                  = local.values_hash
     s3_host                      = local.s3_host
@@ -82,6 +83,15 @@ resource "null_resource" "add_helm_repo" {
   }
 }
 
+# Create PVC for volume server data
+module "volume_pvc" {
+  source        = "../pvc"
+  name          = var.volume_pvc_name
+  namespace     = var.namespace
+  size          = var.volume_size
+  storage_class = var.storage_class
+}
+
 # Install SeaweedFS using local-exec and helm CLI
 resource "null_resource" "install_seaweedfs" {
   count = var.enabled ? 1 : 0
@@ -100,8 +110,6 @@ resource "null_resource" "install_seaweedfs" {
         --set master.replicas=${var.master_replicas} \
         --set volume.replicas=${var.volume_replicas} \
         --set filer.s3.port=${var.s3_port} \
-        --set volume.size=${var.volume_size} \
-        --set volume.storageClass=${var.storage_class} \
         ${local.ingress_host_flags} \
         ${local.s3_credentials_flags} \
         ${local.webui_auth_annotations_flags} \
@@ -109,7 +117,10 @@ resource "null_resource" "install_seaweedfs" {
     EOT
   }
 
-  depends_on = [null_resource.add_helm_repo]
+  depends_on = [
+    null_resource.add_helm_repo,
+    module.volume_pvc
+  ]
 }
 
 # Wait for SeaweedFS to be fully ready

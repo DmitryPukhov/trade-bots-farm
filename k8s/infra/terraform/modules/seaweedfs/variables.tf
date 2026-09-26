@@ -31,7 +31,13 @@ variable "s3_port" {
 variable "volume_size" {
   description = "Storage size for volume servers"
   type        = string
-  default     = "10Gi"
+  default     = "100Gi"
+}
+
+variable "volume_pvc_name" {
+  description = "Name of the PVC for volume server data"
+  type        = string
+  default     = "seaweedfs-volume-data"
 }
 
 variable "storage_class" {

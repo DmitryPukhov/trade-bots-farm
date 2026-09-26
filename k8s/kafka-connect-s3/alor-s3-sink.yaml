@@ -10,8 +10,9 @@ spec:
     topics.regex: raw\.alor\..*
 
     topics.dir: data/raw/alor
-    rotate.interval.ms: 300000
-    flush.size: 100000
+
+    rotate.interval.ms: 60000          # Rotate (commit & close) file every 60s
+    flush.size: 2147483647              # Max records per file (effectively disabled; rotation is time-based)
 
     s3.bucket.name: trade-bots-farm
     storage.class: io.confluent.connect.s3.storage.S3Storage
