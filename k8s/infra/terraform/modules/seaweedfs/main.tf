@@ -2,22 +2,22 @@
 locals {
   values_hash = filebase64sha256("${path.module}/values.yaml")
   install_triggers = {
-    namespace       = var.namespace
-    master_replicas = var.master_replicas
-    volume_replicas = var.volume_replicas
-    s3_port         = var.s3_port
-    volume_size     = var.volume_size
-    storage_class   = var.storage_class
-    values_hash     = local.values_hash
-    s3_host         = local.s3_host
-    filer_host      = local.filer_host
-    master_host     = local.master_host
-    volume_host     = local.volume_host
-    ingress_enabled = var.ingress_enabled
-    webui_auth_enabled = var.webui_auth_enabled
+    namespace                    = var.namespace
+    master_replicas              = var.master_replicas
+    volume_replicas              = var.volume_replicas
+    s3_port                      = var.s3_port
+    volume_size                  = var.volume_size
+    storage_class                = var.storage_class
+    values_hash                  = local.values_hash
+    s3_host                      = local.s3_host
+    filer_host                   = local.filer_host
+    master_host                  = local.master_host
+    volume_host                  = local.volume_host
+    ingress_enabled              = var.ingress_enabled
+    webui_auth_enabled           = var.webui_auth_enabled
     webui_auth_secret_name_final = local.webui_auth_secret_name_final
-    s3_access_key   = var.s3_access_key
-    s3_secret_key   = var.s3_secret_key
+    s3_access_key                = var.s3_access_key
+    s3_secret_key                = var.s3_secret_key
   }
 
   # Compute ingress hosts
@@ -187,35 +187,35 @@ resource "kubernetes_job" "create_default_bucket" {
         restart_policy = "Never"
       }
     }
-    backoff_limit = 3
+    backoff_limit           = 3
     active_deadline_seconds = 300
   }
 
   wait_for_completion = false
-depends_on = [time_sleep.wait_for_seaweedfs]
+  depends_on          = [time_sleep.wait_for_seaweedfs]
 }
 
 # Configure SeaweedFS IAM credentials
 resource "kubernetes_job" "configure_iam_credentials" {
   count = var.enabled && var.configure_iam_credentials && var.s3_access_key != "" && var.s3_secret_key != "" ? 1 : 0
 
-metadata {
-  name      = "configure-iam-credentials"
-  namespace = var.namespace
-}
+  metadata {
+    name      = "configure-iam-credentials"
+    namespace = var.namespace
+  }
 
-spec {
-  template {
-    metadata {
-      name = "configure-iam-credentials"
-    }
-    spec {
-      container {
-        name    = "seaweedfs-shell"
-        image   = "chrislusf/seaweedfs:latest"
-        command = ["/bin/sh", "-c"]
-        args = [
-          <<-EOT
+  spec {
+    template {
+      metadata {
+        name = "configure-iam-credentials"
+      }
+      spec {
+        container {
+          name    = "seaweedfs-shell"
+          image   = "chrislusf/seaweedfs:latest"
+          command = ["/bin/sh", "-c"]
+          args = [
+            <<-EOT
             # Wait for filer to be reachable
             until curl -f -s http://seaweedfs-filer.${var.namespace}.svc.cluster.local:8888/ > /dev/null 2>&1; do
               echo "Waiting for SeaweedFS filer..."
@@ -234,18 +234,18 @@ spec {
             
             echo "IAM credentials configured successfully"
           EOT
-        ]
+          ]
+        }
+        restart_policy = "Never"
       }
-      restart_policy = "Never"
     }
+    backoff_limit           = 3
+    active_deadline_seconds = 300
   }
-  backoff_limit = 3
-  active_deadline_seconds = 300
-}
 
-wait_for_completion = false
+  wait_for_completion = false
 
-depends_on = [time_sleep.wait_for_seaweedfs]
+  depends_on = [time_sleep.wait_for_seaweedfs]
 }
 
 

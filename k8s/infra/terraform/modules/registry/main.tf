@@ -24,7 +24,7 @@ resource "kubernetes_persistent_volume_claim" "registry" {
   count = var.enabled ? 1 : 0
 
   metadata {
-    name = "registry-pvc"
+    name      = "registry-pvc"
     namespace = var.namespace
   }
 
@@ -43,7 +43,7 @@ resource "kubernetes_deployment" "registry" {
   count = var.enabled ? 1 : 0
 
   metadata {
-    name = "registry"
+    name      = "registry"
     namespace = var.namespace
   }
 
@@ -93,7 +93,7 @@ resource "kubernetes_service" "registry" {
   count = var.enabled ? 1 : 0
 
   metadata {
-    name = "registry"
+    name      = "registry"
     namespace = var.namespace
   }
 

@@ -1,0 +1,36 @@
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaConnect
+metadata:
+  name: kafka-connect-s3
+  namespace: $NAMESPACE
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  replicas: 1
+  groupId: connect-kafka-connect-s3
+  configStorageTopic: connect-kafka-connect-s3-configs
+  offsetStorageTopic: connect-kafka-connect-s3-offsets
+  statusStorageTopic: connect-kafka-connect-s3-status
+  bootstrapServers: trade-bots-farm-kafka-bootstrap.$NAMESPACE.svc.cluster.local:9092
+  template:
+    connectContainer:
+      env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: seaweedfs-s3-credentials
+              key: access_key
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: seaweedfs-s3-credentials
+              key: secret_key
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
+  config:
+    config.providers: file
+    config.providers.file.class: org.apache.kafka.common.config.provider.FileConfigProvider
+    key.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    key.converter.schemas.enable: false
+    value.converter.schemas.enable: false

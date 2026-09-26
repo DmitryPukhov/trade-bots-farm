@@ -14,9 +14,9 @@ resource "helm_release" "grafana" {
 }
 
 module "pvc_grafana" {
-  source    = "../pvc"
-  namespace = var.namespace
-  name      = "grafana"
-  size      = "10Gi"
+  source        = "../pvc"
+  namespace     = var.namespace
+  name          = "grafana"
+  size          = "10Gi"
   storage_class = "standard"
 }

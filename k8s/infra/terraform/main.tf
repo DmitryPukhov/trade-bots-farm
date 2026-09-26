@@ -201,6 +201,19 @@ terraform {
   required_version = ">= 1.0"
 }
 
+module "kafka_connect" {
+  source    = "./modules/kafka-connect"
+  namespace = var.namespace
+  count     = var.enable_kafka_connect ? 1 : 0
+
+  bootstrap_servers = var.kafka_connect_bootstrap_servers != "" ? var.kafka_connect_bootstrap_servers : (
+    var.enable_kafka ? "trade-bots-farm-kafka-bootstrap.${var.namespace}.svc.cluster.local:9092" : ""
+  )
+
+  depends_on = [
+    module.kafka
+  ]
+}
 
 # Module for Airflow
 terraform {

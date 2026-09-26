@@ -7,36 +7,36 @@ resource "helm_release" "airflow" {
   values = [
     file("${path.module}/values.yaml")
   ]
-  timeout = 600
-  force_update = true
+  timeout         = 600
+  force_update    = true
   cleanup_on_fail = true
-  recreate_pods = true
-  wait = false
+  recreate_pods   = true
+  wait            = false
 
 }
 
 
 module "pvc_airflow_dags" {
-  source    = "../pvc"
-  namespace = var.namespace
-  name      = "airflow-dags"
-  size      = "5Gi"
+  source        = "../pvc"
+  namespace     = var.namespace
+  name          = "airflow-dags"
+  size          = "5Gi"
   storage_class = "standard"
 }
 
 module "pvc_environment" {
-  source    = "../pvc"
-  namespace = var.namespace
-  name      = "environment"
-  size      = "5Gi"
+  source        = "../pvc"
+  namespace     = var.namespace
+  name          = "environment"
+  size          = "5Gi"
   storage_class = "standard"
 }
 
 module "pvc_wheels" {
-  source    = "../pvc"
-  namespace = var.namespace
-  name      = "wheels"
-  size      = "5Gi"
+  source        = "../pvc"
+  namespace     = var.namespace
+  name          = "wheels"
+  size          = "5Gi"
   storage_class = "standard"
 }
 

@@ -125,6 +125,12 @@ variable "enable_kafka_connect" {
   default     = true
 }
 
+variable "kafka_connect_bootstrap_servers" {
+  description = "Kafka bootstrap servers for Kafka Connect. If empty, defaults to the internal Kafka cluster bootstrap URL."
+  type        = string
+  default     = ""
+}
+
 variable "enable_airflow" {
   description = "Enable Airflow deployment"
   type        = bool

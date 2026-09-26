@@ -5,19 +5,19 @@ enable_prometheus    = true
 enable_grafana       = false
 enable_kafka         = true
 enable_kafka_ui      = true
-enable_kafka_connect = false
+enable_kafka_connect = true
 enable_airflow       = true
 enable_registry      = false
 enable_secrets       = true
 
-seaweedfs_ingress_enabled = true
-seaweedfs_webui_auth_enabled = true
-seaweedfs_ingress_host    = "seaweedfs.tradebotsfarm.svc.cluster.local"
-seaweedfs_s3_ingress_host = "s3.tradebotsfarm.svc.cluster.local"
-seaweedfs_filer_ingress_host = "filer.seaweedfs.tradebotsfarm.svc.cluster.local"
+seaweedfs_ingress_enabled     = true
+seaweedfs_webui_auth_enabled  = true
+seaweedfs_ingress_host        = "seaweedfs.tradebotsfarm.svc.cluster.local"
+seaweedfs_s3_ingress_host     = "s3.tradebotsfarm.svc.cluster.local"
+seaweedfs_filer_ingress_host  = "filer.seaweedfs.tradebotsfarm.svc.cluster.local"
 seaweedfs_master_ingress_host = "master.seaweedfs.tradebotsfarm.svc.cluster.local"
 
-seaweedfs_s3_credentials_secret_name = "seaweedfs-s3-credentials"
+seaweedfs_s3_credentials_secret_name   = "seaweedfs-s3-credentials"
 seaweedfs_create_s3_credentials_secret = false
 
 mlflow_ingress_enabled = true
@@ -28,9 +28,9 @@ prometheus_ingress_enabled = true
 prometheus_ingress_host    = "prometheus.tradebotsfarm.svc.cluster.local"
 prometheus_ingress_class   = "nginx"
 
-kafka_ingress_enabled  = true
-kafka_ingress_host     = "kafka.tradebotsfarm.svc.cluster.local"
-kafka_ingress_class    = "nginx"
+kafka_ingress_enabled = true
+kafka_ingress_host    = "kafka.tradebotsfarm.svc.cluster.local"
+kafka_ingress_class   = "nginx"
 
 kafka_ui_ingress_enabled = true
 kafka_ui_ingress_host    = "kafka-ui.tradebotsfarm.svc.cluster.local"

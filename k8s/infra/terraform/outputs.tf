@@ -56,3 +56,9 @@ output "airflow_webserver_url" {
   description = "Airflow webserver URL"
   depends_on  = [module.airflow]
 }
+
+output "kafka_connect_url" {
+  value       = length(module.kafka_connect) > 0 ? module.kafka_connect[0].connect_url : ""
+  description = "Kafka Connect API URL"
+  depends_on  = [module.kafka_connect]
+}

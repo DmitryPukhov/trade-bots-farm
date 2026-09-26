@@ -49,10 +49,10 @@ resource "helm_release" "mlflow" {
 # Pre-create the PVC for PostgreSQL data to persist across chart upgrades
 # The community chart's bundled bitnami postgresql will use this via existingClaim
 module "pvc_mlflow_postgresql" {
-  source    = "../pvc"
-  namespace = var.namespace
-  name      = "data-mlflow-postgresql-0"
-  size      = "10Gi"
+  source        = "../pvc"
+  namespace     = var.namespace
+  name          = "data-mlflow-postgresql-0"
+  size          = "10Gi"
   storage_class = "standard"
-  count     = var.enabled ? 1 : 0
+  count         = var.enabled ? 1 : 0
 }
