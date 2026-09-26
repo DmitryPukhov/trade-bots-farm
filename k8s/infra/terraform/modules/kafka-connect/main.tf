@@ -10,7 +10,7 @@ resource "null_resource" "install_kafka_connect" {
   provisioner "local-exec" {
     command = <<EOT
 set -e
-NAMESPACE=${var.namespace}
+export NAMESPACE=${var.namespace}
 
 echo "Deploying KafkaConnect cluster: kafka-connect-s3 in namespace $NAMESPACE..."
 
