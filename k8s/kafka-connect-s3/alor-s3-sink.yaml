@@ -10,7 +10,7 @@ spec:
     topics.regex: raw\.alor\..*
 
     topics.dir: data/raw/alor
-    rotate.interval.ms: 3600000
+    rotate.interval.ms: 300000
     flush.size: 100000
 
     s3.bucket.name: trade-bots-farm
@@ -25,8 +25,8 @@ spec:
     path.format: "'year='yyyy'/month='MM'/day='dd"
 
     partitioner.class: io.confluent.connect.storage.partitioner.TimeBasedPartitioner
-    partition.duration.ms: 3600000
+    partition.duration.ms: 86400000     # One partition (directory) per day
     timestamp.extractor: Wallclock
 
-    timezone: Europe/Moscow
+    timezone: UTC
     locale: en-US

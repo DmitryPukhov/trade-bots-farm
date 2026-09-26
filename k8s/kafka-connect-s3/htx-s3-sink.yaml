@@ -11,8 +11,8 @@ spec:
 
     topics.dir: data/raw/htx
 
-    rotate.interval.ms: 3600000
-    flush.size: 100000
+    rotate.interval.ms: 300000          # Rotate (commit & close) file every 60s
+    flush.size: 2147483647              # Max records per file (effectively disabled; rotation is time-based)
 
     s3.bucket.name: trade-bots-farm
     storage.class: io.confluent.connect.s3.storage.S3Storage
@@ -26,8 +26,8 @@ spec:
     path.format: "'year='yyyy'/month='MM'/day='dd"
 
     partitioner.class: io.confluent.connect.storage.partitioner.TimeBasedPartitioner
-    partition.duration.ms: 3600000
+    partition.duration.ms: 86400000     # One partition (directory) per day
     timestamp.extractor: Wallclock
 
-    timezone: Europe/Moscow
+    timezone: UTC
     locale: en-US
