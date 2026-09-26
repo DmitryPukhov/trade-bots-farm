@@ -3,7 +3,7 @@ from datetime import datetime
 
 from airflow import DAG
 
-from trade_bots_farm_common.dag_tools import tbf_task_operator
+from dag_tools import tbf_task_operator
 
 # Define the DAG
 with (DAG(
@@ -16,5 +16,5 @@ with (DAG(
     tbf_task_operator(
         task_id="connector_stream_alor",
         wheel_file_name="trade_bots_farm_connector_stream_alor-0.1.0-py3-none-any.whl",
-        module_name="connector_stream_alor_app",
+        module_name="trade_bots_farm_connector_stream_alor.connector_stream_alor_app",
         class_name="ConnectorStreamAlorApp")

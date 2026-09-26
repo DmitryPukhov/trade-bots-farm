@@ -11,39 +11,36 @@ cd "$PROJECT_ROOT" || exit
 SIDECAR_POD=$(kubectl get pods -n trade-bots-farm | grep scheduler | awk '{print $1}')
 echo "Sidecar pod: $SIDECAR_POD"
 POD_DAGS_DIR="/opt/airflow/dags"
-POD_APP_DIR=/opt/trade-bots-farm
+POD_WHEELS_DIR="/opt/trade-bots-farm/wheels"
+DIST_DIR="dist"
+CONNECTOR_DIR="connectors/stream/alor-ws"
+ENV_FILE_NAME="connector_stream_alor.env"
 
-# Ensure we're in the correct directory
-if [ ! -d "connectors/stream/alor-ws" ]; then
-    echo "❌ Directory connectors/stream/alor-ws not found"
-    exit 1
-fi
+echo "Building wheels..."
+uv build --package trade-bots-farm-common --wheel --out-dir $DIST_DIR
+uv build --package trade-bots-farm-connector-stream-alor --wheel --out-dir $DIST_DIR
 
-cd "connectors/stream/alor-ws" || exit
+echo "Copying wheels to PVC..."
+kubectl -n $NAMESPACE exec $SIDECAR_POD -- mkdir -p $POD_WHEELS_DIR
+for whl in $DIST_DIR/trade_bots_farm_common-*.whl $DIST_DIR/trade_bots_farm_connector_stream_alor-*.whl; do
+    kubectl -n $NAMESPACE cp "$whl" "$NAMESPACE/$SIDECAR_POD:$POD_WHEELS_DIR/"
+done
 
-# Create virtual environment and install dependencies
-#echo "📦 Creating virtual environment and installing dependencies..."
-#uv venv .venv --seed
-#uv pip install -e .
+echo "Copying dag_tools.py to DAGs dir..."
+kubectl -n $NAMESPACE cp common/src/trade_bots_farm_common/dag_tools.py "$NAMESPACE/$SIDECAR_POD:$POD_DAGS_DIR/"
 
-echo "📁 Copying .venv to PVC..."
-kubectl -n $NAMESPACE cp ./.venv $NAMESPACE/$SIDECAR_POD:$POD_APP_DIR/.venv
-#
-#echo "📁 Copying src to PVC..."
-#kubectl -n $NAMESPACE cp ./src $NAMESPACE/$SIDECAR_POD:$POD_DAGS_DIR/src
+echo "Copying dag to DAGs dir..."
+kubectl -n $NAMESPACE cp "$CONNECTOR_DIR/src/"*/*_dag.py "$NAMESPACE/$SIDECAR_POD:$POD_DAGS_DIR/"
 
-echo "📁 Copying dag to PVC..."
-kubectl -n $NAMESPACE cp ./src/*/*_dag.py $NAMESPACE/$SIDECAR_POD:$POD_DAGS_DIR
+echo "Copying .env to environment PVC..."
+kubectl -n $NAMESPACE cp "$CONNECTOR_DIR/.env" "$NAMESPACE/$SIDECAR_POD:/opt/trade-bots-farm/environment/$ENV_FILE_NAME"
 
-echo "🔧 Changing owner to airflow:airflow"
-kubectl -n $NAMESPACE exec $SIDECAR_POD -- chown -R airflow: $POD_DAGS_DIR/*.py
-kubectl -n $NAMESPACE exec $SIDECAR_POD -- chmod +x $POD_DAGS_DIR/*.py
+echo "Setting ownership and permissions..."
+kubectl -n $NAMESPACE exec $SIDECAR_POD -- sh -c "chown -R airflow: $POD_DAGS_DIR/*.py"
+kubectl -n $NAMESPACE exec $SIDECAR_POD -- sh -c "chmod +x $POD_DAGS_DIR/*.py"
 
-# Verify the copy was successful
-echo "🔍 Verifying deployment..."
+echo "Verifying deployment..."
 kubectl -n $NAMESPACE exec $SIDECAR_POD -- ls -la /opt/airflow/dags
+kubectl -n $NAMESPACE exec $SIDECAR_POD -- ls -la $POD_WHEELS_DIR
 
-cd $PROJECT_ROOT
-echo "✅ Deployed successfully to airflow-dags PVC"
-
-cd "$OLDPWD" 2>/dev/null || true
+echo "Deployed successfully"

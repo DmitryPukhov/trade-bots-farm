@@ -15,5 +15,5 @@ with (DAG(
     tbf_task_operator(
         task_id="connector_stream_htx",
         wheel_file_name="trade_bots_farm_connector_stream_htx-0.1.0-py3-none-any.whl",
-        module_name="connector_stream_htx_app",
+        module_name="trade_bots_farm_connector_stream_htx.connector_stream_htx_app",
         class_name="ConnectorStreamHtxApp")
