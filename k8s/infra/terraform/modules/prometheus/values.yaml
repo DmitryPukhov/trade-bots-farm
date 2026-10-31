@@ -1,4 +1,5 @@
 server:
+  retention: "30d"
   service:
     nodePorts:
       http: "31280"

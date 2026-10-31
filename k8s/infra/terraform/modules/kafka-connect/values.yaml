@@ -28,6 +28,10 @@ spec:
               key: secret_key
         - name: AWS_DEFAULT_REGION
           value: us-east-1
+        - name: KAFKA_CONNECT_LOG_DIR
+          value: /var/log/kafka-connect
+        - name: KAFKA_HEAP_OPTS
+          value: "-Xmx256m -Xms256m"
   config:
     config.providers: file
     config.providers.file.class: org.apache.kafka.common.config.provider.FileConfigProvider

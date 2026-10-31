@@ -17,11 +17,15 @@ executor: "CeleryExecutor"
 config:
   core:
     load_examples: "False"
-#    remote_logging: "True"
-#    remote_base_log_folder: "s3://trade-bots-farm/airflow/logs/"
-#    remote_dags: "s3://trade-bots-farm/airflow/dags/"
+    remote_logging: "True"
+    remote_base_log_folder: "s3://trade-bots-farm/airflow/logs/"
+    remote_dags: "s3://trade-bots-farm/airflow/dags/"
     dags_folder: "/opt/airflow/dags"
     donot_log_cli: "True"
+    task_log_retention_days: 30
+    dag_processor_log_retention_days: 30
+  # S3 credentials are injected via Airflow connections/secrets, not direct env vars
+  # The S3 storage class handles authentication via the connection
 
 # Database connection - managed via chart's data section (creates secret automatically)
 data:
@@ -79,14 +83,6 @@ volumes:
   - name: wheels
     persistentVolumeClaim:
       claimName: wheels
-
-volumeMounts:
-  - mountPath: /opt/airflow/dags
-    name: airflow-dags
-  - mountPath: /opt/trade-bots-farm/environment
-    name: environment
-  - mountPath: /opt/trade-bots-farm/wheels
-    name: wheels
 
 # PostgreSQL configuration
 postgresql:
