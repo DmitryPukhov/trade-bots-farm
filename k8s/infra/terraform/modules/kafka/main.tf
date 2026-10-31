@@ -15,6 +15,16 @@ kubectl delete pvc -n ${var.namespace} -l app.kubernetes.io/name=kafka --ignore-
 kubectl delete pvc -n ${var.namespace} -l app.kubernetes.io/name=zookeeper --ignore-not-found
 kubectl get kafka -n ${var.namespace} -o name | xargs -I {} kubectl patch {} -n ${var.namespace} -p '{"metadata":{"finalizers":[]}}' --type=merge
 kubectl get crd -l app=strimzi -o name | xargs -I {} kubectl patch {} -p '{"metadata":{"finalizers":[]}}' --type=merge
+echo '⏳ Waiting for Kafka/Zookeeper PVCs to be deleted...'
+for i in $(seq 1 60); do
+  remaining=$(kubectl get pvc -n ${var.namespace} -l app.kubernetes.io/name=kafka,app.kubernetes.io/name=zookeeper --no-headers 2>/dev/null | wc -l)
+  if [ "$remaining" -eq 0 ]; then
+    echo '✅ All Kafka/Zookeeper PVCs deleted!'
+    break
+  fi
+  echo "  attempt $i/60 - $remaining PVC(s) still exist, waiting 2s..."
+  sleep 2
+done
 echo '✅ Strimzi/Kafka uninstallation complete!'
 set -e
 EOT
