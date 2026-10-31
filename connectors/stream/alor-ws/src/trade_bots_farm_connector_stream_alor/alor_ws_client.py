@@ -101,6 +101,7 @@ class AlorWsClient:
 
         response = requests.post(self._oauth_url, json=payload, headers=headers)
         if response.status_code != 200:
+            self._logger.error(f"Error getting access token: {response.text}")
             response.raise_for_status()
         # Get response as a string, update access token to new value
         self._access_token = json.loads(response.text)["AccessToken"]
