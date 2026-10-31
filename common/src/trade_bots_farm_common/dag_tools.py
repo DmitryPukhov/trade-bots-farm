@@ -64,7 +64,7 @@ def tbf_task_operator(task_id, wheel_file_name, module_name, class_name, **kwarg
 
     ################# Main #################
     """ PythonVirtualenvOperator wrapper to run trade bots farm dag task."""
-    airflow_wheels_dir = os.getenv("AIRFLOW_WHEELS_DIR") or "/opt/trade-bots-farm/wheels"
+    airflow_wheels_dir = os.getenv("AIRFLOW_WHEELS_DIR") or "/home/airflow/trade-bots-farm/wheels"
     return PythonVirtualenvOperator(
         task_id=task_id,
         python_callable=tbf_task_callable,
